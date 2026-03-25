@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-label="Decorative waves background">
+  <defs>
+    <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="600" fill="url(#wg)"/>
+
+  <g fill="none" stroke="#93C5FD" stroke-opacity="0.25" stroke-width="2">
+    <path d="M0 440 C 120 400, 220 500, 340 460 S 560 380, 680 420 S 900 520, 1200 440"/>
+    <path d="M0 380 C 120 340, 220 440, 340 400 S 560 320, 680 360 S 900 460, 1200 380"/>
+    <path d="M0 320 C 120 280, 220 380, 340 340 S 560 260, 680 300 S 900 400, 1200 320"/>
+  </g>
+
+  <g fill="#22D3EE" fill-opacity="0.18">
+    <circle cx="170" cy="470" r="6"/>
+    <circle cx="560" cy="360" r="8"/>
+    <circle cx="990" cy="420" r="7"/>
+  </g>
+</svg>
+

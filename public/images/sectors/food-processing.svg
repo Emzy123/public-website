@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Food and processing background">
+  <rect width="1200" height="800" fill="#0a2342"/>
+  <circle cx="260" cy="580" r="240" fill="#d4af37" opacity="0.3"/>
+  <rect x="620" y="120" width="420" height="180" rx="24" fill="#f8f4e9" opacity="0.2"/>
+  <path d="M80 440 C260 320 420 320 600 440 C780 560 940 560 1120 440" fill="none" stroke="#f4d03f" stroke-width="14" opacity="0.4"/>
+  <circle cx="760" cy="210" r="30" fill="#d4af37" opacity="0.4"/>
+</svg>
+

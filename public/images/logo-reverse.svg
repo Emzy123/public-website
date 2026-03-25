@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128" role="img" aria-label="SINet reverse logo">
+  <rect width="512" height="128" rx="16" fill="#08182f"/>
+  <circle cx="64" cy="64" r="34" fill="#F8F4E9"/>
+  <path d="M52 64h24M64 52v24" stroke="#08182f" stroke-width="6" stroke-linecap="round"/>
+  <text x="118" y="78" font-family="Inter, Arial, sans-serif" font-size="52" font-weight="700" fill="#F8F4E9">SINet</text>
+</svg>
+

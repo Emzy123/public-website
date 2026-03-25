@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="Fashion and creative background">
+  <rect width="1200" height="800" fill="#0a2342"/>
+  <circle cx="240" cy="180" r="180" fill="#d4af37" opacity="0.35"/>
+  <circle cx="930" cy="580" r="220" fill="#1e3a5f" opacity="0.7"/>
+  <path d="M120 680 Q360 480 560 640 T1020 620" fill="none" stroke="#f4d03f" stroke-width="12" opacity="0.5"/>
+  <path d="M160 120 L280 280 L120 360 Z" fill="#f8f4e9" opacity="0.18"/>
+</svg>
+

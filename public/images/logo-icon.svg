@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="SINet icon">
+  <rect width="256" height="256" rx="48" fill="#0A2342"/>
+  <circle cx="128" cy="128" r="72" fill="#D4AF37"/>
+  <path d="M96 128h64M128 96v64" stroke="#0A2342" stroke-width="14" stroke-linecap="round"/>
+</svg>
+

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Empire badge placeholder">
+  <defs>
+    <linearGradient id="eg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0.35"/>
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M80 10
+       L130 38
+       L150 92
+       L120 140
+       L40 140
+       L10 92
+       L30 38 Z"
+    fill="url(#eg)"
+    fill-opacity="0.22"
+    stroke="#93C5FD"
+    stroke-opacity="0.35"
+    stroke-width="3"
+  />
+
+  <path
+    d="M80 38
+       L108 54
+       L120 86
+       L100 115
+       L60 115
+       L40 86
+       L52 54 Z"
+    fill="#0A1A2F"
+    fill-opacity="0.18"
+    stroke="#22D3EE"
+    stroke-opacity="0.25"
+    stroke-width="2"
+  />
+
+  <path d="M45 80 C 60 65, 70 60, 80 55 C 90 60, 100 65, 115 80" fill="none" stroke="#60A5FA" stroke-opacity="0.45" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
