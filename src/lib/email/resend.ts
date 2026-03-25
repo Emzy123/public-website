@@ -7,7 +7,10 @@ export class ResendAdapter implements EmailServiceAdapter {
     const audienceId = process.env.RESEND_AUDIENCE_ID;
 
     if (!apiKey || !audienceId) {
-      console.warn('RESEND_API_KEY or RESEND_AUDIENCE_ID not provided. Subscriber insertion skipped in dev.');
+      const message = 'RESEND_API_KEY or RESEND_AUDIENCE_ID not provided.';
+      // In production, fail loudly so the UI shows an error instead of "success with no subscriber".
+      if (process.env.NODE_ENV === 'production') throw new Error(message);
+      console.warn(`${message} Subscriber insertion skipped in dev.`);
       return;
     }
 

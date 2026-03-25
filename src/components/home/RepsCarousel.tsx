@@ -1,11 +1,12 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import type { Rep } from '@/types';
 import { Card } from '../ui/Card';
 
 export function RepsCarousel({ reps }: { reps: Rep[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   
   const nextSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev === reps.length - 1 ? 0 : prev + 1));
@@ -20,6 +21,22 @@ export function RepsCarousel({ reps }: { reps: Rep[] }) {
     return () => clearInterval(timer);
   }, [nextSlide]);
 
+  // Keep the currently selected rep card in view across breakpoints.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+
+    const child = scroller.children.item(currentIndex);
+    if (!child) return;
+
+    child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+  }, [currentIndex]);
+
+  // If reps changes (or DB data loads differently), reset to a safe index.
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [reps.length]);
+
   if (!reps.length) return null;
 
   return (
@@ -33,30 +50,31 @@ export function RepsCarousel({ reps }: { reps: Rep[] }) {
         </div>
 
         <div className="relative max-w-md mx-auto xl:max-w-5xl lg:max-w-4xl md:max-w-2xl">
-          <div className="overflow-hidden px-4">
-            <div 
-              className="flex transition-transform duration-500 ease-in-out" 
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-            >
-              {reps.map((rep) => (
-                <div key={rep.id} className="w-full shrink-0 px-4 sm:w-1/2 lg:w-1/3 xl:w-1/4">
-                  <Card className="p-6 text-center h-full">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-slate-200 mb-4 overflow-hidden border border-slate-300 flex items-center justify-center text-slate-500 text-2xl font-bold relative">
-                      <Image
-                        src={rep.photoUrl}
-                        alt={rep.altText}
-                        fill
-                        sizes="96px"
-                        className="object-cover opacity-95"
-                      />
-                      <span className="relative z-10">{rep.name.charAt(0)}</span>
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900">{rep.name}</h3>
-                    <p className="text-sm font-medium text-blue-600 mt-1">{rep.region}</p>
-                  </Card>
-                </div>
-              ))}
-            </div>
+          <div
+            ref={scrollerRef}
+            className="flex overflow-x-auto px-4 pb-4 snap-x snap-mandatory scroll-smooth"
+          >
+            {reps.map((rep) => (
+              <div
+                key={rep.id}
+                className="snap-start w-full shrink-0 px-4 sm:w-1/2 lg:w-1/3 xl:w-1/4"
+              >
+                <Card className="p-6 text-center h-full">
+                  <div className="w-24 h-24 mx-auto rounded-full bg-slate-200 mb-4 overflow-hidden border border-slate-300 flex items-center justify-center text-slate-500 text-2xl font-bold relative">
+                    <Image
+                      src={rep.photoUrl}
+                      alt={rep.altText}
+                      fill
+                      sizes="96px"
+                      className="object-cover opacity-95"
+                    />
+                    <span className="relative z-10">{rep.name.charAt(0)}</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">{rep.name}</h3>
+                  <p className="text-sm font-medium text-blue-600 mt-1">{rep.region}</p>
+                </Card>
+              </div>
+            ))}
           </div>
 
           {/* Controls */}

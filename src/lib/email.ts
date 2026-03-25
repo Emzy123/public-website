@@ -1,32 +1,20 @@
 import type { WaitlistFormData } from '@/lib/validation';
+import { getEmailServiceAdapter } from './email/index';
 
 export async function sendWaitlistContact(data: WaitlistFormData): Promise<void> {
-  const endpoint = process.env.EMAIL_SERVICE_API;
-  const apiKey = process.env.EMAIL_SERVICE_KEY;
-  const listId = process.env.EMAIL_LIST_ID;
+  // Use provider-specific adapter (currently defaults to Resend).
+  // This keeps the waitlist endpoint independent from provider API details.
+  const adapter = getEmailServiceAdapter();
 
-  if (!endpoint || !apiKey || !listId) {
-    throw new Error('Email service env vars missing');
-  }
-
-  await fetch(`${endpoint.replace(/\/$/, '')}/lists/${listId}/members`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      email_address: data.email,
-      status: 'subscribed',
-      merge_fields: {
-        FNAME: data.fullName,
-        PHONE: data.phoneNumber ?? '',
-        COUNTRY: data.country,
-        UTYPE: data.userType,
-        SECTOR: data.sectorInterest,
-        INVEST: data.investmentInterest ?? '',
-      },
-      tags: ['sinet', 'waitlist'],
-    }),
+  await adapter.addSubscriber({
+    fullName: data.fullName,
+    email: data.email,
+    phoneNumber: data.phoneNumber,
+    country: data.country,
+    userType: data.userType,
+    sectorInterest: data.sectorInterest,
+    investmentInterest: data.investmentInterest ?? '',
+    hearAbout: data.hearAbout ?? '',
+    tags: ['waitlist', data.userType, data.sectorInterest],
   });
 }
