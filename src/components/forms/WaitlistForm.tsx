@@ -38,6 +38,7 @@ export function WaitlistForm() {
   }, []);
 
   const onSubmit = async (data: WaitlistFormData) => {
+    setErrorMessage('');
     if (!csrfToken || !recaptchaToken) {
       setStatus('error');
       setErrorMessage('Security check is still initializing. Please wait a moment and try again.');
@@ -230,7 +231,7 @@ export function WaitlistForm() {
 
         <Button 
           type="submit" 
-          disabled={status === 'loading'}
+          disabled={status === 'loading' || !csrfToken || !recaptchaToken}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-4 border-0"
         >
           {status === 'loading' ? 'Submitting...' : 'Join the Global Waitlist'}
@@ -239,6 +240,11 @@ export function WaitlistForm() {
           <p className="mt-3 text-sm text-slate-500">
             Initializing security check...
           </p>
+        )}
+        {status === 'error' && errorMessage && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+            {errorMessage}
+          </div>
         )}
       </form>
 
