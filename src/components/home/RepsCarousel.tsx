@@ -29,7 +29,10 @@ export function RepsCarousel({ reps }: { reps: Rep[] }) {
     const child = scroller.children.item(currentIndex);
     if (!child) return;
 
-    child.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    // Avoid `scrollIntoView()` here: it can scroll the whole page to this section on load.
+    // We only want to adjust the horizontal scroll position of the carousel container.
+    const childEl = child as HTMLElement;
+    scroller.scrollTo({ left: childEl.offsetLeft, behavior: 'smooth' });
   }, [currentIndex]);
 
   // If reps changes (or DB data loads differently), reset to a safe index.

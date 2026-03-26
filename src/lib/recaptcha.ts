@@ -1,6 +1,8 @@
 export async function verifyRecaptchaToken(token: string): Promise<boolean> {
   const secret = process.env.RECAPTCHA_SECRET_KEY;
-  if (!secret || !token) return false;
+  if (!secret || !token) {
+    return false;
+  }
 
   const params = new URLSearchParams({
     secret,
@@ -15,7 +17,11 @@ export async function verifyRecaptchaToken(token: string): Promise<boolean> {
     body: params.toString(),
   });
 
-  if (!response.ok) return false;
+  if (!response.ok) {
+    return false;
+  }
+
   const data = (await response.json()) as { success?: boolean; score?: number };
+
   return Boolean(data.success) && (data.score ?? 0) >= 0.4;
 }

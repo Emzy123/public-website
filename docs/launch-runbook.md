@@ -1,5 +1,53 @@
 # SINet Launch Runbook
 
+## NODE_ENV security behavior
+
+- `NODE_ENV=development`
+  - Security checks are still active (origin/CSRF/reCAPTCHA/rate limits).
+  - API errors include actionable `details` fields for local troubleshooting.
+- `NODE_ENV=production`
+  - Strict mode is enforced for API configuration.
+  - Missing required env vars return hard failures with generic error messages.
+
+## Pre-redeploy full-scale test (recommended)
+
+### Local (automated)
+
+```bash
+npm install
+npm run lint
+npm run build
+npm test
+```
+
+### Local (runtime smoke)
+
+- Start prod server locally:
+
+```bash
+npx next start -p 3010
+```
+
+- Verify API routes respond:
+  - `GET http://localhost:3010/api/waitlist` returns `{ csrfToken: ... }`
+  - `GET http://localhost:3010/api/contact` returns `405`
+  - `GET http://localhost:3010/api/academy` returns `405`
+
+- With **real production env values** set (MongoDB, reCAPTCHA, CSRF, Resend):
+  - Submit one waitlist form (expect redirect to `/waitlist/success`)
+  - Submit one contact form (expect DB insert + email notification)
+  - Submit one academy interest form (expect DB insert)
+
+### Vercel Preview (production-like)
+
+- Set the same env vars you intend for production in the Preview environment.
+- Deploy Preview and run the checks in **T-24h** and **T-0** below:
+  - Forms (waitlist/contact/academy)
+  - DB inserts
+  - Email delivery
+  - GA4 realtime (events)
+  - Vercel logs for 4xx/5xx spikes
+
 ## T-24h Checklist
 
 - Confirm Vercel production build is green.

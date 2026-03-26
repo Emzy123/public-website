@@ -8,6 +8,7 @@
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint",
+    "test": "jest",
     "seed:db": "ts-node scripts/seed.ts"
   },
   "dependencies": {

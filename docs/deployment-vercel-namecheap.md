@@ -12,14 +12,23 @@
 
 Set these in Vercel Project Settings -> Environment Variables:
 
+- `NODE_ENV=production` (Vercel sets this automatically for production)
 - `NEXT_PUBLIC_SITE_URL=https://sinet.africa`
+- MongoDB (required by `POST /api/contact` and `POST /api/academy`):
 - `MONGODB_URI=...`
 - `MONGODB_DB=sinet`
+- Waitlist security (required by `POST /api/waitlist`):
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...`
+- `RECAPTCHA_SECRET_KEY=...`
+- `CSRF_SECRET=...`
 - `EMAIL_SERVICE=resend`
 - `RESEND_API_KEY=...`
 - `RESEND_AUDIENCE_ID=...`
 - `RESEND_FROM_EMAIL=...`
 - `RESEND_CONTACT_TO_EMAIL=contact@sinet.africa`
+- Optional rate limiting (Upstash Redis):
+- `UPSTASH_REDIS_REST_URL=...`
+- `UPSTASH_REDIS_REST_TOKEN=...`
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX`
 - Optional:
   - `NEXT_PUBLIC_FACEBOOK_PIXEL_ID`

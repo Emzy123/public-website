@@ -2,8 +2,22 @@ import { NextResponse } from 'next/server';
 import { AcademyInterestSchema } from '@/lib/schemas/academy.schema';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { checkRateLimit, getClientKey, getRateLimitHeaders } from '@/lib/rate-limit';
+import { isDevelopmentMode } from '@/lib/runtime/envMode';
+import { validateRouteSecurityConfig } from '@/lib/runtime/securityConfig';
+
+function errorPayload(message: string, details?: string) {
+  if (isDevelopmentMode()) {
+    return { success: false, message, ...(details ? { details } : {}) };
+  }
+  return { success: false, message };
+}
 
 export async function POST(req: Request) {
+  const configCheck = validateRouteSecurityConfig('academy');
+  if (!configCheck.ok) {
+    return NextResponse.json(errorPayload(configCheck.message, configCheck.details), { status: configCheck.status });
+  }
+
   const key = `academy:${getClientKey(req)}`;
   const limited = checkRateLimit(key, 10, 15 * 60 * 1000);
   if (!limited.ok) {
@@ -31,7 +45,10 @@ export async function POST(req: Request) {
     if (error?.name === 'ZodError') {
       return NextResponse.json({ success: false, errors: error.issues }, { status: 400 });
     }
-    return NextResponse.json({ success: false, message: 'Upstream error' }, { status: 502 });
+    return NextResponse.json(
+      errorPayload('Upstream error', error instanceof Error ? error.message : 'Unknown server error'),
+      { status: 502 }
+    );
   }
 }
 

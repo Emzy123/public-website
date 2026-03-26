@@ -30,13 +30,20 @@ export function WaitlistForm() {
   React.useEffect(() => {
     const loadToken = async () => {
       const response = await fetch('/api/waitlist', { method: 'GET' });
-      const data = await response.json();
-      setCsrfToken(data.csrfToken ?? '');
+      const csrfHeader = response.headers.get('x-csrf-token') ?? '';
+      const data = await response.json().catch(() => ({}));
+      setCsrfToken(csrfHeader || (data as any)?.csrfToken || '');
     };
     loadToken().catch(() => setErrorMessage('Unable to initialize secure form.'));
   }, []);
 
   const onSubmit = async (data: WaitlistFormData) => {
+    if (!csrfToken || !recaptchaToken) {
+      setStatus('error');
+      setErrorMessage('Security check is still initializing. Please wait a moment and try again.');
+      return;
+    }
+
     setStatus('loading');
     try {
       const res = await fetch('/api/waitlist', {
@@ -223,11 +230,16 @@ export function WaitlistForm() {
 
         <Button 
           type="submit" 
-          disabled={status === 'loading' || !csrfToken || !recaptchaToken}
+          disabled={status === 'loading'}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-4 border-0"
         >
           {status === 'loading' ? 'Submitting...' : 'Join the Global Waitlist'}
         </Button>
+        {(!csrfToken || !recaptchaToken) && (
+          <p className="mt-3 text-sm text-slate-500">
+            Initializing security check...
+          </p>
+        )}
       </form>
 
       {status === 'error' && (

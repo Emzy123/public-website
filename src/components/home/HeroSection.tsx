@@ -10,10 +10,20 @@ export function HeroSection() {
   return (
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden bg-[#0A1A2F]">
       <div className="absolute inset-0 z-0">
+        <div
+          className="absolute inset-0 opacity-35"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2400&q=80')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/40 to-[#0A1A2F] z-10"></div>
         <div className="absolute inset-0 bg-blue-950 opacity-50 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-800 to-transparent"></div>
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-25"
           style={{
             backgroundImage: "url('/images/bg-hero.svg')",
             backgroundSize: 'cover',
