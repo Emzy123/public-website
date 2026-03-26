@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { FieldErrors, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { waitlistSchema, WaitlistFormData } from '@/lib/validation';
@@ -39,9 +39,15 @@ export function WaitlistForm() {
 
   const onSubmit = async (data: WaitlistFormData) => {
     setErrorMessage('');
-    if (!csrfToken || !recaptchaToken) {
+    if (!csrfToken) {
       setStatus('error');
       setErrorMessage('Security check is still initializing. Please wait a moment and try again.');
+      return;
+    }
+
+    if (!recaptchaToken) {
+      setStatus('error');
+      setErrorMessage('reCAPTCHA was not initialized. Disable blockers/privacy extensions or refresh the page.');
       return;
     }
 
@@ -72,10 +78,31 @@ export function WaitlistForm() {
     }
   };
 
+  const onInvalid = (formErrors: FieldErrors<WaitlistFormData>) => {
+    setStatus('error');
+    setErrorMessage('Please complete all required fields before submitting.');
+
+    // Bring the first invalid field into view so submit never feels unresponsive.
+    const firstErrorField = Object.keys(formErrors)[0];
+    if (!firstErrorField) return;
+    const el = document.getElementById(firstErrorField);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if ('focus' in el && typeof (el as HTMLElement).focus === 'function') {
+      (el as HTMLElement).focus();
+    }
+  };
+
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="w-full bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-slate-100">
-        <ReCAPTCHA onToken={setRecaptchaToken} />
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="w-full bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-slate-100">
+        <ReCAPTCHA
+          onToken={setRecaptchaToken}
+          onError={(message) => {
+            setStatus('error');
+            setErrorMessage(message);
+          }}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <input
             type="text"
@@ -231,14 +258,14 @@ export function WaitlistForm() {
 
         <Button 
           type="submit" 
-          disabled={status === 'loading' || !csrfToken || !recaptchaToken}
+          disabled={status === 'loading' || !csrfToken}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-4 border-0"
         >
           {status === 'loading' ? 'Submitting...' : 'Join the Global Waitlist'}
         </Button>
-        {(!csrfToken || !recaptchaToken) && (
+        {(!csrfToken || !recaptchaToken) && status !== 'error' && (
           <p className="mt-3 text-sm text-slate-500">
-            Initializing security check...
+            Initializing security check{!recaptchaToken ? ' (reCAPTCHA)...' : '...'}
           </p>
         )}
         {status === 'error' && errorMessage && (
