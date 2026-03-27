@@ -10,6 +10,13 @@ import { trackEvent } from '@/lib/analytics';
 import { ReCAPTCHA } from '@/components/common/ReCAPTCHA';
 import { sectors, userTypes, investmentInterests } from '@/lib/constants';
 
+const waitlistClientSchema = waitlistSchema.omit({
+  csrfToken: true,
+  recaptchaToken: true,
+});
+
+type WaitlistClientFormData = Omit<WaitlistFormData, 'csrfToken' | 'recaptchaToken'>;
+
 export function WaitlistForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -17,12 +24,10 @@ export function WaitlistForm() {
   const [recaptchaToken, setRecaptchaToken] = useState('');
   const router = useRouter();
 
-  const { register, handleSubmit, formState: { errors } } = useForm<WaitlistFormData>({
-    resolver: zodResolver(waitlistSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<WaitlistClientFormData>({
+    resolver: zodResolver(waitlistClientSchema),
     defaultValues: {
       consent: false,
-      csrfToken: '',
-      recaptchaToken: '',
       website: '',
     },
   });
@@ -37,7 +42,7 @@ export function WaitlistForm() {
     loadToken().catch(() => setErrorMessage('Unable to initialize secure form.'));
   }, []);
 
-  const onSubmit = async (data: WaitlistFormData) => {
+  const onSubmit = async (data: WaitlistClientFormData) => {
     setErrorMessage('');
     if (!csrfToken) {
       setStatus('error');
@@ -78,7 +83,7 @@ export function WaitlistForm() {
     }
   };
 
-  const onInvalid = (formErrors: FieldErrors<WaitlistFormData>) => {
+  const onInvalid = (formErrors: FieldErrors<WaitlistClientFormData>) => {
     setStatus('error');
     setErrorMessage('Please complete all required fields before submitting.');
 
