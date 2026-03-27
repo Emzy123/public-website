@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    if (body?.website) {
+    const bodyObj = (typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : null);
+    if (bodyObj?.website) {
       return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
     }
 
