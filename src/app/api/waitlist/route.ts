@@ -101,8 +101,18 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Waitlist submission error:', error);
+    const errMessage = error instanceof Error ? error.message : 'Unknown server error';
+
+    // In production we intentionally hide internal details, but for common
+    // misconfiguration errors we can return a safe, actionable message.
+    const resendMisconfigured =
+      errMessage.includes('RESEND_API_KEY') || errMessage.includes('RESEND_AUDIENCE_ID');
+    const safeMessage = resendMisconfigured
+      ? 'Email service is not configured. Please set RESEND_API_KEY and RESEND_AUDIENCE_ID.'
+      : errMessage;
+
     return NextResponse.json(
-      errorPayload('Unable to submit waitlist request.', error instanceof Error ? error.message : 'Unknown server error'),
+      errorPayload(safeMessage, resendMisconfigured ? undefined : errMessage),
       { status: 500 }
     );
   }
