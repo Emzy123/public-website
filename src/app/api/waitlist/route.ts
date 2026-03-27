@@ -53,28 +53,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(errorPayload(configCheck.message, configCheck.details), { status: configCheck.status });
   }
 
-  // Always validate request body shape early so invalid payloads return 400
-  // rather than falling through to generic 500 handling.
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
-  }
-
-  if ((body as any)?.website) {
-    return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
-  }
-
-  try {
-    waitlistSchema.parse(body);
-  } catch (error) {
-    if (error instanceof ZodError || (error as any)?.name === 'ZodError') {
-      return NextResponse.json({ errors: mapZodErrors(error as ZodError) }, { status: 400 });
-    }
-    return NextResponse.json(errorPayload('Invalid request body.'), { status: 400 });
-  }
-
   if (!validateOrigin(request)) {
     return NextResponse.json(
       errorPayload('Forbidden origin.', 'Request origin or referer is not in the allowed origins list.'),
@@ -101,7 +79,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const parsed = body as any;
+    const body = await request.json();
+    if (body?.website) {
+      return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
+    }
+
+    const parsed = waitlistSchema.parse(body);
     const captchaOk = await verifyRecaptchaToken(parsed.recaptchaToken);
     if (!captchaOk) {
       return NextResponse.json(
@@ -113,6 +96,10 @@ export async function POST(request: NextRequest) {
     await sendWaitlistContact(parsed);
     return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
   } catch (error) {
+    if (error instanceof ZodError || (error as any)?.name === 'ZodError') {
+      return NextResponse.json({ errors: mapZodErrors(error as ZodError) }, { status: 400 });
+    }
+
     console.error('Waitlist submission error:', error);
     return NextResponse.json(
       errorPayload('Unable to submit waitlist request.', error instanceof Error ? error.message : 'Unknown server error'),
