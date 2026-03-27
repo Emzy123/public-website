@@ -61,9 +61,9 @@ export async function getReps(): Promise<Rep[]> {
     const db = await getMongoDb();
     const docs = await db.collection('reps').find({}).toArray();
     const reps = docs.length ? (toPlain(docs) as unknown as Rep[]) : buildRepsFromPublicImages();
-    return attachRepPhotosFromPublic(reps);
+    return filterExcludedReps(attachRepPhotosFromPublic(reps));
   } catch {
-    return attachRepPhotosFromPublic(buildRepsFromPublicImages());
+    return filterExcludedReps(attachRepPhotosFromPublic(buildRepsFromPublicImages()));
   }
 }
 
@@ -104,6 +104,29 @@ function filterInactiveTeamRoles(team: TeamMember[]): TeamMember[] {
   });
 }
 
+function filterExcludedReps(reps: Rep[]): Rep[] {
+  const excludedNameTerms = [
+    'partnership officer',
+    'cgpo',
+    'chief research and strategy officer',
+    'chief research and strategy office',
+    'chief financial officer',
+    'cfo',
+    'crso',
+    'csro',
+  ];
+
+  return reps.filter((rep) => {
+    const name = normalizeForMatch(String(rep.name ?? ''));
+    const region = normalizeForMatch(String(rep.region ?? ''));
+
+    // Drop any rep created from an unparsed filename fallback.
+    if (region === 'region') return false;
+
+    return !excludedNameTerms.some((term) => name.includes(term));
+  });
+}
+
 function getTeamHierarchyRank(title: string): number {
   const role = normalizeRoleText(title);
 
@@ -135,7 +158,7 @@ function normalizeForMatch(value: string) {
 
 function getRepPhotoUrlByStem(): Map<string, string> {
   try {
-    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const repsImagesDir = join(process.cwd(), 'public/images/team');
     const files = readdirSync(repsImagesDir, { withFileTypes: true });
     const map = new Map<string, string>();
 
@@ -146,7 +169,7 @@ function getRepPhotoUrlByStem(): Map<string, string> {
 
       const stem = file.name.slice(0, -extension.length);
       const normalizedStem = normalizeForMatch(stem);
-      const urlPath = `/images/reps/${encodeURIComponent(file.name)}`;
+      const urlPath = `/images/team/${encodeURIComponent(file.name)}`;
       map.set(normalizedStem, urlPath);
     }
 
@@ -158,7 +181,7 @@ function getRepPhotoUrlByStem(): Map<string, string> {
 
 function getRepPhotoUrls(): string[] {
   try {
-    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const repsImagesDir = join(process.cwd(), 'public/images/team');
     const files = readdirSync(repsImagesDir, { withFileTypes: true });
 
     return files
@@ -169,7 +192,7 @@ function getRepPhotoUrls(): string[] {
         return ['.jpg', '.jpeg', '.png', '.webp'].includes(extension);
       })
       .sort((a, b) => a.localeCompare(b))
-      .map((name) => `/images/reps/${encodeURIComponent(name)}`);
+      .map((name) => `/images/team/${encodeURIComponent(name)}`);
   } catch {
     return [];
   }
@@ -196,7 +219,7 @@ function parseRepStem(stem: string): { name: string; region: string } {
 
 function buildRepsFromPublicImages(): Rep[] {
   try {
-    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const repsImagesDir = join(process.cwd(), 'public/images/team');
     const files = readdirSync(repsImagesDir, { withFileTypes: true });
 
     const reps: Rep[] = [];
@@ -209,7 +232,7 @@ function buildRepsFromPublicImages(): Rep[] {
       const stem = file.name.slice(0, -extension.length);
       const { name, region } = parseRepStem(stem);
       const id = slugify(`${name}-${region}`) || slugify(stem) || String(reps.length + 1);
-      const photoUrl = `/images/reps/${encodeURIComponent(file.name)}`;
+      const photoUrl = `/images/team/${encodeURIComponent(file.name)}`;
       const altText = `${name} representing ${region}`;
 
       reps.push({ id, name, region, photoUrl, altText });
@@ -222,8 +245,7 @@ function buildRepsFromPublicImages(): Rep[] {
 }
 
 function attachRepPhotosFromPublic(reps: Rep[]): Rep[] {
-  // Same idea as team photos: allow DB data to omit photoUrl, and auto-attach
-  // from local `public/images/reps` by filename stem.
+  // Force rep photos to come from local `public/images/team`, derived by stem matching.
   try {
     const repPhotoUrlByStem = getRepPhotoUrlByStem();
     const repPhotoUrls = getRepPhotoUrls();
@@ -231,7 +253,7 @@ function attachRepPhotosFromPublic(reps: Rep[]): Rep[] {
 
     return reps.map((rep) => {
       const current = String(rep.photoUrl ?? '').trim();
-      const shouldReplace = !current || current === '/images/rep-avatar.svg';
+      const shouldReplace = !current || !current.startsWith('/images/team/');
 
       const keyCandidates = [
         normalizeForMatch(`${rep.name} - ${rep.region}`),
@@ -253,7 +275,7 @@ function attachRepPhotosFromPublic(reps: Rep[]): Rep[] {
 
       if (fallback) used.add(fallback);
 
-      const photoUrl = shouldReplace ? (matched ?? fallback ?? current) : current;
+      const photoUrl = shouldReplace ? (matched ?? fallback ?? '') : current;
       const altText = rep.altText?.trim() ? rep.altText : `${rep.name} representing ${rep.region}`;
 
       return { ...rep, photoUrl, altText };

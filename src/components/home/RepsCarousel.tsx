@@ -64,14 +64,16 @@ export function RepsCarousel({ reps }: { reps: Rep[] }) {
               >
                 <Card className="p-6 text-center h-full">
                   <div className="w-24 h-24 mx-auto rounded-full bg-slate-200 mb-4 overflow-hidden border border-slate-300 flex items-center justify-center text-slate-500 text-2xl font-bold relative">
-                    <Image
-                      src={rep.photoUrl}
-                      alt={rep.altText}
-                      fill
-                      sizes="96px"
-                      className="object-cover opacity-95"
-                    />
-                    <span className="relative z-10">{rep.name.charAt(0)}</span>
+                    {rep.photoUrl ? (
+                      <Image
+                        src={rep.photoUrl}
+                        alt={rep.altText}
+                        fill
+                        sizes="96px"
+                        className="object-cover opacity-95"
+                      />
+                    ) : null}
+                    {!rep.photoUrl ? <span className="relative z-10">{rep.name.charAt(0)}</span> : null}
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">{rep.name}</h3>
                   <p className="text-sm font-medium text-blue-600 mt-1">{rep.region}</p>

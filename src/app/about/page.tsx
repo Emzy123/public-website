@@ -149,7 +149,11 @@ export default async function AboutPage() {
                       </div>
                     </>
                   ) : (
-                    <Image src="/images/team-placeholder.svg" alt="Team placeholder" fill className="object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-slate-300 flex items-center justify-center">
+                      <div className="w-20 h-20 rounded-full bg-white/70 border border-white flex items-center justify-center text-slate-700 text-3xl font-bold">
+                        {member.name?.trim()?.charAt(0) || '?'}
+                      </div>
+                    </div>
                   )}
                 </div>
                 <div className="p-6">
