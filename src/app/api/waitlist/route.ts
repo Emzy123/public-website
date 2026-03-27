@@ -53,6 +53,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(errorPayload(configCheck.message, configCheck.details), { status: configCheck.status });
   }
 
+  // Parse JSON from a cloned request so the original request body remains
+  // available for csrfProtect, which also needs to inspect the incoming body.
+  let body: unknown;
+  try {
+    body = await request.clone().json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
+  }
+
   if (!validateOrigin(request)) {
     return NextResponse.json(
       errorPayload('Forbidden origin.', 'Request origin or referer is not in the allowed origins list.'),
@@ -79,7 +88,6 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
     if (body?.website) {
       return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
     }
