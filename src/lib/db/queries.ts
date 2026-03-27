@@ -1,7 +1,6 @@
 import { unstable_noStore as noStore } from 'next/cache';
 import type { Empire, Rep, TeamMember } from '@/types';
 import { empires as defaultEmpires } from '@/lib/data/empires';
-import { reps as defaultReps } from '@/lib/data/reps';
 import { teamMembers as defaultTeamMembers } from '@/lib/data/team';
 import { HowItWorksStep } from './types';
 import { getMongoDb } from './mongodb';
@@ -61,10 +60,10 @@ export async function getReps(): Promise<Rep[]> {
   try {
     const db = await getMongoDb();
     const docs = await db.collection('reps').find({}).toArray();
-    if (!docs.length) return defaultReps;
-    return toPlain(docs) as unknown as Rep[];
+    const reps = docs.length ? (toPlain(docs) as unknown as Rep[]) : buildRepsFromPublicImages();
+    return attachRepPhotosFromPublic(reps);
   } catch {
-    return defaultReps;
+    return attachRepPhotosFromPublic(buildRepsFromPublicImages());
   }
 }
 
@@ -132,6 +131,136 @@ function normalizeForMatch(value: string) {
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
+}
+
+function getRepPhotoUrlByStem(): Map<string, string> {
+  try {
+    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const files = readdirSync(repsImagesDir, { withFileTypes: true });
+    const map = new Map<string, string>();
+
+    for (const file of files) {
+      if (!file.isFile()) continue;
+      const extension = extname(file.name).toLowerCase();
+      if (!['.jpg', '.jpeg', '.png', '.webp'].includes(extension)) continue;
+
+      const stem = file.name.slice(0, -extension.length);
+      const normalizedStem = normalizeForMatch(stem);
+      const urlPath = `/images/reps/${encodeURIComponent(file.name)}`;
+      map.set(normalizedStem, urlPath);
+    }
+
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+function getRepPhotoUrls(): string[] {
+  try {
+    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const files = readdirSync(repsImagesDir, { withFileTypes: true });
+
+    return files
+      .filter((file) => file.isFile())
+      .map((file) => file.name)
+      .filter((name) => {
+        const extension = extname(name).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.webp'].includes(extension);
+      })
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => `/images/reps/${encodeURIComponent(name)}`);
+  } catch {
+    return [];
+  }
+}
+
+function parseRepStem(stem: string): { name: string; region: string } {
+  const s = stem.trim().replace(/\s+/g, ' ');
+
+  // Supported filename formats:
+  // - "Name - Region"
+  // - "Name (Region)"
+  const dashParts = s.split(' - ').map((p) => p.trim()).filter(Boolean);
+  if (dashParts.length >= 2) {
+    return { name: dashParts[0], region: dashParts.slice(1).join(' - ') };
+  }
+
+  const match = s.match(/\(([^)]+)\)\s*$/);
+  if (match?.[1]?.trim()) {
+    return { name: s.replace(/\(([^)]+)\)\s*$/, '').trim() || match[1].trim(), region: match[1].trim() };
+  }
+
+  return { name: s || 'Rep', region: 'Region' };
+}
+
+function buildRepsFromPublicImages(): Rep[] {
+  try {
+    const repsImagesDir = join(process.cwd(), 'public/images/reps');
+    const files = readdirSync(repsImagesDir, { withFileTypes: true });
+
+    const reps: Rep[] = [];
+
+    for (const file of files) {
+      if (!file.isFile()) continue;
+      const extension = extname(file.name).toLowerCase();
+      if (!['.jpg', '.jpeg', '.png', '.webp'].includes(extension)) continue;
+
+      const stem = file.name.slice(0, -extension.length);
+      const { name, region } = parseRepStem(stem);
+      const id = slugify(`${name}-${region}`) || slugify(stem) || String(reps.length + 1);
+      const photoUrl = `/images/reps/${encodeURIComponent(file.name)}`;
+      const altText = `${name} representing ${region}`;
+
+      reps.push({ id, name, region, photoUrl, altText });
+    }
+
+    return reps.sort((a, b) => a.region.localeCompare(b.region));
+  } catch {
+    return [];
+  }
+}
+
+function attachRepPhotosFromPublic(reps: Rep[]): Rep[] {
+  // Same idea as team photos: allow DB data to omit photoUrl, and auto-attach
+  // from local `public/images/reps` by filename stem.
+  try {
+    const repPhotoUrlByStem = getRepPhotoUrlByStem();
+    const repPhotoUrls = getRepPhotoUrls();
+    const used = new Set<string>();
+
+    return reps.map((rep) => {
+      const current = String(rep.photoUrl ?? '').trim();
+      const shouldReplace = !current || current === '/images/rep-avatar.svg';
+
+      const keyCandidates = [
+        normalizeForMatch(`${rep.name} - ${rep.region}`),
+        normalizeForMatch(`${rep.name} (${rep.region})`),
+        normalizeForMatch(rep.name),
+        normalizeForMatch(rep.region),
+      ];
+
+      const matched = shouldReplace
+        ? keyCandidates.map((k) => repPhotoUrlByStem.get(k)).find(Boolean) ?? null
+        : null;
+
+      if (matched) used.add(matched);
+
+      const fallback =
+        shouldReplace && !matched
+          ? repPhotoUrls.find((url) => !used.has(url)) ?? null
+          : null;
+
+      if (fallback) used.add(fallback);
+
+      const photoUrl = shouldReplace ? (matched ?? fallback ?? current) : current;
+      const altText = rep.altText?.trim() ? rep.altText : `${rep.name} representing ${rep.region}`;
+
+      return { ...rep, photoUrl, altText };
+    });
+  } catch {
+    return reps;
+  }
 }
 
 function getTeamPhotoUrlByTitle(): Map<string, string> {
