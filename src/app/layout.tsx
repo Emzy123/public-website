@@ -35,8 +35,8 @@ export const metadata: Metadata = {
     images: ['/images/og-image.jpg'],
   },
   icons: {
-    icon: '/images/logo-icon.svg',
-    apple: '/images/logo-icon.svg',
+    icon: '/images/logo.jpg',
+    apple: '/images/logo.jpg',
   },
 };
 

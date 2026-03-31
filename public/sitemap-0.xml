@@ -1,9 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
-<url><loc>https://sinet.africa/robots.txt</loc><lastmod>2026-03-27T01:53:28.007Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://sinet.africa/sitemap.xml</loc><lastmod>2026-03-27T01:53:28.008Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://sinet.africa/academy</loc><lastmod>2026-03-27T01:53:28.008Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://sinet.africa/contact</loc><lastmod>2026-03-27T01:53:28.008Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://sinet.africa/waitlist</loc><lastmod>2026-03-27T01:53:28.008Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
-<url><loc>https://sinet.africa/waitlist/success</loc><lastmod>2026-03-27T01:53:28.008Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/connect</loc><lastmod>2026-03-31T19:39:33.215Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/about</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/sitemap.xml</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/robots.txt</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/contact</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/empires</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/academy</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/blueprint</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/impact</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/privacy</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/investor-journey</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/returns</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/waitlist</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/terms</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/transparency</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://sinet.africa/waitlist/success</loc><lastmod>2026-03-31T19:39:33.216Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
 </urlset>

@@ -1,0 +1,180 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Read the terms and conditions governing your use of the SINet website and investment opportunities.',
+  openGraph: {
+    title: 'Terms of Service | SINet',
+    description: 'Terms and conditions governing use of the SINet website and investment opportunities.',
+  },
+};
+
+const EFFECTIVE_DATE = 'April 1, 2026';
+
+export default function TermsPage() {
+  return (
+    <div className="pt-20">
+      {/* Hero */}
+      <section className="bg-[#0A2342] pt-28 pb-16">
+        <div className="max-w-4xl mx-auto px-4 md:px-6">
+          <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">Legal</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-3">Terms of Service</h1>
+          <p className="text-slate-400 text-sm">Effective Date: {EFFECTIVE_DATE}</p>
+        </div>
+      </section>
+      <div className="h-1 bg-gradient-to-r from-[#D4AF37] via-[#F4D03F] to-[#D4AF37]" />
+
+      <section className="py-16 bg-white">
+        <div className="max-w-4xl mx-auto px-4 md:px-6">
+          {/* Lead */}
+          <p className="text-lg text-slate-700 leading-relaxed mb-8 pb-8 border-b border-slate-100">
+            By accessing or using the SINet website (www.sinet.africa), you agree to be bound by these Terms of Service. If you do not agree, please do not use our website.
+          </p>
+
+          {/* Important disclaimer banner */}
+          <div className="flex items-start gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-12">
+            <span className="text-2xl flex-shrink-0">⚠️</span>
+            <div>
+              <p className="font-bold text-amber-800 mb-1">Important Disclaimer</p>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                SINet is not a registered investment advisor. The information provided on this website is for educational and informational purposes only. Past returns do not guarantee future results. All investments involve risk — conduct your own research before investing.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-10">
+            {[
+              {
+                n: '1', title: 'About SINet',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">SINet (Student Investment Network) is a student-driven investment community that connects investors with opportunities across multiple sectors. Our website provides information about our investment model, returns, and how to participate.</p>
+                ),
+              },
+              {
+                n: '2', title: 'Not Financial Advice',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">Nothing on this website constitutes financial, investment, or legal advice. All information is provided &ldquo;as is&rdquo; without warranties of any kind. You are solely responsible for evaluating the merits and risks associated with any investment opportunity. We strongly recommend consulting with a qualified financial advisor before making any investment decision.</p>
+                ),
+              },
+              {
+                n: '3', title: 'Investment Participation',
+                body: (
+                  <>
+                    <p className="text-slate-600 leading-relaxed text-sm mb-3">Investing with SINet involves risk, including the potential loss of principal. By expressing interest in investing:</p>
+                    <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
+                      <li>You acknowledge that you have read and understood our investment model</li>
+                      <li>You accept that returns are not guaranteed</li>
+                      <li>You understand that past performance does not indicate future results</li>
+                      <li>You confirm that you are investing at your own risk</li>
+                    </ul>
+                  </>
+                ),
+              },
+              {
+                n: '4', title: 'Eligibility',
+                body: (
+                  <>
+                    <p className="text-slate-600 leading-relaxed text-sm mb-3">To participate in SINet investment opportunities, you must:</p>
+                    <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
+                      <li>Be at least 18 years of age</li>
+                      <li>Have the legal capacity to enter into binding agreements</li>
+                      <li>Provide accurate and complete information</li>
+                      <li>Not be located in a jurisdiction where such participation is prohibited</li>
+                    </ul>
+                  </>
+                ),
+              },
+              {
+                n: '5', title: 'Intellectual Property',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">All content on this website, including text, graphics, logos, images, and software, is the property of SINet or its content suppliers and is protected by copyright and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our prior written consent.</p>
+                ),
+              },
+              {
+                n: '6', title: 'Limitation of Liability',
+                body: (
+                  <>
+                    <p className="text-slate-600 leading-relaxed text-sm mb-3">To the maximum extent permitted by law, SINet and its founders, officers, employees, and affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:</p>
+                    <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
+                      <li>Your use of or inability to use the website</li>
+                      <li>Any investment decision made based on information from this website</li>
+                      <li>Any loss of capital or investment returns</li>
+                      <li>Any errors or omissions in website content</li>
+                    </ul>
+                  </>
+                ),
+              },
+              {
+                n: '7', title: 'Third-Party Links',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">Our website may contain links to third-party websites. We do not endorse or assume responsibility for the content or practices of these sites. You access them at your own risk.</p>
+                ),
+              },
+              {
+                n: '8', title: 'Termination',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">We reserve the right to terminate or suspend access to our website at any time, without notice, for conduct that violates these Terms or is harmful to other users.</p>
+                ),
+              },
+              {
+                n: '9', title: 'Governing Law',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">These Terms shall be governed by and construed in accordance with the laws of the Federal Republic of Nigeria. Any disputes arising from these Terms shall be resolved in the courts of Kogi State, Nigeria.</p>
+                ),
+              },
+              {
+                n: '10', title: 'Changes to Terms',
+                body: (
+                  <p className="text-slate-600 leading-relaxed text-sm">We may modify these Terms at any time. Continued use of the website after changes constitutes acceptance of the modified Terms.</p>
+                ),
+              },
+            ].map((s) => (
+              <div key={s.n} id={`section-${s.n}`}>
+                <h2 className="text-xl font-extrabold text-[#0A2342] mb-4 flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">{s.n}</span>
+                  {s.title}
+                </h2>
+                <div className="pl-11">{s.body}</div>
+              </div>
+            ))}
+
+            {/* Contact */}
+            <div className="border-t border-slate-100 pt-10">
+              <h2 className="text-xl font-extrabold text-[#0A2342] mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">11</span>
+                Contact Information
+              </h2>
+              <div className="pl-11">
+                <p className="text-slate-600 text-sm mb-4">For questions about these Terms, please contact us:</p>
+                <div className="bg-[#F8F4E9] rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-[#D4AF37]">✉️</span>
+                    <a href="mailto:sinetworkinggobal@gmail.com" className="text-[#0A2342] font-medium hover:text-[#D4AF37] transition-colors">sinetworkinggobal@gmail.com</a>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-[#D4AF37]">💬</span>
+                    <a href="https://wa.me/2349028239706" target="_blank" rel="noopener noreferrer" className="text-[#0A2342] font-medium hover:text-[#D4AF37] transition-colors">WhatsApp: 0902 823 9706</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer nav */}
+          <div className="mt-12 pt-8 border-t border-slate-100 flex flex-wrap gap-4">
+            <Link href="/privacy" className="text-sm font-semibold text-[#D4AF37] hover:text-[#0A2342] transition-colors">
+              Privacy Policy →
+            </Link>
+            <Link href="/transparency" className="text-sm text-slate-500 hover:text-[#0A2342] transition-colors">
+              Transparency & FAQ
+            </Link>
+            <Link href="/connect" className="text-sm text-slate-500 hover:text-[#0A2342] transition-colors">
+              Contact Us
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
