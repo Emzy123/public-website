@@ -145,8 +145,8 @@ function buildAutoReplyHtml(name: string): string {
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#0A2342;border-radius:12px;margin-bottom:28px;">
                 <tr>
                   <td width="33%" style="padding:20px;text-align:center;border-right:1px solid #1E3A5F;">
-                    <div style="font-size:22px;font-weight:800;color:#D4AF37;">15%</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">ROI Per Cycle</div>
+                    <div style="font-size:16px;font-weight:800;color:#D4AF37;">Real Sector</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-top:4px;text-transform:uppercase;letter-spacing:0.08em;">Operations</div>
                   </td>
                   <td width="33%" style="padding:20px;text-align:center;border-right:1px solid #1E3A5F;">
                     <div style="font-size:22px;font-weight:800;color:#D4AF37;">6 Wks</div>

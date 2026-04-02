@@ -5,7 +5,7 @@ import { PageHero, SectionHeader } from '@/components/ui/PageHero';
 
 export const metadata: Metadata = {
   title: 'The SINet Blueprint',
-  description: 'How the SINet Trade-to-Asset model works. Active goods trade generates 15% ROI every 6 weeks, funding the 5 Mega Empires.',
+  description: 'How the SINet Trade-to-Asset model works. Structured 6-week investment cycle, funding the 5 Mega Empires.',
   openGraph: {
     title: 'The SINet Blueprint | How It Works',
     description: 'Trade → Profits → Manufacturing → Real Estate → Empires. The complete model explained.',
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const cycleSteps = [
   { icon: '📦', number: '01', title: 'Capital Deployed', desc: 'Your capital is used to purchase high-demand consumer goods — essential commodities with guaranteed market demand.' },
   { icon: '🤝', number: '02', title: 'Goods Sold', desc: 'Goods are sold through established trade routes within 6 weeks. SINet cuts out middlemen for maximum margin.' },
-  { icon: '📈', number: '03', title: 'ROI Credited', desc: 'You receive 15% ROI on your capital. Your capital also appreciates by 5%, compounding your wealth each cycle.' },
+  { icon: '📈', number: '03', title: 'Profits Distributed', desc: 'Profits are distributed at the end of each cycle, generated from active goods trade and agricultural operations.' },
   { icon: '🏭', number: '04', title: 'SINet Reinvests', desc: 'A portion of trade profits is reinvested into long-term infrastructure — manufacturing plants, hostel estates, tech.' },
   { icon: '🌍', number: '05', title: 'Empires Grow', desc: 'As SINet scales from trade to manufacturing to real estate, return potential and asset value increase for all investors.' },
 ];
@@ -45,7 +45,7 @@ export default function BlueprintPage() {
         badge="The Model"
         title="The SINet"
         titleAccent="Blueprint"
-        subtitle="How active goods trade powers 15% ROI every 6 weeks — and funds the 5 Mega Empires being built across Africa."
+        subtitle="How active goods trade powers a structured 6-week investment cycle — and funds the 5 Mega Empires being built across Africa."
       />
 
       {/* Engine & Destination */}
@@ -72,8 +72,8 @@ export default function BlueprintPage() {
                 {[
                   'We buy high-demand consumer goods at wholesale',
                   'We sell within 6 weeks through established trade routes',
-                  'This generates your 15% ROI per cycle',
-                  'Your capital appreciates +5% every cycle',
+                  'Profits distributed at end of each cycle',
+                  'Returns generated through active goods trade and agricultural operations',
                   'No speculation. No idle funds. Real transactions.',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-slate-200 text-sm">

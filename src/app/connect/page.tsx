@@ -13,9 +13,10 @@ const EMAIL = 'sinetworkinggobal@gmail.com';
 const ADDRESS = 'Kogi State, Nigeria';
 
 const investmentOptions = [
-  { value: '50000',   label: '₦50,000 – Seed (Just starting)' },
-  { value: '250000',  label: '₦250,000 – Growth (Ready to accelerate)' },
-  { value: '1000000', label: '₦1M+ – Legacy (Institutional participation)' },
+  { value: 'student',   label: 'Student Tier (₦50,000 – ₦100,000)' },
+  { value: 'investor',  label: 'Investor Tier (₦150,000 – ₦500,000)' },
+  { value: 'advanced', label: 'Advanced Investor Tier (₦500,000 – ₦1,000,000)' },
+  { value: 'strategic', label: 'Strategic Investor Tier (₦1,000,000 – ₦10,000,000+)' },
   { value: 'learning',label: 'Just learning for now (Academy interest)' },
 ];
 

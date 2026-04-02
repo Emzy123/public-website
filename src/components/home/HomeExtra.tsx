@@ -6,7 +6,7 @@ const steps = [
     number: '01',
     icon: '💰',
     title: 'Choose Your Entry',
-    tiers: ['₦50,000 – Seed', '₦250,000 – Growth', '₦1M+ – Legacy'],
+    tiers: ['Student Tier (₦50k - ₦100k)', 'Investor Tiers (₦150k - ₦1M)', 'Strategic Tier (₦1M+)'],
     color: 'border-[#D4AF37]',
   },
   {
@@ -20,7 +20,7 @@ const steps = [
     number: '03',
     icon: '📈',
     title: 'Reinvest or Withdraw',
-    tiers: ['15% ROI credited', '+5% Capital appreciation', 'Full flexibility at cycle end'],
+    tiers: ['Structured 6-week investment cycle', 'Returns generated through active goods trade', 'Profits distributed at end of each cycle'],
     color: 'border-[#D4AF37]',
   },
 ];
@@ -151,7 +151,7 @@ export function HomeCTA() {
           Ready to Build <span className="text-gold-shimmer">Africa's Future?</span>
         </h2>
         <p className="text-slate-300 text-lg mb-10 leading-relaxed">
-          Talk to our team. No pressure. Just clarity. Start with ₦50,000 and earn 15% every 6 weeks.
+          Talk to our team. No pressure. Just clarity. Join a structured 6-week investment cycle.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">

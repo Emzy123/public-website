@@ -50,9 +50,9 @@ export function MobileDrawer({ isOpen, onClose, links, currentPath }: MobileDraw
               {link.label}
             </Link>
           ))}
-          <Link href="/waitlist" onClick={onClose} className="mt-4">
-            <button className="w-full bg-blue-600 text-white rounded-md px-6 py-3 font-medium">
-              Join Waitlist
+          <Link href="/connect" onClick={onClose} className="mt-4">
+            <button className="w-full bg-[#D4AF37] text-[#0A2342] rounded-md px-6 py-3 font-bold shadow-md">
+              Connect With Us
             </button>
           </Link>
         </nav>

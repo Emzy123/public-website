@@ -5,42 +5,12 @@ import { PageHero, SectionHeader } from '@/components/ui/PageHero';
 
 export const metadata: Metadata = {
   title: 'Investor Journey',
-  description: 'Start with ₦50,000. Earn 15% ROI every 6 weeks. Step-by-step guide to investing with SINet.',
+  description: 'Structured 6-week investment cycle. Step-by-step guide to investing with SINet.',
   openGraph: {
     title: 'Investor Journey | SINet',
-    description: 'Choose your tier. Start a 6-week cycle. Earn 15% ROI + 5% appreciation.',
+    description: 'Choose your tier. Start a 6-week cycle. Profits distributed at end of each cycle.',
   },
 };
-
-const tiers = [
-  {
-    name: 'Seed',
-    amount: '₦50,000',
-    icon: '🌱',
-    forWho: 'Students & first-time investors',
-    perks: ['15% ROI per cycle', '+5% capital appreciation', 'Full flexibility to exit at cycle end', 'Access to SINet community'],
-    cta: 'Start Here',
-    highlight: false,
-  },
-  {
-    name: 'Growth',
-    amount: '₦250,000',
-    icon: '🚀',
-    forWho: 'Young professionals ready to accelerate',
-    perks: ['15% ROI per cycle', '+5% capital appreciation', 'Priority cycle access', 'Quarterly portfolio review'],
-    cta: 'Accelerate',
-    highlight: true,
-  },
-  {
-    name: 'Legacy',
-    amount: '₦1M+',
-    icon: '🏛️',
-    forWho: 'Institutions & high-net-worth individuals',
-    perks: ['15% ROI per cycle', '+5% capital appreciation', 'Dedicated relationship manager', 'Co-ownership consideration on empire assets'],
-    cta: 'Partner With Us',
-    highlight: false,
-  },
-];
 
 const compoundingData = [
   { cycle: 1, start: '₦50,000', roi: '₦7,500', appreciation: '₦2,500', total: '₦60,000' },
@@ -53,7 +23,7 @@ const withdrawalOptions = [
   {
     icon: '💸',
     title: 'Withdraw ROI',
-    desc: 'Take your 15% profit every cycle. Your capital stays invested for the next cycle.',
+    desc: 'Take your profits every cycle. Your capital stays invested for the next cycle.',
     bestFor: 'Regular income',
   },
   {
@@ -65,7 +35,7 @@ const withdrawalOptions = [
   {
     icon: '📈',
     title: 'Compound & Reinvest',
-    desc: 'Reinvest ROI + appreciation. Next cycle grows on a larger base. Maximum wealth building.',
+    desc: 'Reinvest returns. Next cycle grows on a larger base. Maximum wealth building.',
     bestFor: 'Long-term wealth',
   },
 ];
@@ -77,72 +47,105 @@ export default function InvestorJourneyPage() {
         badge="Your Roadmap"
         title="The Investor"
         titleAccent="Journey"
-        subtitle="Start with ₦50,000. Earn 15% every 6 weeks. Build ownership in Africa's fastest-growing investment ecosystem."
+        subtitle="Start a structured 6-week investment cycle. Build ownership in Africa's fastest-growing investment ecosystem."
       />
 
-      {/* Tier Cards */}
-      <section className="py-20 bg-[#F8F4E9]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+      {/* Investment Tiers Section */}
+      <section className="py-12 bg-white">
+        <div className="container mx-auto px-4 md:px-6 max-w-7xl">
           <SectionHeader
             badge="Choose Your Entry"
-            title="Select Your"
-            titleAccent="Investment Tier"
-            subtitle="All tiers earn the same 15% ROI. Choose based on your starting capital."
+            title="Investment"
+            titleAccent="Tiers"
+            subtitle="Choose your entry point. All tiers participate in the same 6-week structured investment cycles."
           />
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {tiers.map((tier) => (
-              <div
-                key={tier.name}
-                className={`relative rounded-2xl p-8 transition-all duration-300 ${
-                  tier.highlight
-                    ? 'bg-[#0A2342] text-white shadow-2xl shadow-[#0A2342]/30 scale-105'
-                    : 'bg-white border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-xl hover:shadow-[#D4AF37]/10'
-                }`}
-              >
-                {tier.highlight && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-[#0A2342] text-xs font-bold px-4 py-1.5 rounded-full shadow-md">
-                    Most Popular
-                  </div>
-                )}
-
-                <div className="text-4xl mb-4">{tier.icon}</div>
-                <div className="mb-6">
-                  <div className={`text-xs uppercase tracking-widest font-semibold mb-1 ${tier.highlight ? 'text-[#D4AF37]' : 'text-[#0A2342]/60'}`}>
-                    {tier.name}
-                  </div>
-                  <div className={`text-4xl font-extrabold mb-1 ${tier.highlight ? 'text-[#D4AF37]' : 'text-[#0A2342]'}`}>
-                    {tier.amount}
-                  </div>
-                  <div className={`text-sm ${tier.highlight ? 'text-slate-300' : 'text-slate-500'}`}>{tier.forWho}</div>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {tier.perks.map((perk) => (
-                    <li key={perk} className="flex items-start gap-2.5 text-sm">
-                      <svg className={`w-4 h-4 flex-shrink-0 mt-0.5 ${tier.highlight ? 'text-[#D4AF37]' : 'text-green-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className={tier.highlight ? 'text-slate-200' : 'text-slate-600'}>{perk}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href="/connect"
-                  className={`w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${
-                    tier.highlight
-                      ? 'bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] shadow-lg'
-                      : 'bg-[#0A2342] hover:bg-[#1E3A5F] text-white'
-                  }`}
-                >
-                  {tier.cta}
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </Link>
+          
+          <div className="grid md:grid-cols-4 gap-6">
+            
+            {/* Student Tier */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden hover:shadow-xl hover:border-[#D4AF37]/50 transition duration-300">
+              <div className="bg-[#0A2342] text-white py-4 px-6">
+                <h3 className="text-xl font-bold">Student Tier</h3>
               </div>
-            ))}
+              <div className="p-6">
+                <p className="text-2xl font-bold text-[#0A2342] mb-2">₦50,000 – ₦100,000</p>
+                <p className="text-slate-600 text-sm mb-4">Flexible entry within this range to accommodate different levels of participation.</p>
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <p className="text-sm text-slate-500 mb-2">✓ 6-week investment cycles</p>
+                  <p className="text-sm text-slate-500 mb-2">✓ Real sector operations (goods trade, agriculture)</p>
+                  <p className="text-sm text-slate-500">✓ Profits distributed at cycle end</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Investor Tier */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden hover:shadow-xl hover:border-[#D4AF37]/50 transition duration-300">
+              <div className="bg-[#0A2342] text-white py-4 px-6">
+                <h3 className="text-xl font-bold">Investor Tier</h3>
+              </div>
+              <div className="p-6">
+                <p className="text-2xl font-bold text-[#0A2342] mb-2">₦150,000 – ₦500,000</p>
+                <p className="text-slate-600 text-sm mb-4">For those ready to scale their participation.</p>
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <p className="text-sm text-slate-500 mb-2">✓ 6-week investment cycles</p>
+                  <p className="text-sm text-slate-500 mb-2">✓ Real sector operations (goods trade, agriculture)</p>
+                  <p className="text-sm text-slate-500">✓ Profits distributed at cycle end</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Advanced Investor Tier */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden hover:shadow-xl hover:border-[#D4AF37]/50 transition duration-300">
+              <div className="bg-[#0A2342] text-white py-4 px-6">
+                <h3 className="text-xl font-bold">Advanced Investor Tier</h3>
+              </div>
+              <div className="p-6">
+                <p className="text-2xl font-bold text-[#0A2342] mb-2">₦500,000 – ₦1,000,000</p>
+                <p className="text-slate-600 text-sm mb-4">Strategic participation with enhanced engagement.</p>
+                <div className="border-t border-slate-100 pt-4 mt-4">
+                  <p className="text-sm text-slate-500 mb-2">✓ 6-week investment cycles</p>
+                  <p className="text-sm text-slate-500 mb-2">✓ Real sector operations (goods trade, agriculture)</p>
+                  <p className="text-sm text-slate-500">✓ Profits distributed at cycle end</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Strategic Investor Tier */}
+            <div className="bg-[#D4AF37]/10 rounded-2xl shadow-md border border-[#D4AF37]/30 overflow-hidden hover:shadow-xl hover:border-[#D4AF37] transition duration-300 relative scale-[1.02]">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#0A2342] text-[#D4AF37] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider z-10 whitespace-nowrap">
+                Premium
+              </div>
+              <div className="bg-[#D4AF37] text-[#0A2342] py-4 px-6 relative">
+                <h3 className="text-xl font-bold">Strategic Investor Tier</h3>
+              </div>
+              <div className="p-6">
+                <p className="text-2xl font-bold text-[#0A2342] mb-2">₦1,000,000 – ₦10,000,000+</p>
+                <p className="text-slate-600 text-sm mb-4">For larger investments (₦10M+), kindly contact us directly.</p>
+                <div className="border-t border-[#D4AF37]/20 pt-4 mt-4">
+                  <p className="text-sm text-slate-600 mb-2">✓ 6-week investment cycles</p>
+                  <p className="text-sm text-slate-600 mb-2">✓ Real sector operations (goods trade, agriculture)</p>
+                  <p className="text-sm text-slate-600 mb-2">✓ Profits distributed at cycle end</p>
+                  <p className="text-sm text-[#0A2342] font-semibold mt-2">✓ Direct engagement with leadership</p>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+          
+          <div className="text-center mt-12 mb-4">
+            <p className="text-slate-500 text-sm tracking-wide">All tiers participate in the same structured cycles. Returns are generated through active goods trade and agricultural operations, with profits distributed at the end of each 6-week cycle.</p>
+          </div>
+          
+          <div className="text-center mt-8">
+            <Link
+              href="/connect"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-[#0A2342] hover:bg-[#1E3A5F] text-white font-bold rounded-xl transition-all duration-200 shadow-lg text-base"
+            >
+              Contact to Start
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
@@ -164,9 +167,9 @@ export default function InvestorJourneyPage() {
 
             <div className="grid grid-cols-3 gap-4 relative">
               {[
-                { week: 'Week 0', title: 'You Invest', desc: 'Capital deployed immediately into goods trade' },
-                { week: 'Weeks 1–5', title: 'Capital Works', desc: 'Goods purchased, trade routes activated, sales executed' },
-                { week: 'Week 6', title: '15% ROI + 5%', desc: 'ROI credited. Capital appreciated. Choose to reinvest or withdraw.' },
+                { week: 'Week 0', title: 'You Invest', desc: 'Capital deployed immediately into active operations' },
+                { week: 'Weeks 1–5', title: 'Capital Works', desc: 'Real sector operations: trade routes activated, agricultural processes' },
+                { week: 'Week 6', title: 'Profits Generated', desc: 'Profits credited. Choose to reinvest or withdraw.' },
               ].map((item, i) => (
                 <div key={item.week} className="text-center relative">
                   <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center font-extrabold text-sm shadow-lg border-2 ${
@@ -218,14 +221,14 @@ export default function InvestorJourneyPage() {
           />
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm border border-slate-200 rounded-xl">
               <thead>
                 <tr className="bg-[#0A2342] text-white">
-                  <th className="px-6 py-4 text-left font-semibold rounded-tl-xl">Cycle</th>
-                  <th className="px-6 py-4 text-left font-semibold">Starting Capital</th>
-                  <th className="px-6 py-4 text-left font-semibold">ROI (15%)</th>
-                  <th className="px-6 py-4 text-left font-semibold">Appreciation (5%)</th>
-                  <th className="px-6 py-4 text-left font-semibold rounded-tr-xl text-[#D4AF37]">New Total</th>
+                  <th className="px-6 py-4 text-left font-semibold rounded-tl-xl whitespace-nowrap">Cycle</th>
+                  <th className="px-6 py-4 text-left font-semibold whitespace-nowrap">Starting Capital</th>
+                  <th className="px-6 py-4 text-left font-semibold whitespace-nowrap">Estimated Returns</th>
+                  <th className="px-6 py-4 text-left font-semibold whitespace-nowrap">Asset Growth</th>
+                  <th className="px-6 py-4 text-left font-semibold rounded-tr-xl text-[#D4AF37] whitespace-nowrap">New Total</th>
                 </tr>
               </thead>
               <tbody>

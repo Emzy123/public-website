@@ -5,27 +5,26 @@ import { PageHero, SectionHeader } from '@/components/ui/PageHero';
 
 export const metadata: Metadata = {
   title: 'Returns & Track Record',
-  description: 'SINet delivers 15% ROI + 5% capital appreciation every 6 weeks through active goods trade. Full transparency on returns.',
+  description: 'SINet delivers returns through active goods trade and agricultural operations. Full transparency on returns.',
   openGraph: {
     title: 'Returns & Track Record | SINet',
-    description: '15% ROI every 6 weeks. 5% capital appreciation. Backed by real goods trade.',
+    description: 'Structured 6-week investment cycle. Backed by real goods trade.',
   },
 };
 
 const currentReturns = [
-  { metric: 'Minimum Investment', value: '₦50,000', highlight: false },
-  { metric: 'ROI Per Cycle', value: '15%', highlight: true },
-  { metric: 'Capital Appreciation', value: '+5% per cycle', highlight: true },
+  { metric: 'Minimum Entry', value: '₦50,000', highlight: false },
+  { metric: 'Investment Structure', value: 'Trade & Agribusiness', highlight: true },
   { metric: 'Cycle Duration', value: '6 Weeks', highlight: false },
   { metric: 'Payout Timing', value: 'End of each cycle', highlight: false },
   { metric: 'Current Status', value: '✅ Open – Capital deployed', highlight: false },
 ];
 
 const trackRecord = [
-  { cycle: 'Cycle 4', period: 'Date – Date', roi: '15%', appreciation: '5%', total: '20%', status: 'Paid' },
-  { cycle: 'Cycle 3', period: 'Date – Date', roi: '15%', appreciation: '5%', total: '20%', status: 'Paid' },
-  { cycle: 'Cycle 2', period: 'Date – Date', roi: '15%', appreciation: '5%', total: '20%', status: 'Paid' },
-  { cycle: 'Cycle 1', period: 'Date – Date', roi: '15%', appreciation: '5%', total: '20%', status: 'Paid' },
+  { cycle: 'Cycle 4', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
+  { cycle: 'Cycle 3', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
+  { cycle: 'Cycle 2', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
+  { cycle: 'Cycle 1', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
 ];
 
 export default function ReturnsPage() {
@@ -35,7 +34,7 @@ export default function ReturnsPage() {
         badge="Full Transparency"
         title="Returns &"
         titleAccent="Track Record"
-        subtitle="15% ROI + 5% capital appreciation every 6 weeks. Generated through active goods trade. No speculation."
+        subtitle="Structured 6-week investment cycle with returns generated through active goods trade and agricultural operations. No speculation."
       />
 
       {/* Schema markup for Investment type */}
@@ -48,8 +47,8 @@ export default function ReturnsPage() {
             mainEntity: [
               {
                 '@type': 'Question',
-                name: 'What ROI does SINet offer?',
-                acceptedAnswer: { '@type': 'Answer', text: '15% ROI per 6-week cycle plus 5% capital appreciation.' },
+                name: 'What returns does SINet offer?',
+                acceptedAnswer: { '@type': 'Answer', text: 'Profits are distributed at the end of every 6-week cycle, generated from real sector operations.' },
               },
             ],
           }),
@@ -57,24 +56,19 @@ export default function ReturnsPage() {
       />
 
       {/* ── Risk Disclaimer ── */}
-      <div className="bg-amber-50 border-b border-amber-200">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-            </svg>
-            <div>
-              <p className="font-bold text-amber-800 text-sm">Important Risk Disclaimer</p>
-              <p className="text-xs text-amber-700 leading-relaxed mt-0.5">
-                All investments carry risk. Past returns do not guarantee future results. The information on this page is for educational purposes only. Conduct your own research and consult a qualified financial advisor before investing. SINet is not a registered investment advisor.
-              </p>
-            </div>
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 text-center sm:text-left mx-auto max-w-5xl mt-6 lg:rounded-md">
+        <div className="flex items-start">
+          <svg className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <div>
+            <p className="text-sm text-yellow-800">All investments carry risk. Returns may vary based on market conditions and operational performance.</p>
           </div>
         </div>
       </div>
 
       {/* Current Returns Summary */}
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-12 bg-[#F8F4E9]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <SectionHeader
             badge="Current Offering"
@@ -84,10 +78,10 @@ export default function ReturnsPage() {
           />
 
           <div className="bg-[#0A2342] rounded-2xl overflow-hidden">
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#1E3A5F]">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-[#1E3A5F]">
               {currentReturns.map((item) => (
                 <div key={item.metric} className="p-8 text-center">
-                  <div className={`text-2xl md:text-3xl font-extrabold mb-2 ${item.highlight ? 'text-[#D4AF37]' : 'text-white'}`}>
+                  <div className={`text-xl md:text-2xl font-extrabold mb-2 ${item.highlight ? 'text-[#D4AF37]' : 'text-white'}`}>
                     {item.value}
                   </div>
                   <div className="text-slate-400 text-sm">{item.metric}</div>
@@ -119,17 +113,17 @@ export default function ReturnsPage() {
                 Your capital is deployed in active goods trade — purchasing high-demand consumer goods (food commodities, essential household items) and selling through established trade routes within 6 weeks.
               </p>
               <p className="text-slate-600 leading-relaxed mb-6">
-                SINet cuts out middlemen in the supply chain, trading directly in high-demand markets. This efficiency creates the margins that generate your 15% ROI.
+                SINet cuts out middlemen in the supply chain, trading directly in high-demand markets. This efficiency creates the margins that generate your returns.
               </p>
               <div className="bg-[#F8F4E9] rounded-2xl p-6 border border-slate-200">
                 <h3 className="font-bold text-[#0A2342] mb-4 text-sm uppercase tracking-widest">Example Cycle</h3>
                 <table className="w-full text-sm">
                   <tbody className="divide-y divide-slate-100">
                     {[
-                      { label: 'Investment', value: '₦50,000' },
-                      { label: '15% ROI (after 6 weeks)', value: '+₦7,500', color: 'text-green-600' },
-                      { label: '5% Capital Appreciation', value: '+₦2,500', color: 'text-blue-600' },
-                      { label: 'Total Value', value: '₦60,000', color: 'text-[#D4AF37] font-extrabold text-base' },
+                      { label: 'Investment', value: 'Initial Capital' },
+                      { label: 'Profits Generated', value: 'Variable Returns', color: 'text-green-600' },
+                      { label: 'Asset Growth', value: 'Long-Term Growth', color: 'text-blue-600' },
+                      { label: 'Total Value', value: 'Capital + Returns', color: 'text-[#D4AF37] font-extrabold text-base' },
                     ].map((row) => (
                       <tr key={row.label}>
                         <td className="py-3 text-slate-500">{row.label}</td>
@@ -146,7 +140,7 @@ export default function ReturnsPage() {
                 { icon: '🛒', title: 'Capital Deployed', desc: 'Funds purchase of high-demand consumer goods at wholesale.' },
                 { icon: '🚚', title: 'Trade Executed', desc: 'Goods moved through verified trade routes across Nigeria.' },
                 { icon: '💵', title: 'Sales Converted', desc: 'Revenue realized within the 6-week window.' },
-                { icon: '✅', title: 'ROI Distributed', desc: '15% + 5% credited to your account. Choose to reinvest or withdraw.' },
+                { icon: '✅', title: 'Profits Distributed', desc: 'Profits credited to your account. Choose to reinvest or withdraw.' },
               ].map((step, i) => (
                 <div key={step.title} className="flex items-start gap-4 p-5 bg-[#F8F4E9] rounded-xl border border-slate-200">
                   <span className="w-10 h-10 rounded-xl bg-[#0A2342] flex items-center justify-center text-2xl flex-shrink-0">{step.icon}</span>
@@ -177,9 +171,7 @@ export default function ReturnsPage() {
                 <tr className="bg-[#0A2342] text-white">
                   <th className="px-6 py-4 text-left font-semibold">Cycle</th>
                   <th className="px-6 py-4 text-left font-semibold">Period</th>
-                  <th className="px-6 py-4 text-left font-semibold">ROI Paid</th>
-                  <th className="px-6 py-4 text-left font-semibold">Appreciation</th>
-                  <th className="px-6 py-4 text-left font-semibold">Total Return</th>
+                  <th className="px-6 py-4 text-left font-semibold">Returns</th>
                   <th className="px-6 py-4 text-left font-semibold">Status</th>
                 </tr>
               </thead>
@@ -188,9 +180,7 @@ export default function ReturnsPage() {
                   <tr key={row.cycle} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F8F4E9]'}>
                     <td className="px-6 py-4 font-bold text-[#0A2342]">{row.cycle}</td>
                     <td className="px-6 py-4 text-slate-400 text-xs">[Add dates]</td>
-                    <td className="px-6 py-4 text-green-600 font-bold">{row.roi}</td>
-                    <td className="px-6 py-4 text-blue-500 font-bold">{row.appreciation}</td>
-                    <td className="px-6 py-4 text-[#D4AF37] font-extrabold">{row.total}</td>
+                    <td className="px-6 py-4 text-[#D4AF37] font-extrabold">{row.result}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold border border-green-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500" />

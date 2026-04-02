@@ -80,7 +80,7 @@ export default function ImpactPage() {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { stat: '₦50,000', label: 'Minimum to start building ownership', bg: 'bg-[#0A2342]', text: 'text-[#D4AF37]' },
-                { stat: '6 Weeks', label: 'To your first ROI. No waiting years.', bg: 'bg-[#D4AF37]', text: 'text-[#0A2342]' },
+                { stat: '6 Weeks', label: 'To your first returns. No waiting years.', bg: 'bg-[#D4AF37]', text: 'text-[#0A2342]' },
                 { stat: '5 Empires', label: 'Real sectors. Real assets. Real ownership.', bg: 'bg-[#F8F4E9]', text: 'text-[#0A2342]' },
                 { stat: '1 Movement', label: 'Pan-African. Student-powered. Built to last.', bg: 'bg-[#0A2342]', text: 'text-white' },
               ].map((item) => (

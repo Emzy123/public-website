@@ -58,16 +58,16 @@ const faqCategories = [
     title: 'ROI & Returns',
     items: [
       {
-        question: 'Why is the ROI 15% every 6 weeks?',
-        answer: 'We cut out middlemen in the supply chain and trade directly in high-demand markets. This efficiency, combined with bulk purchasing power and established trade routes, creates margins that allow for 15% returns within 6-week cycles.',
+        question: 'How are returns generated within 6 weeks?',
+        answer: 'We cut out middlemen in the supply chain and trade directly in high-demand markets. This efficiency, combined with bulk purchasing power and established trade routes, creates significant margins within 6-week cycles.',
       },
       {
-        question: 'Are the 15% returns guaranteed?',
-        answer: 'Returns are based on actual trade performance. Our track record shows consistent delivery across all completed cycles. While we do not legally guarantee returns (no investment is 100% risk-free), our model is designed to deliver on our stated figures.',
+        question: 'Are returns guaranteed?',
+        answer: 'Returns are based on actual trade and agricultural performance. Our track record shows consistent delivery across all completed cycles. While we do not legally guarantee returns (no investment is 100% risk-free), our model is designed to deliver consistent value creation.',
       },
       {
-        question: 'How is the 5% capital appreciation calculated?',
-        answer: 'As SINet\'s operational capacity grows — more trade volume, more assets, more revenue streams — your invested capital\'s value increases proportionally. This appreciation reflects the growing enterprise value of the SINet ecosystem.',
+        question: 'How is capital appreciation calculated?',
+        answer: 'As SINet\'s operational capacity grows — more trade volume, more agricultural output, more real assets — your invested capital\'s value increases proportionally. This appreciation reflects the growing enterprise value of the SINet ecosystem.',
       },
     ],
   },

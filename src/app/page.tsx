@@ -5,12 +5,12 @@ import { EmpirePreviewCards } from '@/components/home/EmpirePreviewCards';
 import { InvestorJourneyPreview, TestimonialsSection, HomeCTA } from '@/components/home/HomeExtra';
 
 export const metadata: Metadata = {
-  title: 'SINet – 15% ROI Every 6 Weeks | Pan-African Investment Ecosystem',
+  title: 'SINet | Pan-African Investment Ecosystem',
   description:
-    'Earn 15% ROI every 6 weeks + 5% capital appreciation through active goods trade. SINet is building 5 Mega Empires across Africa. Start with ₦50,000.',
+    'Structured 6-week investment cycle with returns generated through active goods trade and agricultural operations. SINet is building 5 Mega Empires across Africa.',
   openGraph: {
-    title: 'SINet – 15% ROI Every 6 Weeks',
-    description: 'Active goods trade generating 15% ROI per cycle. Building 5 empires across Africa. Start with ₦50,000.',
+    title: 'SINet | Pan-African Investment Ecosystem',
+    description: 'Structured 6-week investment cycle with returns generated through active goods trade and agricultural operations.',
   },
 };
 
@@ -27,7 +27,7 @@ export default function Home() {
             name: 'SINet',
             url: 'https://sinet.africa',
             logo: 'https://sinet.africa/images/logo.jpg',
-            description: 'Pan-African Investment Ecosystem. 15% ROI every 6 weeks through active goods trade.',
+            description: 'Pan-African Investment Ecosystem. Structured 6-week investment cycle through active goods trade and agricultural operations.',
             contactPoint: {
               '@type': 'ContactPoint',
               telephone: '+2349028239706',

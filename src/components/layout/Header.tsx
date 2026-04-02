@@ -7,6 +7,7 @@ import { MobileDrawer } from './MobileDrawer';
 
 const navLinks = [
   { label: 'Home', href: '/' },
+  { label: 'About', href: '/about' },
   { label: 'Blueprint', href: '/blueprint' },
   { label: 'Empires', href: '/empires' },
   { label: 'Returns', href: '/returns' },

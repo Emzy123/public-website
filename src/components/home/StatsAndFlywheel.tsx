@@ -12,9 +12,9 @@ interface StatItem {
 
 const stats: StatItem[] = [
   { value: '2M', label: 'Capital Deployed', prefix: '₦', suffix: '+' },
-  { value: '15', label: 'ROI Per Cycle', suffix: '%' },
-  { value: '6', label: 'Cycle Duration', suffix: ' Weeks' },
+  { value: '6', label: 'Weeks Cycle' },
   { value: '5', label: 'Empires Building' },
+  { value: 'Real Sector', label: 'Operations' },
 ];
 
 function StatCounter({ stat, isVisible }: { stat: StatItem; isVisible: boolean }) {
@@ -74,9 +74,9 @@ export function StatsBar() {
 
 const flywheelNodes = [
   { id: 'trade', label: 'Goods Trade', sub: 'Active Now', icon: '📦', href: '/blueprint', color: '#D4AF37' },
-  { id: 'roi', label: '15% ROI + 5%', sub: 'Every 6 Weeks', icon: '📈', href: '/returns', color: '#F4D03F' },
-  { id: 'manufacturing', label: 'Manufacturing', sub: '2 Plants Building', icon: '🏭', href: '/empires#food', color: '#D4AF37' },
-  { id: 'hostel', label: 'Student Hostel', sub: '5,000-Bed Vision', icon: '🏘️', href: '/empires#realestate', color: '#F4D03F' },
+  { id: 'roi', label: 'Profits Generated', sub: 'Every 6 Weeks', icon: '📈', href: '/returns', color: '#F4D03F' },
+  { id: 'manufacturing', label: 'Reinvested into Manufacturing', sub: '2 Plants Building', icon: '🏭', href: '/empires#food', color: '#D4AF37' },
+  { id: 'hostel', label: 'Long-Term Asset Growth', sub: '5,000-Bed Vision', icon: '🏘️', href: '/empires#realestate', color: '#F4D03F' },
   { id: 'empires', label: '5 Mega Empires', sub: 'Pan-African Future', icon: '🌍', href: '/empires', color: '#D4AF37' },
 ];
 

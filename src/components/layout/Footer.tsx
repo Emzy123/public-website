@@ -21,7 +21,7 @@ export function Footer() {
             />
           </Link>
           <p className="text-sm leading-relaxed text-slate-400 mb-6">
-            Build Africa's future. Invest in active goods trade, earning 15% ROI every 6 weeks while co-owning Africa's next great institutions.
+            Build Africa's future. Invest in active goods trade with our structured 6-week investment cycles while co-owning Africa's next great institutions.
           </p>
           {/* Social icons */}
           <div className="flex gap-3 flex-wrap">
