@@ -332,6 +332,32 @@ export default function AboutClient() {
               </div>
             ))}
           </div>
+
+          {/* ── Beyond Returns subsection ── */}
+          <div className="mt-12 p-8 bg-[#0A2342]/5 rounded-2xl border border-[#D4AF37]/20">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="w-10 h-10 rounded-xl bg-[#D4AF37] flex items-center justify-center text-[#0A2342] font-extrabold text-lg flex-shrink-0">🌍</span>
+              <h3 className="text-xl font-extrabold text-[#0A2342]">Beyond Returns: Building Systems</h3>
+            </div>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              SINet is not just an investment platform. We are building the economic
+              infrastructure that will define Africa&rsquo;s next generation of ownership
+              and production.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              {[
+                'Youth-driven economic infrastructure',
+                'Job creation through manufacturing',
+                'Production systems and value chains',
+                'Student ownership and leadership',
+              ].map((item) => (
+                <div key={item} className="flex items-start gap-3">
+                  <span className="text-[#D4AF37] font-bold text-lg mt-0.5 flex-shrink-0">✓</span>
+                  <span className="text-slate-700 text-sm leading-relaxed">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
