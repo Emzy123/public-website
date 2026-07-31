@@ -49,13 +49,13 @@ export function Header({ navLinks = DEFAULT_NAV, whatsappUrl = 'https://wa.me/23
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group" aria-label="SINet home">
+          <Link href="/" className="flex items-center gap-2 group hover:opacity-95 transition-opacity" aria-label="SINet home">
             <div className="relative h-10 w-auto">
               <Image
-                src={logoUrl || "/images/logo.jpg"}
+                src={logoUrl || "/images/logo-primary.svg"}
                 alt="SINet Logo"
                 height={40}
-                width={120}
+                width={160}
                 className="object-contain h-10 w-auto"
                 priority
               />

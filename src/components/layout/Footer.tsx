@@ -19,9 +19,9 @@ export function Footer({ settings = DEFAULT_SITE_SETTINGS }: FooterProps) {
         <div className="lg:col-span-1">
           <Link href="/" className="inline-block mb-4">
             <Image
-              src={settings.footerLogoUrl || settings.logoUrl || "/images/logo.jpg"}
+              src={settings.footerLogoUrl || settings.logoUrl || "/images/logo-primary.svg"}
               alt="SINet Logo"
-              width={130}
+              width={140}
               height={44}
               className="object-contain h-11 w-auto"
             />
