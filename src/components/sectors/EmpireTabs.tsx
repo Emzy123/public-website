@@ -1,10 +1,19 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { InvestmentCard } from './InvestmentCard';
 import type { Empire } from '@/types';
 
-export function EmpireTabs({ empires }: { empires: Empire[] }) {
+function EmpireTabsContent({ empires }: { empires: Empire[] }) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(empires[0]?.id ?? '');
+
+  useEffect(() => {
+    if (tabParam && empires.some(e => e.id === tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam, empires]);
 
   const activeEmpire = empires.find(e => e.id === activeTab) || empires[0];
 
@@ -59,5 +68,18 @@ export function EmpireTabs({ empires }: { empires: Empire[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function EmpireTabs({ empires }: { empires: Empire[] }) {
+  return (
+    <Suspense fallback={
+      <div className="w-full max-w-7xl mx-auto bg-slate-50 rounded-2xl p-10 border border-slate-200 animate-pulse">
+        <div className="h-8 bg-slate-200 rounded w-1/4 mb-4"></div>
+        <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+      </div>
+    }>
+      <EmpireTabsContent empires={empires} />
+    </Suspense>
   );
 }

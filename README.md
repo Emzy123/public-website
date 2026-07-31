@@ -5,12 +5,13 @@ Marketing and waitlist website for SINet, built with Next.js 14, TypeScript, Tai
 ## Quick Start
 
 ```bash
-npm install
-cp .env.example .env.local
+npm run setup    # install deps, create .env.local, check config
 npm run dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000).
+
+For the full development guide (architecture, testing, adding features), see [docs/development.md](docs/development.md).
 
 ## Security Features
 
@@ -22,18 +23,27 @@ Visit [http://localhost:3000](http://localhost:3000).
 - Zod validation on client and server
 - Honeypot field for bot filtering
 
+## Development Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Start dev server |
+| `npm test` | Run unit tests |
+| `npm run check:env` | Validate environment setup |
+| `npm run smoke` | Smoke-test API routes (server must be running) |
+| `make help` | List all Makefile shortcuts |
+
 ## Required Environment Variables
 
-See `.env.example` for all keys:
+See `.env.example` for all keys. Run `npm run check:env` to see what's configured.
 
-- `EMAIL_SERVICE_API`
-- `EMAIL_SERVICE_KEY`
-- `EMAIL_LIST_ID`
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
-- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`
-- `RECAPTCHA_SECRET_KEY`
-- `CSRF_SECRET`
+Key variables:
+
+- `MONGODB_URI` / `MONGODB_DB` — contact and academy forms
+- `RESEND_API_KEY` / `RESEND_AUDIENCE_ID` — waitlist email
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` — waitlist bot protection
+- `CSRF_SECRET` — waitlist CSRF tokens
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — waitlist rate limiting (optional locally)
 - `NEXT_PUBLIC_SITE_URL`
 
 ## Deployment (Vercel + Namecheap)

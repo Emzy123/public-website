@@ -1,43 +1,23 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHero, SectionHeader } from '@/components/ui/PageHero';
+import { getCmsContent } from '@/lib/cms';
+import { buildPageMetadata } from '@/lib/cms/metadata';
 
-export const metadata: Metadata = {
-  title: 'Returns & Track Record',
-  description: 'SINet delivers returns through active goods trade and agricultural operations. Full transparency on returns.',
-  openGraph: {
-    title: 'Returns & Track Record | SINet',
-    description: 'Structured 6-week investment cycle. Backed by real goods trade.',
-  },
-};
+export async function generateMetadata() {
+  return buildPageMetadata('returns', {
+    title: 'Returns & Track Record',
+    description: 'SINet delivers returns through active goods trade and agricultural operations. Full transparency on returns.',
+  });
+}
 
-const currentReturns = [
-  { metric: 'Minimum Entry', value: '₦50,000', highlight: false },
-  { metric: 'Investment Structure', value: 'Trade & Agribusiness', highlight: true },
-  { metric: 'Cycle Duration', value: '6 Weeks', highlight: false },
-  { metric: 'Payout Timing', value: 'End of each cycle', highlight: false },
-  { metric: 'Current Status', value: '✅ Open – Capital deployed', highlight: false },
-];
+export default async function ReturnsPage() {
+  const { hero, disclaimer, currentReturns, statusLine, mechanicsSteps, trackRecord, futureSection } = await getCmsContent('returns');
 
-const trackRecord = [
-  { cycle: 'Cycle 4', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
-  { cycle: 'Cycle 3', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
-  { cycle: 'Cycle 2', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
-  { cycle: 'Cycle 1', period: 'Date – Date', result: 'Profits Distributed', status: 'Completed' },
-];
-
-export default function ReturnsPage() {
   return (
     <div className="pt-20">
-      <PageHero
-        badge="Full Transparency"
-        title="Returns &"
-        titleAccent="Track Record"
-        subtitle="Structured 6-week investment cycle with returns generated through active goods trade and agricultural operations. No speculation."
-      />
+      <PageHero badge={hero.badge} title={hero.title} titleAccent={hero.titleAccent} subtitle={hero.subtitle} />
 
-      {/* Schema markup for Investment type */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -55,19 +35,17 @@ export default function ReturnsPage() {
         }}
       />
 
-      {/* ── Risk Disclaimer ── */}
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 text-center sm:text-left mx-auto max-w-5xl mt-6 lg:rounded-md">
         <div className="flex items-start">
           <svg className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
           <div>
-            <p className="text-sm text-yellow-800">All investments carry risk. Returns may vary based on market conditions and operational performance.</p>
+            <p className="text-sm text-yellow-800">{disclaimer}</p>
           </div>
         </div>
       </div>
 
-      {/* Current Returns Summary */}
       <section className="py-12 bg-[#F8F4E9]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <SectionHeader
@@ -91,14 +69,13 @@ export default function ReturnsPage() {
             <div className="border-t border-[#1E3A5F] p-5 text-center">
               <span className="inline-flex items-center gap-2 text-sm text-slate-300">
                 <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                Currently accepting new investors — capital is being deployed in active trade cycles
+                {statusLine}
               </span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How Returns Are Generated */}
       <section className="py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <SectionHeader
@@ -136,12 +113,7 @@ export default function ReturnsPage() {
             </div>
 
             <div className="space-y-4">
-              {[
-                { icon: '🛒', title: 'Capital Deployed', desc: 'Funds purchase of high-demand consumer goods at wholesale.' },
-                { icon: '🚚', title: 'Trade Executed', desc: 'Goods moved through verified trade routes across Nigeria.' },
-                { icon: '💵', title: 'Sales Converted', desc: 'Revenue realized within the 6-week window.' },
-                { icon: '✅', title: 'Profits Distributed', desc: 'Profits credited to your account. Choose to reinvest or withdraw.' },
-              ].map((step, i) => (
+              {mechanicsSteps.map((step, i) => (
                 <div key={step.title} className="flex items-start gap-4 p-5 bg-[#F8F4E9] rounded-xl border border-slate-200">
                   <span className="w-10 h-10 rounded-xl bg-[#0A2342] flex items-center justify-center text-2xl flex-shrink-0">{step.icon}</span>
                   <div>
@@ -155,7 +127,6 @@ export default function ReturnsPage() {
         </div>
       </section>
 
-      {/* Track Record Table */}
       <section className="py-20 bg-[#F8F4E9]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <SectionHeader
@@ -179,7 +150,7 @@ export default function ReturnsPage() {
                 {trackRecord.map((row, i) => (
                   <tr key={row.cycle} className={i % 2 === 0 ? 'bg-white' : 'bg-[#F8F4E9]'}>
                     <td className="px-6 py-4 font-bold text-[#0A2342]">{row.cycle}</td>
-                    <td className="px-6 py-4 text-slate-400 text-xs">[Add dates]</td>
+                    <td className="px-6 py-4 text-slate-400 text-xs">{row.period}</td>
                     <td className="px-6 py-4 text-[#D4AF37] font-extrabold">{row.result}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold border border-green-200">
@@ -196,7 +167,6 @@ export default function ReturnsPage() {
         </div>
       </section>
 
-      {/* Future Potential */}
       <section className="py-20 bg-[#0A2342]">
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
           <SectionHeader
@@ -205,12 +175,9 @@ export default function ReturnsPage() {
             titleAccent="Potential"
             dark
           />
-          <p className="text-slate-300 leading-relaxed mb-4">
-            As SINet scales from trade → manufacturing → real estate, return potential grows. Manufacturing assets will create new revenue streams. The 5,000-bed hostel estate will generate long-term passive income. Your capital grows with us.
-          </p>
-          <p className="text-slate-300 leading-relaxed mb-10">
-            Investors who join early co-own the assets being built today. Early participation means maximum upside as the empires scale.
-          </p>
+          {futureSection.paragraphs.map((p, i) => (
+            <p key={i} className={`text-slate-300 leading-relaxed ${i < futureSection.paragraphs.length - 1 ? 'mb-4' : 'mb-10'}`}>{p}</p>
+          ))}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/investor-journey" className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] font-bold rounded-xl transition-all duration-200 shadow-lg">
               Start Investing →

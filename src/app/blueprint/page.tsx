@@ -1,54 +1,23 @@
 import React from 'react';
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageHero, SectionHeader } from '@/components/ui/PageHero';
+import { getCmsContent } from '@/lib/cms';
+import { buildPageMetadata } from '@/lib/cms/metadata';
 
-export const metadata: Metadata = {
-  title: 'The SINet Blueprint',
-  description: 'How the SINet Trade-to-Asset model works. Structured 6-week investment cycle, funding the 5 Mega Empires.',
-  openGraph: {
-    title: 'The SINet Blueprint | How It Works',
-    description: 'Trade → Profits → Manufacturing → Real Estate → Empires. The complete model explained.',
-  },
-};
+export async function generateMetadata() {
+  return buildPageMetadata('blueprint', {
+    title: 'The SINet Blueprint',
+    description: 'How the SINet Trade-to-Asset model works. Structured 6-week investment cycle, funding the 5 Mega Empires.',
+  });
+}
 
-const cycleSteps = [
-  { icon: '📦', number: '01', title: 'Capital Deployed', desc: 'Your capital is used to purchase high-demand consumer goods — essential commodities with guaranteed market demand.' },
-  { icon: '🤝', number: '02', title: 'Goods Sold', desc: 'Goods are sold through established trade routes within 6 weeks. SINet cuts out middlemen for maximum margin.' },
-  { icon: '📈', number: '03', title: 'Profits Distributed', desc: 'Profits are distributed at the end of each cycle, generated from active goods trade and agricultural operations.' },
-  { icon: '🏭', number: '04', title: 'SINet Reinvests', desc: 'A portion of trade profits is reinvested into long-term infrastructure — manufacturing plants, hostel estates, tech.' },
-  { icon: '🌍', number: '05', title: 'Empires Grow', desc: 'As SINet scales from trade to manufacturing to real estate, return potential and asset value increase for all investors.' },
-];
+export default async function BlueprintPage() {
+  const { hero, cycleSteps, whyPoints } = await getCmsContent('blueprint');
 
-const whyPoints = [
-  {
-    icon: '⚡',
-    title: 'Speed',
-    desc: '6-week cycles vs. traditional 12–24 month investment horizons. Your money never idles.',
-  },
-  {
-    icon: '🧱',
-    title: 'Tangibility',
-    desc: 'Your capital buys physical goods — not speculation, not derivatives. Real inventory. Real trade.',
-  },
-  {
-    icon: '👁️',
-    title: 'Transparency',
-    desc: 'You see where money goes at every stage. Regular updates on trade cycles and project milestones.',
-  },
-];
-
-export default function BlueprintPage() {
   return (
     <div className="pt-20">
-      <PageHero
-        badge="The Model"
-        title="The SINet"
-        titleAccent="Blueprint"
-        subtitle="How active goods trade powers a structured 6-week investment cycle — and funds the 5 Mega Empires being built across Africa."
-      />
+      <PageHero badge={hero.badge} title={hero.title} titleAccent={hero.titleAccent} subtitle={hero.subtitle} />
 
-      {/* Engine & Destination */}
       <section className="py-20 bg-[#F8F4E9]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <SectionHeader
@@ -59,7 +28,6 @@ export default function BlueprintPage() {
           />
 
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Engine */}
             <div className="bg-[#0A2342] rounded-2xl p-8 md:p-10 text-white">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#D4AF37] flex items-center justify-center text-2xl">⚙️</div>
@@ -88,7 +56,6 @@ export default function BlueprintPage() {
               </ul>
             </div>
 
-            {/* Destination */}
             <div className="bg-white rounded-2xl p-8 md:p-10 border border-slate-200">
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 rounded-xl bg-[#0A2342] flex items-center justify-center text-2xl">🌍</div>
@@ -120,25 +87,14 @@ export default function BlueprintPage() {
         </div>
       </section>
 
-      {/* Cycle of Wealth */}
       <section className="py-20 bg-[#0A2342]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <SectionHeader
-            badge="Step by Step"
-            title="The Cycle"
-            titleAccent="of Wealth"
-            subtitle="Five stages. Every six weeks. Repeating, compounding, growing."
-            dark
-          />
-
+          <SectionHeader badge="Step by Step" title="The Cycle" titleAccent="of Wealth" subtitle="Five stages. Every six weeks. Repeating, compounding, growing." dark />
           <div className="relative">
-            {/* Vertical connecting line */}
             <div className="absolute left-[26px] md:left-1/2 top-0 bottom-0 w-px bg-[#D4AF37]/20 ml-0 md:-ml-px hidden md:block" />
-
             <div className="space-y-8">
               {cycleSteps.map((step, i) => (
                 <div key={step.number} className={`flex gap-6 md:gap-8 items-start ${i % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'}`}>
-                  {/* Content card */}
                   <div className="flex-1 md:w-5/12">
                     <div className="bg-[#0A1929] rounded-2xl p-6 border border-slate-700/50 hover:border-[#D4AF37]/30 transition-colors">
                       <div className="flex items-center gap-3 mb-3">
@@ -151,13 +107,9 @@ export default function BlueprintPage() {
                       <p className="text-slate-400 text-sm leading-relaxed">{step.desc}</p>
                     </div>
                   </div>
-
-                  {/* Center dot */}
                   <div className="hidden md:flex flex-shrink-0 w-14 h-14 rounded-full bg-[#D4AF37] items-center justify-center text-[#0A2342] font-extrabold text-sm shadow-lg shadow-[#D4AF37]/30">
                     {step.number}
                   </div>
-
-                  {/* Spacer for alternating layout */}
                   <div className="flex-1 hidden md:block md:w-5/12" />
                 </div>
               ))}
@@ -166,22 +118,12 @@ export default function BlueprintPage() {
         </div>
       </section>
 
-      {/* Why This Works */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <SectionHeader
-            badge="The Advantage"
-            title="Why This Model"
-            titleAccent="Works"
-            subtitle="Three principles that separate SINet from traditional investment platforms."
-          />
-
+          <SectionHeader badge="The Advantage" title="Why This Model" titleAccent="Works" subtitle="Three principles that separate SINet from traditional investment platforms." />
           <div className="grid md:grid-cols-3 gap-8">
             {whyPoints.map((point) => (
-              <div
-                key={point.title}
-                className="text-center p-8 rounded-2xl border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-xl hover:shadow-[#D4AF37]/10 transition-all duration-300 group"
-              >
+              <div key={point.title} className="text-center p-8 rounded-2xl border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-xl hover:shadow-[#D4AF37]/10 transition-all duration-300 group">
                 <div className="w-16 h-16 rounded-2xl bg-[#F8F4E9] group-hover:bg-[#D4AF37]/10 flex items-center justify-center text-3xl mx-auto mb-4 transition-colors">
                   {point.icon}
                 </div>
@@ -190,18 +132,11 @@ export default function BlueprintPage() {
               </div>
             ))}
           </div>
-
           <div className="text-center mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/investor-journey"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] font-bold rounded-xl transition-all duration-200 shadow-lg"
-            >
+            <Link href="/investor-journey" className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] font-bold rounded-xl transition-all duration-200 shadow-lg">
               Start Your Journey →
             </Link>
-            <Link
-              href="/returns"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#0A2342] hover:bg-[#1E3A5F] text-white font-bold rounded-xl transition-all duration-200"
-            >
+            <Link href="/returns" className="inline-flex items-center gap-2 px-8 py-4 bg-[#0A2342] hover:bg-[#1E3A5F] text-white font-bold rounded-xl transition-all duration-200">
               See Track Record →
             </Link>
           </div>

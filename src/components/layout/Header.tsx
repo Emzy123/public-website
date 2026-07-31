@@ -5,7 +5,9 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { MobileDrawer } from './MobileDrawer';
 
-const navLinks = [
+import type { NavLink } from '@admin/types/content';
+
+const DEFAULT_NAV: NavLink[] = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
   { label: 'Blueprint', href: '/blueprint' },
@@ -15,7 +17,14 @@ const navLinks = [
   { label: 'Connect', href: '/connect' },
 ];
 
-export function Header() {
+type HeaderProps = {
+  navLinks?: NavLink[];
+  whatsappUrl?: string;
+  stackOffset?: boolean;
+  logoUrl?: string;
+};
+
+export function Header({ navLinks = DEFAULT_NAV, whatsappUrl = 'https://wa.me/2349028239706', stackOffset = false, logoUrl }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -30,7 +39,9 @@ export function Header() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+        className={`fixed left-0 right-0 z-40 transition-all duration-300 ${
+          stackOffset ? 'top-10' : 'top-0'
+        } ${
           isScrolled
             ? 'bg-[#0A2342] shadow-lg shadow-black/30 py-3'
             : 'bg-[#0A2342]/95 backdrop-blur-md py-4'
@@ -41,7 +52,7 @@ export function Header() {
           <Link href="/" className="flex items-center gap-2 group" aria-label="SINet home">
             <div className="relative h-10 w-auto">
               <Image
-                src="/images/logo.jpg"
+                src={logoUrl || "/images/logo.jpg"}
                 alt="SINet Logo"
                 height={40}
                 width={120}
@@ -74,7 +85,7 @@ export function Header() {
           {/* CTA */}
           <div className="hidden lg:flex items-center gap-3">
             <a
-              href="https://wa.me/2349028239706"
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-5 py-2.5 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] text-sm font-bold rounded-lg transition-all duration-200 shadow-md hover:shadow-[#D4AF37]/30 hover:shadow-lg"

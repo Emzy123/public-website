@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { FieldErrors, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-import { waitlistSchema, WaitlistFormData } from '@/lib/validation';
+import { waitlistSchema, WaitlistFormData } from '@/lib/schemas/waitlist.schema';
 import { Button } from '../ui/Button';
 import { Toast } from '../ui/Toast';
 import { trackEvent } from '@/lib/analytics';

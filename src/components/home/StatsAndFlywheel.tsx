@@ -3,19 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
+import type { HomeContent } from '@admin/types/content';
+
 interface StatItem {
   value: string;
   label: string;
   prefix?: string;
   suffix?: string;
 }
-
-const stats: StatItem[] = [
-  { value: '2M', label: 'Capital Deployed', prefix: '₦', suffix: '+' },
-  { value: '6', label: 'Weeks Cycle' },
-  { value: '5', label: 'Empires Building' },
-  { value: 'Real Sector', label: 'Operations' },
-];
 
 function StatCounter({ stat, isVisible }: { stat: StatItem; isVisible: boolean }) {
   return (
@@ -32,7 +27,8 @@ function StatCounter({ stat, isVisible }: { stat: StatItem; isVisible: boolean }
   );
 }
 
-export function StatsBar() {
+export function StatsBar({ content }: { content: HomeContent['statsBar'] }) {
+  const stats = content.stats;
   const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -62,7 +58,7 @@ export function StatsBar() {
         <div className="mt-6 text-center">
           <span className="inline-flex items-center gap-2 text-xs text-slate-400">
             <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            Capital currently deployed in active goods trade
+            {content.statusLine}
           </span>
         </div>
       </div>
@@ -72,15 +68,8 @@ export function StatsBar() {
 
 /* ── FLYWHEEL ─────────────────────────────────────────────── */
 
-const flywheelNodes = [
-  { id: 'trade', label: 'Goods Trade', sub: 'Active Now', icon: '📦', href: '/blueprint', color: '#D4AF37' },
-  { id: 'roi', label: 'Profits Generated', sub: 'Every 6 Weeks', icon: '📈', href: '/returns', color: '#F4D03F' },
-  { id: 'manufacturing', label: 'Reinvested into Manufacturing', sub: '2 Plants Building', icon: '🏭', href: '/empires#food', color: '#D4AF37' },
-  { id: 'hostel', label: 'Long-Term Asset Growth', sub: '5,000-Bed Vision', icon: '🏘️', href: '/empires#realestate', color: '#F4D03F' },
-  { id: 'empires', label: '5 Mega Empires', sub: 'Pan-African Future', icon: '🌍', href: '/empires', color: '#D4AF37' },
-];
 
-function FlywheelNode({ node, index, total }: { node: typeof flywheelNodes[0]; index: number; total: number }) {
+function FlywheelNode({ node, index, total }: { node: HomeContent['flywheel']['nodes'][0]; index: number; total: number }) {
   const angle = (index / total) * 360 - 90; // Start from top
   const rad = (angle * Math.PI) / 180;
   const r = 38; // radius in %
@@ -109,7 +98,8 @@ function FlywheelNode({ node, index, total }: { node: typeof flywheelNodes[0]; i
   );
 }
 
-export function SinetFlywheel() {
+export function SinetFlywheel({ content }: { content: HomeContent['flywheel'] }) {
+  const flywheelNodes = content.nodes;
   return (
     <section className="py-20 bg-[#0A1929] relative overflow-hidden">
       {/* Background glow */}
@@ -117,13 +107,11 @@ export function SinetFlywheel() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         <div className="text-center mb-12">
-          <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">The Engine</span>
+          <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">{content.eyebrow}</span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-3 mb-4">
-            The <span className="text-[#D4AF37]">SINet Flywheel</span>
+            {content.title}
           </h2>
-          <p className="text-slate-300 max-w-2xl mx-auto">
-            Each cycle feeds the next. Trade profits build manufacturing. Manufacturing profits build empires. Your capital compounds at every stage.
-          </p>
+          <p className="text-slate-300 max-w-2xl mx-auto">{content.subtitle}</p>
         </div>
 
         {/* Flywheel diagram */}
@@ -170,10 +158,10 @@ export function SinetFlywheel() {
 
         <div className="text-center mt-8">
           <Link
-            href="/blueprint"
+            href={content.linkHref}
             className="inline-flex items-center gap-2 text-[#D4AF37] hover:text-[#F4D03F] font-semibold transition-colors text-sm"
           >
-            Learn how the model works
+            {content.linkLabel}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

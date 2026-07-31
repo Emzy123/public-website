@@ -2,69 +2,47 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import type { HeroSlide } from '@admin/types/content';
 
-const slides = [
-  {
-    id: 'slide-1',
-    bgUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=2400&q=80',
-    badge: '🔴 LIVE NOW',
-    headline: 'Structured Investment.',
-    headlineAccent: 'Real Sector Operations.',
-    subheadline: 'Active today: Structured 6-week investment cycles through goods trade and agricultural operations.',
-    cta: { label: 'See How It Works', href: '/blueprint' },
-    ctaSecondary: { label: 'Connect With Us', href: '/investor-journey' },
-  },
-  {
-    id: 'slide-2',
-    bgUrl: 'https://images.unsplash.com/photo-1590859808308-3d2d9c515b1a?auto=format&fit=crop&w=2400&q=80',
-    badge: '🏗️ BUILDING NOW',
-    headline: '2 Manufacturing Plants',
-    headlineAccent: 'Under Construction',
-    subheadline: 'Funded by Trade Profits. Building Nigeria\'s Production Capacity.',
-    cta: { label: 'Explore Our Assets', href: '/empires' },
-    ctaSecondary: { label: 'Join the Movement', href: '/impact' },
-  },
-  {
-    id: 'slide-3',
-    bgUrl: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=2400&q=80',
-    badge: '🌍 THE VISION',
-    headline: '5 Mega Empires.',
-    headlineAccent: 'One Movement.',
-    subheadline: 'Fashion • Food Processing • Tech • Real Estate • Agriculture',
-    cta: { label: 'Explore the 5 Empires', href: '/empires' },
-    ctaSecondary: { label: 'Our Returns', href: '/returns' },
-  },
-];
+type Props = {
+  slides: HeroSlide[];
+};
 
-export function HeroCarousel() {
+export function HeroCarousel({ slides: allSlides }: Props) {
+  const slides = allSlides.filter((s) => s.enabled).sort((a, b) => a.sortOrder - b.sortOrder);
+
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const goTo = useCallback((index: number) => {
-    if (isTransitioning) return;
+    if (isTransitioning || slides.length === 0) return;
     setIsTransitioning(true);
     setCurrent(index);
     setTimeout(() => setIsTransitioning(false), 700);
-  }, [isTransitioning]);
+  }, [isTransitioning, slides.length]);
 
   const next = useCallback(() => {
+    if (slides.length === 0) return;
     goTo((current + 1) % slides.length);
-  }, [current, goTo]);
+  }, [current, goTo, slides.length]);
 
   const prev = useCallback(() => {
+    if (slides.length === 0) return;
     goTo((current - 1 + slides.length) % slides.length);
-  }, [current, goTo]);
+  }, [current, goTo, slides.length]);
 
   useEffect(() => {
-    if (!paused) {
+    if (!paused && slides.length > 0) {
       intervalRef.current = setInterval(next, 6000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [paused, next]);
+  }, [paused, next, slides.length]);
+
+  if (slides.length === 0) return null;
 
   const slide = slides[current];
 
@@ -75,7 +53,6 @@ export function HeroCarousel() {
       onMouseLeave={() => setPaused(false)}
       aria-label="Hero carousel"
     >
-      {/* Background images — prerender all for instant transitions */}
       {slides.map((s, i) => (
         <div
           key={s.id}
@@ -87,17 +64,14 @@ export function HeroCarousel() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url('${s.bgUrl}')` }}
           />
-          {/* Dark gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#0A2342]/95 via-[#0A2342]/75 to-[#0A2342]/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A2342]/80 via-transparent to-transparent" />
         </div>
       ))}
 
-      {/* Content */}
       <div className="relative z-10 h-full flex items-center">
         <div className="max-w-7xl mx-auto px-4 md:px-8 w-full">
           <div className="max-w-3xl">
-            {/* Badge */}
             <div
               key={`badge-${current}`}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-6 animate-fade-in-up"
@@ -105,7 +79,6 @@ export function HeroCarousel() {
               <span>{slide.badge}</span>
             </div>
 
-            {/* Headline */}
             <h1
               key={`h1-${current}`}
               className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-4 animate-fade-in-up"
@@ -115,7 +88,6 @@ export function HeroCarousel() {
               <span className="text-gold-shimmer">{slide.headlineAccent}</span>
             </h1>
 
-            {/* Subheadline */}
             <p
               key={`sub-${current}`}
               className="text-lg md:text-xl text-slate-200 mb-10 leading-relaxed max-w-xl animate-fade-in-up"
@@ -124,7 +96,6 @@ export function HeroCarousel() {
               {slide.subheadline}
             </p>
 
-            {/* CTAs */}
             <div
               key={`ctas-${current}`}
               className="flex flex-col sm:flex-row gap-4 animate-fade-in-up"
@@ -150,7 +121,6 @@ export function HeroCarousel() {
         </div>
       </div>
 
-      {/* Slide navigation dots */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
         {slides.map((_, i) => (
           <button
@@ -166,7 +136,6 @@ export function HeroCarousel() {
         ))}
       </div>
 
-      {/* Arrow navigation */}
       <button
         onClick={prev}
         aria-label="Previous slide"
@@ -186,7 +155,6 @@ export function HeroCarousel() {
         </svg>
       </button>
 
-      {/* Progress bar */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-20">
         <div
           key={`progress-${current}`}

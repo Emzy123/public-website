@@ -3,17 +3,23 @@ import { z } from 'zod';
 export const UserTypeEnum = z.enum(['investor', 'learner', 'student', 'builder']);
 export type UserType = z.infer<typeof UserTypeEnum>;
 
-export const WaitlistSchema = z.object({
-  fullName:           z.string().min(1, 'Full name is required'),
-  email:              z.string().email('Valid email address required'),
-  phoneNumber:        z.string().optional(),
-  country:            z.string().min(1, 'Country is required'),
-  userType:           UserTypeEnum,
-  sectorInterest:     z.string().min(1, 'Sector interest is required'),
-  investmentInterest: z.string().min(1, 'Investment interest is required'),
-  hearAbout:          z.string().min(1, 'Please tell us how you heard about us'),
-  consent:            z.literal(true, { message: 'You must consent to continue' }),
-  website:            z.string().max(0).optional(),
+export const waitlistSchema = z.object({
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  phoneNumber: z.string().optional(),
+  country: z.string().min(1, 'Please select your country'),
+  userType: UserTypeEnum,
+  sectorInterest: z.string().min(1, 'Please select a sector'),
+  investmentInterest: z.enum(['50000', '100000+', 'learning']).optional(),
+  hearAbout: z.string().optional(),
+  consent: z.boolean().refine((val) => val === true, {
+    message: 'You must agree to receive updates',
+  }),
+  recaptchaToken: z.string().min(1, 'reCAPTCHA verification required'),
+  csrfToken: z.string().min(1, 'Security verification failed'),
+  website: z.string().optional(),
 });
 
-export type WaitlistFormData = z.infer<typeof WaitlistSchema>;
+export const WaitlistSchema = waitlistSchema;
+
+export type WaitlistFormData = z.infer<typeof waitlistSchema>;

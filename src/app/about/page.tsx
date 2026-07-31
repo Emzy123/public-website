@@ -1,18 +1,26 @@
-import type { Metadata } from 'next';
+import { getCmsContent } from '@/lib/cms';
+import { buildPageMetadata } from '@/lib/cms/metadata';
 import AboutClient from './AboutClient';
 
-export const metadata: Metadata = {
-  title: 'About SINet',
-  description:
-    'From Student Dreams to Pan-African Movement. Founded in March 2025. Meet the founder, the leadership team, and learn how SINet is building 5 Mega Empires across Africa.',
-  openGraph: {
-    title: 'About SINet | From Student Dreams to Pan-African Movement',
+export async function generateMetadata() {
+  return buildPageMetadata('about', {
+    title: 'About SINet',
     description:
-      'Meet Adams Ochekwu and the SINet team. Founded March 2025. 280+ students. ₦11.8M cash flow. Building Africa\'s future.',
-    images: ['/images/logo.jpg'],
-  },
-};
+      'From Student Dreams to Pan-African Movement. Founded in March 2025. Meet the founder, the leadership team, and learn how SINet is building 5 Mega Empires across Africa.',
+  });
+}
 
-export default function AboutPage() {
-  return <AboutClient />;
+export default async function AboutPage() {
+  const [content, settings] = await Promise.all([
+    getCmsContent('about'),
+    getCmsContent('site-settings'),
+  ]);
+
+  return (
+    <AboutClient
+      content={content}
+      whatsappUrl={settings.contact.whatsapp}
+      whatsappDisplay={settings.contact.whatsappDisplay}
+    />
+  );
 }

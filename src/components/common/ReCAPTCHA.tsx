@@ -32,6 +32,10 @@ export function ReCAPTCHA({ onToken, onError }: ReCAPTCHAProps) {
       script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
       script.async = true;
       script.defer = true;
+      const nonce = document.querySelector('script[nonce]')?.getAttribute('nonce');
+      if (nonce) {
+        script.setAttribute('nonce', nonce);
+      }
       script.onerror = () => onError?.('Unable to load reCAPTCHA script. Check ad-block/privacy settings.');
       document.head.appendChild(script);
     }

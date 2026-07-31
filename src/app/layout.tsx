@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import { SiteChrome } from '@/components/layout/SiteChrome';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
@@ -35,25 +34,25 @@ export const metadata: Metadata = {
     images: ['/images/og-image.jpg'],
   },
   icons: {
-    icon: '/images/logo.jpg',
-    apple: '/images/logo.jpg',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
   },
 };
+
+import { headers } from 'next/headers';
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = headers().get('x-nonce') || undefined;
+
   return (
     <html lang="en" className="scroll-smooth">
       <body className={`${inter.variable} ${plusJakarta.variable} antialiased min-h-screen flex flex-col`}>
-        <AnalyticsScripts />
-        <Header />
-        <main className="flex-grow">
-          {children}
-        </main>
-        <Footer />
+        <AnalyticsScripts nonce={nonce} />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );

@@ -64,7 +64,7 @@ export function FiveEmpiresGrid({ empires }: { empires: Empire[] }) {
                 <p className="text-xs text-slate-300 mb-3">
                   {empire.subSectors.slice(0, 2).map((s) => s.name).join(' • ')}
                 </p>
-                <Link href="/sectors" className="text-sm font-semibold text-sinet-gold hover:text-sinet-gold-light transition-colors">
+                <Link href={`/sectors?tab=${empire.id}`} className="text-sm font-semibold text-sinet-gold hover:text-sinet-gold-light transition-colors">
                   Learn more about this sector &rarr;
                 </Link>
               </div>

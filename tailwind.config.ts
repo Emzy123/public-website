@@ -11,7 +11,9 @@ const config: Config = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
-        'gold-main': 'var(--gold-main)',
+        'gold-main': '#D4AF37',
+        'gold-light': '#F4D03F',
+        'gold-dark': '#B49450',
         sinet: {
           blue: '#0A2342',
           navy: '#08182f',

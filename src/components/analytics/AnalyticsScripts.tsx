@@ -3,15 +3,15 @@
 import Script from 'next/script';
 import { GA_MEASUREMENT_ID } from '@/lib/analytics';
 
-export function AnalyticsScripts() {
+export function AnalyticsScripts({ nonce }: { nonce?: string }) {
   if (!GA_MEASUREMENT_ID) {
     return null;
   }
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-      <Script id="ga4-config" strategy="afterInteractive">
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" nonce={nonce} />
+      <Script id="ga4-config" strategy="afterInteractive" nonce={nonce}>
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}

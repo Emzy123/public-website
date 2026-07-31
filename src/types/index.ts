@@ -1,4 +1,4 @@
-import type { WaitlistFormData } from '@/lib/validation';
+import type { WaitlistFormData } from '@/lib/schemas/waitlist.schema';
 
 export type ApiErrorResponse = { error?: string; errors?: Record<string, string> };
 export type ApiSuccessResponse = { success: true; message: string };

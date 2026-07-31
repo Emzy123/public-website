@@ -1,4 +1,4 @@
-import type { WaitlistFormData } from '@/lib/validation';
+import type { WaitlistFormData } from '@/lib/schemas/waitlist.schema';
 import { getEmailServiceAdapter } from './email/index';
 
 export async function sendWaitlistContact(data: WaitlistFormData): Promise<void> {

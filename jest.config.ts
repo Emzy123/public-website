@@ -6,13 +6,18 @@ const config: Config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@admin/(.*)$': '<rootDir>/admin/$1',
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
       tsconfig: 'tsconfig.jest.json',
-      isolatedModules: true
     }],
   },
+  collectCoverageFrom: [
+    'src/lib/**/*.{ts,tsx}',
+    '!src/lib/**/*.test.{ts,tsx}',
+    '!src/lib/data/**',
+  ],
 };
 
 export default config;

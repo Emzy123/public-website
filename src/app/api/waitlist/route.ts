@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
-import { allowedOrigins } from '@/lib/constants';
-import { csrfProtect } from '@/lib/csrf';
 import { sendWaitlistContact } from '@/lib/email';
 import { verifyRecaptchaToken } from '@/lib/recaptcha';
-import { waitlistLimiter } from '@/lib/rateLimit';
-import { waitlistSchema } from '@/lib/validation';
+import { waitlistSchema } from '@/lib/schemas/waitlist.schema';
+import { issueCsrfToken, verifyCsrfToken } from '@/lib/security/csrf-handler';
+import { validateOrigin } from '@/lib/security/origin';
+import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { isDevelopmentMode } from '@/lib/runtime/envMode';
 import { validateRouteSecurityConfig } from '@/lib/runtime/securityConfig';
 
-function getClientIp(request: NextRequest): string {
-  const xff = request.headers.get('x-forwarded-for');
-  return xff?.split(',')[0]?.trim() ?? 'unknown';
-}
+import { getMongoDb } from '@/lib/db/mongodb';
 
 function mapZodErrors(error: ZodError): Record<string, string> {
   return error.issues.reduce<Record<string, string>>((acc, issue) => {
@@ -29,22 +26,8 @@ function errorPayload(message: string, details?: string) {
   return { error: message };
 }
 
-function validateOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  const referer = request.headers.get('referer');
-  if (origin && allowedOrigins.includes(origin as (typeof allowedOrigins)[number])) return true;
-  if (referer) {
-    return allowedOrigins.some((allowed) => referer.startsWith(allowed));
-  }
-  return false;
-}
-
 export async function GET(request: NextRequest) {
-  const response = NextResponse.json({ success: true });
-  await csrfProtect(request, response);
-  // csrfProtect sets the CSRF token on the response header (and the CSRF cookie on the response).
-  // We return the same response object to preserve Set-Cookie for POST validation.
-  return response;
+  return issueCsrfToken(request);
 }
 
 export async function POST(request: NextRequest) {
@@ -53,8 +36,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(errorPayload(configCheck.message, configCheck.details), { status: configCheck.status });
   }
 
-  // Parse JSON from a cloned request so the original request body remains
-  // available for csrfProtect, which also needs to inspect the incoming body.
   let body: unknown;
   try {
     body = await request.clone().json();
@@ -69,26 +50,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const response = NextResponse.next();
-  try {
-    await csrfProtect(request, response);
-  } catch {
+  const csrfCheck = await verifyCsrfToken(request);
+  if (!csrfCheck.ok) return csrfCheck.response;
+
+  const ip = getClientIp(request);
+  const limited = await enforceRateLimit(ip, 'waitlist', 5, 60);
+  if (!limited.ok) {
     return NextResponse.json(
-      errorPayload('Invalid CSRF token.', 'Fetch a fresh CSRF token from GET /api/waitlist before submitting.'),
-      { status: 403 }
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429, headers: limited.headers }
     );
   }
 
-  const ip = getClientIp(request);
-  if (waitlistLimiter) {
-    const { success } = await waitlistLimiter.limit(ip);
-    if (!success) {
-      return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 });
-    }
-  }
-
   try {
-    const bodyObj = (typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : null);
+    const bodyObj = typeof body === 'object' && body !== null ? (body as Record<string, unknown>) : null;
     if (bodyObj?.website) {
       return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
     }
@@ -102,18 +77,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Save to MongoDB
+    const db = await getMongoDb();
+    await db.collection('waitlistSubmissions').insertOne({
+      fullName: parsed.fullName,
+      email: parsed.email,
+      phoneNumber: parsed.phoneNumber || '',
+      country: parsed.country,
+      userType: parsed.userType,
+      sectorInterest: parsed.sectorInterest,
+      investmentInterest: parsed.investmentInterest || '',
+      hearAbout: parsed.hearAbout || '',
+      createdAt: new Date(),
+    });
+
     await sendWaitlistContact(parsed);
     return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });
   } catch (error) {
-    if (error instanceof ZodError || (error as any)?.name === 'ZodError') {
+    if (error instanceof ZodError || (error as { name?: string })?.name === 'ZodError') {
       return NextResponse.json({ errors: mapZodErrors(error as ZodError) }, { status: 400 });
     }
 
     console.error('Waitlist submission error:', error);
     const errMessage = error instanceof Error ? error.message : 'Unknown server error';
 
-    // In production we intentionally hide internal details, but for common
-    // misconfiguration errors we can return a safe, actionable message.
     const resendMisconfigured =
       errMessage.includes('RESEND_API_KEY') || errMessage.includes('RESEND_AUDIENCE_ID');
     const safeMessage = resendMisconfigured

@@ -27,9 +27,10 @@ function devOrProdMessage(missing: string[], route: ApiRouteName): CheckResult {
     };
   }
 
+  const isUpstashMissing = missing.includes('UPSTASH_REDIS_REST_URL') || missing.includes('UPSTASH_REDIS_REST_TOKEN');
   return {
     ok: false,
-    status: 500,
+    status: isUpstashMissing ? 503 : 500,
     message: 'Service is not configured correctly.',
   };
 }
@@ -50,16 +51,12 @@ export function validateRouteSecurityConfig(route: ApiRouteName): CheckResult {
     academy: ['MONGODB_URI', 'MONGODB_DB'],
   };
 
-  const missing = missingEnvVars(routeRequired[route]);
-  if (missing.length === 0) {
-    return { ok: true, status: 200, message: 'ok' };
-  }
-
-  // Production gets strict, generic error payloads. Development gets helpful details.
+  const required = [...routeRequired[route]];
   if (isProductionMode()) {
-    return devOrProdMessage(missing, route);
+    required.push('UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN');
   }
 
+  const missing = missingEnvVars(required);
   return devOrProdMessage(missing, route);
 }
 
