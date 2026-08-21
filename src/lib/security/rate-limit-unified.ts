@@ -42,16 +42,21 @@ export async function enforceRateLimit(
   const limiter = getUpstashLimiter(prefix, max, windowSec);
 
   if (limiter) {
-    const { success, reset } = await limiter.limit(identifier);
-    if (!success) {
-      const retryAfterSec = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-      return {
-        ok: false,
-        retryAfterSec,
-        headers: { 'Retry-After': String(retryAfterSec) },
-      };
+    try {
+      const { success, reset } = await limiter.limit(identifier);
+      if (!success) {
+        const retryAfterSec = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
+        return {
+          ok: false,
+          retryAfterSec,
+          headers: { 'Retry-After': String(retryAfterSec) },
+        };
+      }
+      return { ok: true, headers: {} };
+    } catch (error) {
+      // Misconfigured or unreachable Upstash must not take down auth/forms.
+      console.error(`Upstash rate limit failed for ${prefix}; falling back to memory limiter:`, error);
     }
-    return { ok: true, headers: {} };
   }
 
   const memoryKey = `${prefix}:${identifier}`;

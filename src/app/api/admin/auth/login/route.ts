@@ -4,12 +4,15 @@ import { isMfaEnabled, verifyTotp } from '@admin/lib/mfa';
 import { writeAuditLog } from '@/lib/audit/log';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
+function normalizeEnv(value: string | undefined): string {
+  return (value ?? '').trim().replace(/^["']|["']$/g, '');
+}
+
 function isAdminAuthConfigured(): boolean {
-  return Boolean(
-    process.env.ADMIN_EMAIL?.trim() &&
-      process.env.ADMIN_PASSWORD_HASH?.trim() &&
-      process.env.ADMIN_SESSION_SECRET?.trim()
-  );
+  const email = normalizeEnv(process.env.ADMIN_EMAIL);
+  const hash = normalizeEnv(process.env.ADMIN_PASSWORD_HASH);
+  const sessionSecret = normalizeEnv(process.env.ADMIN_SESSION_SECRET);
+  return Boolean(email && hash.includes(':') && sessionSecret.length >= 32);
 }
 
 const accountAttempts = new Map<string, { count: number; lockedUntil: number }>();
@@ -54,15 +57,16 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
-  const limited = await enforceRateLimit(ip, 'admin-login', 5, 15 * 60);
-  if (!limited.ok) {
-    return NextResponse.json(
-      { error: 'Too many login attempts. Try again later.' },
-      { status: 429, headers: limited.headers }
-    );
-  }
 
   try {
+    const limited = await enforceRateLimit(ip, 'admin-login', 5, 15 * 60);
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Try again later.' },
+        { status: 429, headers: limited.headers }
+      );
+    }
+
     const body = await request.json();
     const email = String(body?.email ?? '').trim();
     const password = String(body?.password ?? '');

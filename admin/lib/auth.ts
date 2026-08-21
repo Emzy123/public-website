@@ -72,12 +72,16 @@ export function clearSessionCookie() {
   };
 }
 
-export function validateCredentials(email: string, password: string): boolean {
-  const adminEmail = process.env.ADMIN_EMAIL;
-  if (!adminEmail || email !== adminEmail) return false;
+function normalizeSecret(value: string | undefined): string {
+  return (value ?? '').trim().replace(/^["']|["']$/g, '');
+}
 
-  const passwordHash = process.env.ADMIN_PASSWORD_HASH;
-  if (!passwordHash) return false;
+export function validateCredentials(email: string, password: string): boolean {
+  const adminEmail = normalizeSecret(process.env.ADMIN_EMAIL);
+  if (!adminEmail || email.trim().toLowerCase() !== adminEmail.toLowerCase()) return false;
+
+  const passwordHash = normalizeSecret(process.env.ADMIN_PASSWORD_HASH);
+  if (!passwordHash || !passwordHash.includes(':')) return false;
   return verifyPassword(password, passwordHash);
 }
 
