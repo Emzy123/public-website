@@ -33,8 +33,15 @@ function LoginForm() {
     }
 
     if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError(json.error || 'Login failed');
+      const json = await res.json().catch(() => ({} as { error?: string }));
+      setError(
+        json.error ||
+          (res.status === 503
+            ? 'Admin sign-in is not configured on this deployment.'
+            : res.status >= 500
+              ? 'Sign-in service error. Check server logs and admin env vars.'
+              : 'Login failed')
+      );
       setLoading(false);
       return;
     }
