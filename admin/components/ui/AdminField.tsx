@@ -11,22 +11,22 @@ type Props = {
 export function AdminField({ label, children, hint }: Props) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-slate-300">{label}</span>
+      <span className="text-sm font-medium text-[#0d1a4a]">{label}</span>
       {children}
-      {hint && <span className="text-xs text-slate-500">{hint}</span>}
+      {hint && <span className="block text-xs text-[#7b7263]">{hint}</span>}
     </label>
   );
 }
 
 const inputClass =
-  'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-[#D4AF37] focus:outline-none focus:ring-1 focus:ring-[#D4AF37]';
+  'w-full rounded-lg border border-[#d9d1bf] bg-white px-3 py-2.5 text-sm text-[#0d1a4a] placeholder:text-[#b0a799] focus:border-[#d9a23c] focus:outline-none focus:ring-2 focus:ring-[#d9a23c]/20 transition-colors';
 
 export function AdminInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={inputClass} {...props} />;
 }
 
 export function AdminTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={`${inputClass} min-h-[80px]`} {...props} />;
+  return <textarea className={`${inputClass} min-h-[80px] resize-y`} {...props} />;
 }
 
 export function AdminSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {

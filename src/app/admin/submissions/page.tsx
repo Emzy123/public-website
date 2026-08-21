@@ -3,9 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminShell } from '@admin/components/AdminShell';
 import {
-  exportSingleAcademyCsv,
-  exportSingleContactCsv,
-  exportSubmissionsCsv,
   isUnread,
   submissionReplyMailto,
   type AcademySubmission,
@@ -14,10 +11,17 @@ import {
   type SubmissionType,
 } from '@admin/lib/submissions';
 
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return email;
+  const [local, domain] = email.split('@');
+  if (local.length <= 2) return `${local[0]}***@${domain}`;
+  return `${local[0]}${local[1]}${'*'.repeat(Math.min(local.length - 2, 6))}@${domain}`;
+}
+
 type StatusFilter = 'all' | 'unread' | 'read';
 type TypeFilter = 'all' | SubmissionType;
 
-function FilterButton({
+function Tab({
   active,
   onClick,
   children,
@@ -30,10 +34,8 @@ function FilterButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-        active
-          ? 'bg-[#D4AF37]/15 text-[#D4AF37] font-medium'
-          : 'text-slate-400 hover:text-white hover:bg-slate-800'
+      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+        active ? 'bg-[#0d1a4a] text-white shadow-sm' : 'text-[#7b7263] hover:text-[#0d1a4a]'
       }`}
     >
       {children}
@@ -54,26 +56,25 @@ function SubmissionCard({
 }) {
   return (
     <div
-      className={`p-4 rounded-lg border text-sm transition-colors ${
-        unread
-          ? 'border-[#D4AF37]/40 bg-[#D4AF37]/5'
-          : 'border-slate-800 bg-slate-900/60'
+      className={`rounded-xl border p-5 transition-colors ${
+        unread ? 'border-[#d9a23c]/40 bg-[#fdf8ef]' : 'border-[#e4dcc9] bg-white'
       }`}
     >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        {unread && (
-          <span className="shrink-0 text-[10px uppercase tracking-wider font-semibold text-[#D4AF37] bg-[#D4AF37]/10 px-2 py-0.5 rounded">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        {unread ? (
+          <span className="rounded-full bg-[#d9a23c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0d1a4a]">
             New
           </span>
+        ) : (
+          <span />
         )}
-        <div className="flex-1" />
         <button
           type="button"
           onClick={onToggleRead}
           disabled={toggling}
-          className="text-xs text-slate-400 hover:text-white disabled:opacity-50 transition-colors"
+          className="text-xs text-[#7b7263] transition-colors hover:text-[#0d1a4a] disabled:opacity-40"
         >
-          {unread ? 'Mark read' : 'Mark unread'}
+          {unread ? 'Mark as read' : 'Mark as unread'}
         </button>
       </div>
       {children}
@@ -91,11 +92,12 @@ export default function SubmissionsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
 
   const loadSubmissions = useCallback(async () => {
     setLoading(true);
     setError('');
-
     const params = new URLSearchParams();
     if (typeFilter !== 'all') params.set('type', typeFilter);
     if (statusFilter !== 'all') params.set('status', statusFilter);
@@ -108,6 +110,7 @@ export default function SubmissionsPage() {
       setContacts(data.contacts ?? []);
       setAcademy(data.academy ?? []);
       setCounts(data.counts ?? null);
+      setCsrfToken(res.headers.get('x-csrf-token') ?? '');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load');
     } finally {
@@ -125,39 +128,66 @@ export default function SubmissionsPage() {
     try {
       const res = await fetch('/api/admin/submissions', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
         body: JSON.stringify({ type, id, read }),
       });
       if (!res.ok) throw new Error('Update failed');
 
-      const patchContact = (read: boolean) => (item: ContactSubmission): ContactSubmission =>
-        item._id === id ? { ...item, readAt: read ? new Date().toISOString() : undefined } : item;
-
-      const patchAcademy = (read: boolean) => (item: AcademySubmission): AcademySubmission =>
-        item._id === id ? { ...item, readAt: read ? new Date().toISOString() : undefined } : item;
-
       if (type === 'contact') {
-        setContacts((prev) => prev.map(patchContact(read)));
+        setContacts((prev) =>
+          prev.map((item) =>
+            item._id === id ? { ...item, readAt: read ? new Date().toISOString() : undefined } : item
+          )
+        );
       } else {
-        setAcademy((prev) => prev.map(patchAcademy(read)));
+        setAcademy((prev) =>
+          prev.map((item) =>
+            item._id === id ? { ...item, readAt: read ? new Date().toISOString() : undefined } : item
+          )
+        );
       }
 
       setCounts((prev) => {
         if (!prev) return prev;
         const key = type === 'contact' ? 'contacts' : 'academy';
-        const delta = read ? -1 : 1;
         return {
           ...prev,
-          [key]: {
-            ...prev[key],
-            unread: Math.max(0, prev[key].unread + delta),
-          },
+          [key]: { ...prev[key], unread: Math.max(0, prev[key].unread + (read ? -1 : 1)) },
         };
       });
     } catch {
       setError('Failed to update submission');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const exportCsv = async (type: 'all' | SubmissionType, ids: string[] = []) => {
+    setExporting(true);
+    try {
+      const response = await fetch('/api/admin/submissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+        body: JSON.stringify({ type, ids }),
+      });
+      if (!response.ok) throw new Error('Failed to export');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'sinet-submissions.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -174,134 +204,184 @@ export default function SubmissionsPage() {
       title="Form Submissions"
       description={
         counts
-          ? `${counts.contacts.total} contact · ${counts.academy.total} academy · ${unreadTotal} unread`
-          : 'Contact and academy interest messages from the public site'
+          ? `${counts.contacts.total + counts.academy.total} total · ${unreadTotal} unread`
+          : 'Contact messages and academy interest from the public site'
       }
       actions={
         <button
           type="button"
-          onClick={() => exportSubmissionsCsv(contacts, academy)}
-          disabled={loading || (contacts.length === 0 && academy.length === 0)}
-          className="px-4 py-2 rounded-lg border border-slate-700 text-sm text-slate-300 hover:text-white hover:border-slate-500 disabled:opacity-40 transition-colors"
+          onClick={() => void exportCsv('all')}
+          disabled={loading || exporting || (contacts.length === 0 && academy.length === 0)}
+          className="rounded-lg border border-[#e4dcc9] bg-white px-4 py-2 text-sm font-medium text-[#0d1a4a] transition-colors hover:border-[#d9a23c] hover:bg-[#fdf8ef] disabled:opacity-40"
         >
-          Export CSV
+          {exporting ? 'Exporting…' : 'Export CSV'}
         </button>
       }
     >
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
-      <div className="mb-6 flex flex-col lg:flex-row lg:items-center gap-4">
+      {/* Filters */}
+      <div className="mb-6 space-y-3">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, email, subject…"
-          className="flex-1 px-4 py-2 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-[#D4AF37]"
+          placeholder="Search by name, email, or subject…"
+          className="w-full rounded-xl border border-[#e4dcc9] bg-white px-4 py-2.5 text-sm text-[#0d1a4a] placeholder:text-[#b0a799] focus:border-[#d9a23c] focus:outline-none"
         />
-
-        <div className="flex flex-wrap gap-1 p-1 rounded-lg bg-slate-900 border border-slate-800">
-          <FilterButton active={typeFilter === 'all'} onClick={() => setTypeFilter('all')}>All</FilterButton>
-          <FilterButton active={typeFilter === 'contact'} onClick={() => setTypeFilter('contact')}>Contact</FilterButton>
-          <FilterButton active={typeFilter === 'academy'} onClick={() => setTypeFilter('academy')}>Academy</FilterButton>
-        </div>
-
-        <div className="flex flex-wrap gap-1 p-1 rounded-lg bg-slate-900 border border-slate-800">
-          <FilterButton active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>All status</FilterButton>
-          <FilterButton active={statusFilter === 'unread'} onClick={() => setStatusFilter('unread')}>
-            Unread{counts ? ` (${unreadTotal})` : ''}
-          </FilterButton>
-          <FilterButton active={statusFilter === 'read'} onClick={() => setStatusFilter('read')}>Read</FilterButton>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex gap-1 rounded-xl border border-[#e4dcc9] bg-white p-1">
+            {(['all', 'contact', 'academy'] as TypeFilter[]).map((v) => (
+              <Tab key={v} active={typeFilter === v} onClick={() => setTypeFilter(v)}>
+                {v === 'all' ? 'All types' : v === 'contact' ? 'Contact' : 'Academy'}
+              </Tab>
+            ))}
+          </div>
+          <div className="flex gap-1 rounded-xl border border-[#e4dcc9] bg-white p-1">
+            <Tab active={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
+              All
+            </Tab>
+            <Tab active={statusFilter === 'unread'} onClick={() => setStatusFilter('unread')}>
+              Unread{counts ? ` (${unreadTotal})` : ''}
+            </Tab>
+            <Tab active={statusFilter === 'read'} onClick={() => setStatusFilter('read')}>
+              Read
+            </Tab>
+          </div>
         </div>
       </div>
 
-      {loading && <p className="text-slate-400 mb-4">Loading…</p>}
+      {loading && (
+        <div className="py-10 text-center text-sm text-[#7b7263]">Loading submissions…</div>
+      )}
 
-      <div className={`grid gap-8 ${showContacts && showAcademy ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
-        {showContacts && (
-          <section>
-            <h2 className="text-lg font-semibold text-[#D4AF37] mb-4">
-              Contact Messages ({contacts.length})
-            </h2>
-            <div className="space-y-3">
-              {contacts.map((c) => (
-                <SubmissionCard
-                  key={c._id}
-                  unread={isUnread(c)}
-                  toggling={togglingId === c._id}
-                  onToggleRead={() => toggleRead('contact', c._id, isUnread(c))}
-                >
-                  <div className="font-medium text-white">{c.name} — {c.subject}</div>
-                  <a href={`mailto:${c.email}`} className="text-slate-400 hover:text-[#D4AF37]">{c.email}</a>
-                  <p className="text-slate-300 mt-2 whitespace-pre-wrap">{c.message}</p>
-                  <div className="flex flex-wrap gap-3 mt-3">
+      {!loading && (
+        <div className={`grid gap-8 ${showContacts && showAcademy ? 'lg:grid-cols-2' : ''}`}>
+          {showContacts && (
+            <section>
+              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#7b7263]">
+                Contact Messages
+                <span className="rounded-full border border-[#e4dcc9] bg-white px-2 py-0.5 text-[10px] font-normal text-[#0d1a4a]">
+                  {contacts.length}
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {contacts.map((c) => (
+                  <SubmissionCard
+                    key={c._id}
+                    unread={isUnread(c)}
+                    toggling={togglingId === c._id}
+                    onToggleRead={() => toggleRead('contact', c._id, isUnread(c))}
+                  >
+                    <p className="font-semibold text-[#0d1a4a]">
+                      {c.name}
+                      {c.subject && <span className="font-normal text-[#7b7263]"> — {c.subject}</span>}
+                    </p>
                     <a
-                      href={submissionReplyMailto('contact', c)}
-                      className="text-xs text-[#D4AF37] hover:underline"
+                      href={`mailto:${c.email}`}
+                      className="mt-0.5 block text-xs text-[#7b7263] hover:text-[#d9a23c]"
+                      title={c.email}
                     >
-                      Reply
+                      {maskEmail(c.email)}
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => exportSingleContactCsv(c)}
-                      className="text-xs text-slate-400 hover:text-white transition-colors"
-                    >
-                      Export CSV
-                    </button>
-                  </div>
-                  {c.createdAt && (
-                    <div className="text-xs text-slate-500 mt-2">{new Date(c.createdAt).toLocaleString()}</div>
-                  )}
-                </SubmissionCard>
-              ))}
-              {!loading && contacts.length === 0 && (
-                <p className="text-slate-500 text-sm">No contact messages match your filters.</p>
-              )}
-            </div>
-          </section>
-        )}
+                    <p className="mt-3 text-sm leading-relaxed text-[#524d43] whitespace-pre-wrap">
+                      {c.message}
+                    </p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex gap-3">
+                        <a
+                          href={submissionReplyMailto('contact', c)}
+                          className="text-xs font-medium text-[#d9a23c] hover:underline"
+                        >
+                          Reply
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => void exportCsv('contact', [c._id])}
+                          className="text-xs text-[#7b7263] hover:text-[#0d1a4a] transition-colors"
+                        >
+                          Export
+                        </button>
+                      </div>
+                      {c.createdAt && (
+                        <span className="text-xs text-[#b0a799]">
+                          {new Date(c.createdAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </SubmissionCard>
+                ))}
+                {contacts.length === 0 && (
+                  <p className="rounded-xl border border-[#e4dcc9] bg-white px-5 py-10 text-center text-sm text-[#7b7263]">
+                    No contact messages match your filters.
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
 
-        {showAcademy && (
-          <section>
-            <h2 className="text-lg font-semibold text-[#D4AF37] mb-4">
-              Academy Interests ({academy.length})
-            </h2>
-            <div className="space-y-3">
-              {academy.map((a) => (
-                <SubmissionCard
-                  key={a._id}
-                  unread={isUnread(a)}
-                  toggling={togglingId === a._id}
-                  onToggleRead={() => toggleRead('academy', a._id, isUnread(a))}
-                >
-                  <div className="font-medium text-white">{a.fullName}</div>
-                  <a href={`mailto:${a.email}`} className="text-slate-400 hover:text-[#D4AF37]">{a.email}</a>
-                  <div className="flex flex-wrap gap-3 mt-3">
+          {showAcademy && (
+            <section>
+              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-[#7b7263]">
+                Academy Interest
+                <span className="rounded-full border border-[#e4dcc9] bg-white px-2 py-0.5 text-[10px] font-normal text-[#0d1a4a]">
+                  {academy.length}
+                </span>
+              </h2>
+              <div className="space-y-3">
+                {academy.map((a) => (
+                  <SubmissionCard
+                    key={a._id}
+                    unread={isUnread(a)}
+                    toggling={togglingId === a._id}
+                    onToggleRead={() => toggleRead('academy', a._id, isUnread(a))}
+                  >
+                    <p className="font-semibold text-[#0d1a4a]">{a.fullName}</p>
                     <a
-                      href={submissionReplyMailto('academy', a)}
-                      className="text-xs text-[#D4AF37] hover:underline"
+                      href={`mailto:${a.email}`}
+                      className="mt-0.5 block text-xs text-[#7b7263] hover:text-[#d9a23c]"
+                      title={a.email}
                     >
-                      Reply
+                      {maskEmail(a.email)}
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => exportSingleAcademyCsv(a)}
-                      className="text-xs text-slate-400 hover:text-white transition-colors"
-                    >
-                      Export CSV
-                    </button>
-                  </div>
-                  {a.createdAt && (
-                    <div className="text-xs text-slate-500 mt-2">{new Date(a.createdAt).toLocaleString()}</div>
-                  )}
-                </SubmissionCard>
-              ))}
-              {!loading && academy.length === 0 && (
-                <p className="text-slate-500 text-sm">No academy interests match your filters.</p>
-              )}
-            </div>
-          </section>
-        )}
-      </div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex gap-3">
+                        <a
+                          href={submissionReplyMailto('academy', a)}
+                          className="text-xs font-medium text-[#d9a23c] hover:underline"
+                        >
+                          Reply
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => void exportCsv('academy', [a._id])}
+                          className="text-xs text-[#7b7263] hover:text-[#0d1a4a] transition-colors"
+                        >
+                          Export
+                        </button>
+                      </div>
+                      {a.createdAt && (
+                        <span className="text-xs text-[#b0a799]">
+                          {new Date(a.createdAt).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  </SubmissionCard>
+                ))}
+                {academy.length === 0 && (
+                  <p className="rounded-xl border border-[#e4dcc9] bg-white px-5 py-10 text-center text-sm text-[#7b7263]">
+                    No academy interests match your filters.
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </AdminShell>
   );
 }

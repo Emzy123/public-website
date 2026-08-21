@@ -20,7 +20,6 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
     <>
       {preview && <PreviewBanner />}
       <Header
-        navLinks={settings.navigation}
         whatsappUrl={settings.contact.whatsapp}
         stackOffset={preview}
         logoUrl={settings.logoUrl}

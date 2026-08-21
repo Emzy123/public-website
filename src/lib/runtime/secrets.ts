@@ -20,7 +20,7 @@ export function assertProductionSecrets(): void {
     throw new Error(`Missing required production secrets: ${missing.join(', ')}`);
   }
 
-  if (!process.env.ADMIN_PASSWORD_HASH?.trim() && !process.env.ADMIN_PASSWORD?.trim()) {
-    throw new Error('ADMIN_PASSWORD_HASH is required in production (plain ADMIN_PASSWORD is discouraged)');
+  if (!process.env.ADMIN_PASSWORD_HASH?.trim()) {
+    throw new Error('ADMIN_PASSWORD_HASH is required in production — plaintext passwords are no longer supported');
   }
 }

@@ -8,6 +8,7 @@ import { ReCAPTCHA } from '@/components/common/ReCAPTCHA';
 
 const captureSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
+  consent: z.boolean().refine((v) => v === true, { message: 'You must consent to continue' }),
 });
 
 type CaptureForm = z.infer<typeof captureSchema>;
@@ -104,8 +105,10 @@ export function EmailCapture() {
           <input
             id="inline-email"
             type="email"
+            inputMode="email"
+            autoComplete="email"
             placeholder="Enter your email address"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
+            className={`w-full px-4 py-3.5 rounded-md border text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
             aria-invalid={errors.email ? 'true' : 'false'}
             aria-describedby={errors.email ? 'inline-email-error' : undefined}
             disabled={status === 'loading'}
@@ -115,11 +118,19 @@ export function EmailCapture() {
         <Button 
           type="submit" 
           disabled={status === 'loading' || !csrfToken || !recaptchaToken}
-          className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white"
+          className="min-h-[48px] whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white"
         >
           {status === 'loading' ? 'Joining...' : 'Join Now'}
         </Button>
       </div>
+
+      <label className="flex items-start gap-3 mt-3 text-xs text-slate-500 cursor-pointer">
+        <input type="checkbox" className="mt-0.5 h-5 w-5 flex-shrink-0 accent-blue-600" {...register('consent')} />
+        <span>I consent to SINet collecting my email for waitlist and future communications. <a href="/privacy" className="underline hover:text-blue-600">Privacy Policy</a></span>
+      </label>
+      {errors.consent && (
+        <p className="mt-1 text-sm text-red-600 text-left">{errors.consent.message}</p>
+      )}
 
       <ReCAPTCHA onToken={setRecaptchaToken} />
 

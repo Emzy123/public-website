@@ -3,23 +3,28 @@ import { getSession } from '@admin/lib/auth';
 import { getCmsContentForAdmin, saveCmsDraft } from '@admin/lib/cms/repository';
 import { getCmsPreviewPath, isCmsKey } from '@admin/lib/cms/keys';
 import { writeAuditLog } from '@/lib/audit/log';
+import { csrfProtect } from '@/lib/csrf';
+import { verifyCsrfToken } from '@/lib/security/csrf-handler';
+import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import type { CmsKey } from '@admin/types/content';
 
 type RouteContext = { params: { key: string } };
 
-export async function GET(_request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, { params }: RouteContext) {
   const key = params.key;
   if (!isCmsKey(key)) {
     return NextResponse.json({ error: 'Invalid content key' }, { status: 400 });
   }
 
   const { data, meta } = await getCmsContentForAdmin(key as CmsKey);
-  return NextResponse.json({
+  const response = NextResponse.json({
     key,
     data,
     meta,
     previewPath: getCmsPreviewPath(key as CmsKey),
   });
+  await csrfProtect(request, response);
+  return response;
 }
 
 export async function PUT(request: NextRequest, { params }: RouteContext) {
@@ -27,6 +32,10 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const csrf = await verifyCsrfToken(request);
+  if (!csrf.ok) return csrf.response;
+  const limited = await enforceRateLimit(`${session.email}:${getClientIp(request)}`, 'admin-draft-save', 30, 60);
+  if (!limited.ok) return NextResponse.json({ error: 'Too many save attempts. Try again later.' }, { status: 429, headers: limited.headers });
 
   const key = params.key;
   if (!isCmsKey(key)) {

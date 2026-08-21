@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
 import { EmailServiceAdapter, WaitlistPayload } from './index';
+import { escapeHtml, firstName } from './html';
 
-const LOGO_URL = 'https://sinet.africa/images/logo.jpg';
+const LOGO_URL = 'https://sinet.africa/images/sinet-logo.svg';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
 const WHATSAPP_URL = 'https://wa.me/2349028239706';
 
@@ -10,9 +11,9 @@ function buildWaitlistWelcomeEmailHtml(data: {
   userType: string;
   sectorInterest: string;
 }): string {
-  const name = data.fullName.split(' ')[0];
-  const sector = data.sectorInterest;
-  const userType = data.userType;
+  const name = firstName(data.fullName);
+  const sector = escapeHtml(data.sectorInterest);
+  const userType = escapeHtml(data.userType);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -127,13 +128,15 @@ export class ResendAdapter implements EmailServiceAdapter {
       lastName: data.fullName.split(' ').slice(1).join(' '),
     });
 
-    if (error) {
+    // A previous database write may have succeeded before a network failure. Treat
+    // Resend's duplicate-contact response as idempotent and continue the workflow.
+    if (error && !/already exists|duplicate/i.test(error.message)) {
       throw new Error(`Resend adapter error: ${error.message}`);
     }
 
     // 2. Send the branded welcome transactional email
     try {
-      await resend.emails.send({
+      const { error: emailError } = await resend.emails.send({
         from: fromEmail,
         to: [data.email],
         subject: 'Welcome to the SINet Waitlist! 🌍',
@@ -144,6 +147,7 @@ export class ResendAdapter implements EmailServiceAdapter {
         }),
         text: `Hi ${data.fullName.split(' ')[0]},\n\nThank you for joining the SINet waitlist. You have secured your spot!\n\nPreferences:\nRole: ${data.userType.toUpperCase()}\nEmpire: ${data.sectorInterest}\n\nJoin us on WhatsApp: ${WHATSAPP_URL}\n\n— The SINet Team`,
       });
+      if (emailError) throw new Error(emailError.message);
     } catch (emailErr: any) {
       console.warn('Welcome email failed to send:', emailErr);
       // Don't fail the entire submission if welcome email send fails (non-blocking)

@@ -1,7 +1,8 @@
 import { Resend } from 'resend';
+import { escapeHtml, firstName } from './html';
 
-const LOGO_URL = 'https://sinet.africa/images/logo.jpg';
-const SITE_URL = 'https://sinet.africa';
+const LOGO_URL = 'https://sinet.africa/images/sinet-logo.svg';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
 const WHATSAPP_URL = 'https://wa.me/2349028239706';
 
 function buildContactEmailHtml(data: {
@@ -10,6 +11,10 @@ function buildContactEmailHtml(data: {
   subject: string;
   message: string;
 }): string {
+  const name = escapeHtml(data.name);
+  const email = escapeHtml(data.email);
+  const subject = escapeHtml(data.subject);
+  const message = escapeHtml(data.message);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,20 +46,20 @@ function buildContactEmailHtml(data: {
           <tr>
             <td style="padding:36px 32px;">
               <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#D4AF37;text-transform:uppercase;letter-spacing:0.1em;">New Investor Inquiry</p>
-              <h1 style="margin:0 0 24px;font-size:22px;font-weight:800;color:#0A2342;line-height:1.2;">${data.subject}</h1>
+              <h1 style="margin:0 0 24px;font-size:22px;font-weight:800;color:#0A2342;line-height:1.2;">${subject}</h1>
 
               <!-- Info table -->
               <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F8F4E9;border-radius:12px;overflow:hidden;margin-bottom:24px;">
                 <tr>
                   <td style="padding:16px 20px;border-bottom:1px solid #e5e7eb;">
                     <span style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Name</span><br/>
-                    <span style="font-size:15px;color:#0A2342;font-weight:600;">${data.name}</span>
+                    <span style="font-size:15px;color:#0A2342;font-weight:600;">${name}</span>
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:16px 20px;">
                     <span style="font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Email</span><br/>
-                    <a href="mailto:${data.email}" style="font-size:15px;color:#0A2342;font-weight:600;text-decoration:none;">${data.email}</a>
+                    <a href="mailto:${email}" style="font-size:15px;color:#0A2342;font-weight:600;text-decoration:none;">${email}</a>
                   </td>
                 </tr>
               </table>
@@ -62,7 +67,7 @@ function buildContactEmailHtml(data: {
               <!-- Message -->
               <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Message</p>
               <div style="background:#F8F4E9;border-left:3px solid #D4AF37;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:28px;">
-                <p style="margin:0;font-size:15px;color:#374151;line-height:1.7;white-space:pre-wrap;">${data.message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                <p style="margin:0;font-size:15px;color:#374151;line-height:1.7;white-space:pre-wrap;">${message}</p>
               </div>
 
               <!-- Reply CTA -->
@@ -70,7 +75,7 @@ function buildContactEmailHtml(data: {
                 <tr>
                   <td align="center">
                     <a href="mailto:${data.email}" style="display:inline-block;background:#D4AF37;color:#0A2342;font-weight:800;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">
-                      Reply to ${data.name} →
+                      Reply to ${name} →
                     </a>
                   </td>
                 </tr>
@@ -102,6 +107,7 @@ function buildContactEmailHtml(data: {
 }
 
 function buildAutoReplyHtml(name: string): string {
+  const safeName = firstName(name);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -133,7 +139,7 @@ function buildAutoReplyHtml(name: string): string {
           <!-- Body -->
           <tr>
             <td style="padding:40px 32px;">
-              <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#0A2342;">Hi ${name}, we got your message! 👋</h1>
+              <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#0A2342;">Hi ${safeName}, we got your message! 👋</h1>
               <p style="margin:0 0 16px;font-size:16px;color:#374151;line-height:1.7;">
                 Thank you for reaching out to SINet. A member of our team will get back to you <strong>within 24 hours</strong>.
               </p>
@@ -228,11 +234,12 @@ export async function sendContactNotification(data: {
   if (notifyError) throw new Error(notifyError.message);
 
   // 2. Auto-reply to the sender
-  await resend.emails.send({
+  const { error: autoReplyError } = await resend.emails.send({
     from,
     to: [data.email],
     subject: `We received your inquiry – SINet`,
     html: buildAutoReplyHtml(data.name),
     text: `Hi ${data.name},\n\nThank you for contacting SINet. We will respond within 24 hours.\n\nFor faster support, reach us on WhatsApp: +234 902 823 9706\n\n— The SINet Team`,
   });
+  if (autoReplyError) throw new Error(autoReplyError.message);
 }

@@ -79,17 +79,13 @@ export async function POST(request: NextRequest) {
 
     // Save to MongoDB
     const db = await getMongoDb();
-    await db.collection('waitlistSubmissions').insertOne({
-      fullName: parsed.fullName,
-      email: parsed.email,
-      phoneNumber: parsed.phoneNumber || '',
-      country: parsed.country,
-      userType: parsed.userType,
-      sectorInterest: parsed.sectorInterest,
-      investmentInterest: parsed.investmentInterest || '',
-      hearAbout: parsed.hearAbout || '',
-      createdAt: new Date(),
-    });
+    const email = parsed.email.toLowerCase();
+    const insert = await db.collection('waitlistSubmissions').updateOne(
+      { email },
+      { $setOnInsert: { fullName: parsed.fullName, email, phoneNumber: parsed.phoneNumber || '', country: parsed.country, userType: parsed.userType, sectorInterest: parsed.sectorInterest, investmentInterest: parsed.investmentInterest || '', hearAbout: parsed.hearAbout || '', createdAt: new Date() } },
+      { upsert: true }
+    );
+    if (!insert.upsertedCount) return NextResponse.json({ success: true, message: 'You are already on the waitlist.' });
 
     await sendWaitlistContact(parsed);
     return NextResponse.json({ success: true, message: 'Successfully joined waitlist' });

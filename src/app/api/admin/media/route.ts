@@ -5,6 +5,9 @@ import { buildMediaUrl } from '@/lib/media/url';
 import { validateMediaUpload } from '@/lib/media/validation';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { writeAuditLog } from '@/lib/audit/log';
+import { csrfProtect } from '@/lib/csrf';
+import { verifyCsrfToken } from '@/lib/security/csrf-handler';
+import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
 export const runtime = 'nodejs';
 
@@ -28,18 +31,24 @@ export async function GET(req: NextRequest) {
 
   try {
     const { items, total } = await listMedia(limit, skip);
-    return NextResponse.json({ items, total, limit, skip });
+    const response = NextResponse.json({ items, total, limit, skip });
+    await csrfProtect(req, response);
+    return response;
   } catch (error) {
     console.error('Media list error:', error);
     return NextResponse.json({ error: 'Failed to list media' }, { status: 500 });
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const csrf = await verifyCsrfToken(req);
+  if (!csrf.ok) return csrf.response;
+  const limited = await enforceRateLimit(`${session.email}:${getClientIp(req)}`, 'admin-media-upload', 12, 60);
+  if (!limited.ok) return NextResponse.json({ error: 'Too many upload attempts. Try again later.' }, { status: 429, headers: limited.headers });
 
   try {
     await getMongoDb();
@@ -59,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const validation = validateMediaUpload(file.type, buffer.length, file.name);
+    const validation = validateMediaUpload(file.type, buffer.length, file.name, buffer);
     if (!validation.ok) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }

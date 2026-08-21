@@ -3,10 +3,177 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CMS_KEYS } from '@admin/lib/cms/keys';
 import type { SubmissionCounts } from '@admin/lib/submissions';
 
-const NAV_GROUPS = ['Home', 'Pages', 'Settings', 'Inbox'] as const;
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  badge?: number;
+  end?: boolean;
+};
+
+const Icon = ({ d, size = 16 }: { d: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+    <path d={d} />
+  </svg>
+);
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Overview',
+    items: [
+      {
+        href: '/admin',
+        label: 'Dashboard',
+        end: true,
+        icon: <Icon d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z M9 22V12h6v10" />,
+      },
+    ],
+  },
+  {
+    label: 'Applications',
+    items: [
+      {
+        href: '/admin/applications',
+        label: 'All Applications',
+        icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+      },
+      {
+        href: '/admin/applications?pathway=investment',
+        label: 'Investment',
+        icon: <Icon d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6" />,
+      },
+      {
+        href: '/admin/applications?pathway=get-involved',
+        label: 'Get Involved',
+        icon: <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75" />,
+      },
+    ],
+  },
+  {
+    label: 'Members',
+    items: [
+      {
+        href: '/admin/submissions',
+        label: 'Form Submissions',
+        icon: <Icon d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
+      },
+    ],
+  },
+  {
+    label: 'Content',
+    items: [
+      {
+        href: '/admin/content/home',
+        label: 'Homepage',
+        icon: <Icon d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7 M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />,
+      },
+      {
+        href: '/admin/content/returns',
+        label: 'Returns & Reports',
+        icon: <Icon d="M18 20V10 M12 20V4 M6 20v-6" />,
+      },
+      {
+        href: '/admin/content/site-settings',
+        label: 'Settings',
+        icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />,
+      },
+    ],
+  },
+];
+
+function SidebarContent({
+  pathname,
+  unread,
+  onClose,
+  logout,
+}: {
+  pathname: string;
+  unread: number;
+  onClose?: () => void;
+  logout: () => void;
+}) {
+  const isActive = (item: NavItem) => {
+    if (item.end) return pathname === item.href;
+    const base = item.href.split('?')[0];
+    return pathname.startsWith(base);
+  };
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+        <div className="flex h-8 w-8 items-center justify-center rounded bg-[#d9a23c]">
+          <span className="font-bold text-[#0d1a4a] text-sm">S</span>
+        </div>
+        <div>
+          <Link href="/admin" onClick={onClose} className="block font-semibold text-white leading-none text-[15px]">
+            SINet Admin
+          </Link>
+          <p className="text-[10px] text-[#d9a23c] uppercase tracking-widest mt-0.5">Staff console</p>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3">
+        {navGroups.map((group) => (
+          <div key={group.label} className="mb-5">
+            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[.12em] text-[#d9a23c]">
+              {group.label}
+            </p>
+            {group.items.map((item) => {
+              const active = isActive(item);
+              const showBadge = item.href === '/admin/submissions' && unread > 0;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all mb-0.5 ${
+                    active
+                      ? 'bg-[#d9a23c]/15 text-[#d9a23c] font-medium'
+                      : 'text-white hover:bg-white/[.06] hover:text-[#d9a23c]'
+                  }`}
+                >
+                  <span className={`shrink-0 ${active ? 'text-[#d9a23c]' : 'text-white/70'}`}>
+                    {item.icon}
+                  </span>
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {showBadge && (
+                    <span className="shrink-0 rounded-full bg-[#d9a23c] px-2 py-0.5 font-mono text-[10px] font-bold text-[#0d1a4a]">
+                      {unread}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* User */}
+      <div className="border-t border-white/10 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d9a23c] font-bold text-xs text-[#0d1a4a]">
+            FB
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-white">Favour Benjamin</p>
+            <p className="truncate text-xs text-white/40">Director of Investments</p>
+          </div>
+        </div>
+        <button
+          onClick={logout}
+          className="mt-3 flex items-center gap-2 text-xs text-[#d9a23c] hover:text-white transition-colors"
+        >
+          <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={13} />
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function AdminShell({
   title,
@@ -21,108 +188,98 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [unreadTotal, setUnreadTotal] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const [csrfToken, setCsrfToken] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/submissions?limit=1')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        const counts = d?.counts as SubmissionCounts | undefined;
-        if (counts) setUnreadTotal(counts.contacts.unread + counts.academy.unread);
+        const c = d?.counts as SubmissionCounts | undefined;
+        if (c) setUnread(c.contacts.unread + c.academy.unread);
       })
-      .catch(() => setUnreadTotal(0));
+      .catch(() => setUnread(0));
   }, [pathname]);
 
+  useEffect(() => {
+    fetch('/api/admin/auth/me')
+      .then((r) => setCsrfToken(r.headers.get('x-csrf-token') ?? ''))
+      .catch(() => setCsrfToken(''));
+  }, []);
+
   const logout = async () => {
-    await fetch('/api/admin/auth/logout', { method: 'POST' });
+    await fetch('/api/admin/auth/logout', {
+      method: 'POST',
+      headers: csrfToken ? { 'x-csrf-token': csrfToken } : {},
+    });
     router.push('/admin/login');
     router.refresh();
   };
 
-  const navItems = [
-    { href: '/admin', label: 'Dashboard', group: 'Home' as const },
-    ...CMS_KEYS.map((k) => ({
-      href: `/admin/content/${k.key}`,
-      label: k.label,
-      group: k.group as (typeof NAV_GROUPS)[number],
-    })),
-    { href: '/admin/submissions', label: 'Submissions', group: 'Inbox' as const, badge: unreadTotal },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex">
-      <aside className="w-64 shrink-0 border-r border-slate-800 bg-[#0A1929] flex flex-col">
-        <div className="p-5 border-b border-slate-800">
-          <Link href="/admin" className="text-lg font-bold text-[#D4AF37]">
-            SINet Admin
-          </Link>
-          <p className="text-xs text-slate-500 mt-1">Content Management</p>
-        </div>
-
-        <nav className="flex-1 overflow-y-auto p-3 space-y-6">
-          {NAV_GROUPS.map((group) => {
-            const items = navItems.filter((n) => n.group === group);
-            if (!items.length) return null;
-            return (
-              <div key={group}>
-                <p className="px-3 text-[10px] uppercase tracking-widest text-slate-500 mb-2">{group}</p>
-                <ul className="space-y-0.5">
-                  {items.map((item) => {
-                    const active = pathname === item.href;
-                    const badge = 'badge' in item ? item.badge : 0;
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
-                            active
-                              ? 'bg-[#D4AF37]/15 text-[#D4AF37] font-medium'
-                              : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                          }`}
-                        >
-                          <span>{item.label}</span>
-                          {badge > 0 && (
-                            <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-[#D4AF37] text-[#0A2342] text-xs font-bold">
-                              {badge}
-                            </span>
-                          )}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-slate-800 space-y-2">
-          <Link href="/" target="_blank" className="block text-xs text-slate-400 hover:text-[#D4AF37]">
-            View live site →
-          </Link>
-          <button
-            onClick={logout}
-            className="text-xs text-slate-400 hover:text-red-400 transition-colors"
-          >
-            Sign out
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#f6f2e8] text-[#0d1a4a] lg:flex">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:fixed lg:inset-y-0 bg-[#0d1a4a]">
+        <SidebarContent pathname={pathname} unread={unread} logout={logout} />
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="border-b border-slate-800 bg-slate-900/50 px-8 py-5 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold">{title}</h1>
-            {description && <p className="text-sm text-slate-400 mt-0.5">{description}</p>}
+      {/* Mobile drawer */}
+      {drawerOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <button
+            aria-label="Close menu"
+            onClick={() => setDrawerOpen(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          />
+          <aside className="relative flex w-64 flex-col bg-[#0d1a4a] shadow-2xl">
+            <SidebarContent
+              pathname={pathname}
+              unread={unread}
+              onClose={() => setDrawerOpen(false)}
+              logout={logout}
+            />
+          </aside>
+        </div>
+      )}
+
+      {/* Main */}
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
+        {/* Top bar */}
+        <header className="sticky top-0 z-30 flex min-h-[60px] items-center justify-between gap-4 border-b border-[#e4dcc9] bg-white/90 px-5 backdrop-blur md:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="grid h-9 w-9 place-items-center rounded-lg text-[#0d1a4a] hover:bg-[#f0e9d9] lg:hidden"
+              aria-label="Open menu"
+            >
+              <Icon d="M4 6h16M4 12h16M4 18h16" size={18} />
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold leading-none text-[#0d1a4a]">{title}</h1>
+              {description && <p className="mt-0.5 text-xs text-[#7b7263]">{description}</p>}
+            </div>
           </div>
-          {actions}
+          <div className="flex items-center gap-2">
+            {actions}
+            <div className="hidden items-center gap-2 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d9a23c] font-bold text-xs text-[#0d1a4a]">
+                FB
+              </div>
+            </div>
+          </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+
+        {/* Page content */}
+        <main className="mx-auto w-full max-w-[1280px] flex-1 px-5 py-7 md:px-8 md:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );
 }
 
+/* ── Shared action buttons ── */
 export function SaveButton({
   onClick,
   saving,
@@ -138,9 +295,9 @@ export function SaveButton({
     <button
       onClick={onClick}
       disabled={saving}
-      className="px-5 py-2 rounded-lg bg-[#D4AF37] text-[#0A2342] font-semibold text-sm hover:bg-[#F4D03F] disabled:opacity-50 transition-colors"
+      className="inline-flex items-center gap-2 rounded-lg border border-[#d9a23c] bg-[#d9a23c] px-4 py-2 text-sm font-semibold text-[#0d1a4a] transition-opacity disabled:opacity-50 hover:bg-[#c8921e]"
     >
-      {saving ? 'Saving…' : saved ? 'Draft saved ✓' : label}
+      {saving ? 'Saving…' : saved ? '✓ Saved' : label}
     </button>
   );
 }
@@ -160,9 +317,9 @@ export function PublishButton({
     <button
       onClick={onClick}
       disabled={publishing || disabled}
-      className="px-5 py-2 rounded-lg bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-500 disabled:opacity-50 transition-colors"
+      className="inline-flex items-center gap-2 rounded-lg border border-[#0d1a4a] bg-[#0d1a4a] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 hover:bg-[#1a2d66]"
     >
-      {publishing ? 'Publishing…' : published ? 'Published ✓' : 'Publish'}
+      {publishing ? 'Publishing…' : published ? '✓ Published' : 'Publish'}
     </button>
   );
 }
@@ -180,17 +337,25 @@ export function PreviewButton({
     <button
       onClick={onClick}
       disabled={previewing || disabled}
-      className="px-5 py-2 rounded-lg border border-slate-600 text-slate-200 font-semibold text-sm hover:border-slate-400 hover:text-white disabled:opacity-50 transition-colors"
+      className="inline-flex items-center gap-2 rounded-lg border border-[#d9d1bf] bg-white px-4 py-2 text-sm font-semibold text-[#0d1a4a] transition-colors disabled:opacity-50 hover:border-[#0d1a4a]"
     >
       {previewing ? 'Opening…' : 'Preview'}
     </button>
   );
 }
 
-export function AdminCard({ title, children }: { title?: string; children: React.ReactNode }) {
+export function AdminCard({
+  title,
+  children,
+  className = '',
+}: {
+  title?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-4">
-      {title && <h2 className="text-base font-semibold text-[#D4AF37]">{title}</h2>}
+    <div className={`rounded-xl border border-[#e4dcc9] bg-white p-6 ${className}`}>
+      {title && <h2 className="mb-4 text-base font-semibold text-[#0d1a4a]">{title}</h2>}
       {children}
     </div>
   );

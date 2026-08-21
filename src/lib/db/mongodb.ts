@@ -2,6 +2,17 @@ import { MongoClient, Db } from 'mongodb';
 import { Resolver } from 'node:dns';
 
 let clientPromise: Promise<MongoClient> | null = null;
+let lastConnectError: unknown = null;
+let lastConnectFailureAt = 0;
+const CONNECT_COOLDOWN_MS = 30_000;
+
+function isDevRuntime() {
+  return process.env.NODE_ENV !== 'production';
+}
+
+function isLocalMongoUri(uri: string) {
+  return /mongodb:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(uri);
+}
 
 function convertMongoSrvToDirectUri(srvUri: string): string | null {
   try {
@@ -96,7 +107,9 @@ async function connectMongoWithFallback(): Promise<MongoClient> {
   });
   if (viaSrvHosts) fallbackCandidates.push(viaSrvHosts);
 
-  const candidates = [uri, ...fallbackCandidates];
+  const useLocalOnly = isLocalMongoUri(uri);
+  const candidates = useLocalOnly ? [uri] : [uri, ...fallbackCandidates];
+  const timeoutMS = isDevRuntime() || useLocalOnly ? 2_000 : 10_000;
   let lastErr: unknown = null;
 
   for (const candidate of candidates) {
@@ -104,14 +117,15 @@ async function connectMongoWithFallback(): Promise<MongoClient> {
     const loggedCandidate = candidate.replace(/\/\/([^:]+):([^@]+)@/, '//$1:<redacted>@');
     try {
       const client = new MongoClient(candidate, {
-        connectTimeoutMS: 10_000,
-        serverSelectionTimeoutMS: 10_000,
+        connectTimeoutMS: timeoutMS,
+        serverSelectionTimeoutMS: timeoutMS,
       });
       await client.connect();
       return client;
     } catch (err) {
       console.warn(`MongoDB candidate connection failed for: ${loggedCandidate}. Error:`, err);
       lastErr = err;
+      if (isDevRuntime()) break;
     }
   }
 
@@ -135,11 +149,23 @@ function getEnv() {
 export async function getMongoDb(): Promise<Db> {
   const { dbName } = getEnv();
 
+  if (lastConnectError && Date.now() - lastConnectFailureAt < CONNECT_COOLDOWN_MS) {
+    throw lastConnectError;
+  }
+
   if (!clientPromise) {
-    clientPromise = connectMongoWithFallback().catch((err) => {
-      clientPromise = null;
-      throw err;
-    });
+    clientPromise = connectMongoWithFallback()
+      .then((client) => {
+        lastConnectError = null;
+        lastConnectFailureAt = 0;
+        return client;
+      })
+      .catch((err) => {
+        lastConnectError = err;
+        lastConnectFailureAt = Date.now();
+        clientPromise = null;
+        throw err;
+      });
   }
 
   const client = await clientPromise;

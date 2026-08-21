@@ -38,14 +38,38 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <AdminField label="Email">
-        <AdminInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
+      <AdminField label="Email address">
+        <AdminInput
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="username"
+          placeholder="admin@sinet.africa"
+        />
       </AdminField>
       <AdminField label="Password">
-        <AdminInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+        <AdminInput
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="current-password"
+          placeholder="••••••••"
+        />
       </AdminField>
-      {error && <p className="text-sm text-red-400">{error}</p>}
-      <button type="submit" disabled={loading} className="w-full py-3 rounded-lg bg-[#D4AF37] text-[#0A2342] font-bold hover:bg-[#F4D03F] disabled:opacity-50 transition-colors">
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full rounded-lg bg-[#0d1a4a] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1a2d66] disabled:opacity-50"
+      >
         {loading ? 'Signing in…' : 'Sign In'}
       </button>
     </form>
@@ -54,15 +78,26 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen bg-[#0A1929] flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[#D4AF37]">SINet Admin</h1>
-          <p className="text-sm text-slate-400 mt-2">Sign in to manage site content</p>
+    <div className="min-h-screen bg-[#f6f2e8] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo mark */}
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d1a4a]">
+            <span className="text-xl font-bold text-[#d9a23c]">S</span>
+          </div>
+          <h1 className="text-2xl font-semibold text-[#0d1a4a]">SINet Admin</h1>
+          <p className="mt-1 text-sm text-[#7b7263]">Sign in to the staff console</p>
         </div>
-        <Suspense fallback={<p className="text-slate-400 text-sm">Loading…</p>}>
-          <LoginForm />
-        </Suspense>
+
+        <div className="rounded-2xl border border-[#e4dcc9] bg-white p-8 shadow-sm">
+          <Suspense fallback={<p className="text-sm text-[#7b7263]">Loading…</p>}>
+            <LoginForm />
+          </Suspense>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-[#b0a799]">
+          SINet · Staff access only
+        </p>
       </div>
     </div>
   );

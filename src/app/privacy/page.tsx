@@ -84,18 +84,25 @@ const sections = [
     id: '6',
     title: 'Data Retention',
     content: (
-      <p className="text-slate-600 leading-relaxed">We retain your personal information for as long as necessary to fulfill the purposes outlined in this Privacy Policy, unless a longer retention period is required by law.</p>
+      <p className="text-slate-600 leading-relaxed">We retain your personal information only for as long as necessary to provide the requested service, meet legal obligations, resolve disputes, and enforce agreements. Marketing contact details are reviewed periodically and removed or anonymized when no longer needed; investment and application records may be retained longer where required by law.</p>
     ),
   },
   {
     id: '7',
+    title: 'Nigeria Data Protection Act',
+    content: (
+      <p className="text-slate-600 leading-relaxed">SINet processes personal information in line with applicable Nigerian data-protection law, including the Nigeria Data Protection Act 2023. You can exercise your access, correction, deletion, objection, and consent-withdrawal rights by contacting our data-protection contact using the details below.</p>
+    ),
+  },
+  {
+    id: '8',
     title: "Children's Privacy",
     content: (
       <p className="text-slate-600 leading-relaxed">Our website is not intended for individuals under the age of 18. We do not knowingly collect personal information from minors.</p>
     ),
   },
   {
-    id: '8',
+    id: '9',
     title: 'Changes to This Policy',
     content: (
       <p className="text-slate-600 leading-relaxed">We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page with an updated effective date.</p>
@@ -139,9 +146,9 @@ export default function PrivacyPage() {
             ))}
 
             {/* Contact section */}
-            <div id="section-9" className="border-t border-slate-100 pt-10">
+            <div id="section-10" className="border-t border-slate-100 pt-10">
               <h2 className="text-xl font-extrabold text-[#0A2342] mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">9</span>
+                <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">10</span>
                 Contact Us
               </h2>
               <div className="pl-11">

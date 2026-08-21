@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-heading', display: 'swap' });
+// Keep the application self-contained at build time. The editorial serif and mono
+// stacks are defined in globals.css; Geist supplies the UI/body fallback locally.
+const geist = localFont({
+  src: './fonts/GeistVF.woff',
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://sinet.africa'),
@@ -35,10 +40,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: '/images/logo-icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.png', type: 'image/png' },
+      { url: '/images/favicon.svg', type: 'image/svg+xml' },
     ],
-    apple: '/images/logo-icon.svg',
+    apple: '/images/favicon.svg',
   },
 };
 
@@ -53,7 +57,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="scroll-smooth">
-      <body className={`${inter.variable} ${plusJakarta.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geist.variable} antialiased min-h-screen flex flex-col`}>
         <AnalyticsScripts nonce={nonce} />
         <SiteChrome>{children}</SiteChrome>
       </body>

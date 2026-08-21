@@ -12,6 +12,7 @@ type UploadResult = {
 export function useImageUpload() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
 
   const upload = useCallback(async (file: File): Promise<UploadResult | null> => {
     setUploading(true);
@@ -30,11 +31,19 @@ export function useImageUpload() {
     }
 
     try {
+      let token = csrfToken;
+      if (!token) {
+        const tokenResponse = await fetch('/api/admin/media?limit=1');
+        token = tokenResponse.headers.get('x-csrf-token') ?? '';
+        setCsrfToken(token);
+      }
+      if (!token) throw new Error('Security token unavailable. Please refresh and try again.');
       const formData = new FormData();
       formData.append('file', file);
 
       const res = await fetch('/api/admin/media', {
         method: 'POST',
+        headers: { 'x-csrf-token': token },
         body: formData,
       });
 
@@ -50,7 +59,7 @@ export function useImageUpload() {
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [csrfToken]);
 
   const clearError = useCallback(() => setError(''), []);
 

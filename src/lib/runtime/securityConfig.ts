@@ -1,6 +1,6 @@
 import { isDevelopmentMode, isProductionMode } from './envMode';
 
-export type ApiRouteName = 'waitlist' | 'contact' | 'academy';
+export type ApiRouteName = 'waitlist' | 'contact' | 'academy' | 'applications';
 
 type CheckResult = {
   ok: boolean;
@@ -49,6 +49,7 @@ export function validateRouteSecurityConfig(route: ApiRouteName): CheckResult {
     ],
     contact: ['MONGODB_URI', 'MONGODB_DB', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL'],
     academy: ['MONGODB_URI', 'MONGODB_DB'],
+    applications: ['MONGODB_URI', 'MONGODB_DB', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL'],
   };
 
   const required = [...routeRequired[route]];
@@ -59,4 +60,3 @@ export function validateRouteSecurityConfig(route: ApiRouteName): CheckResult {
   const missing = missingEnvVars(required);
   return devOrProdMessage(missing, route);
 }
-

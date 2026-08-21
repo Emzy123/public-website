@@ -1,7 +1,9 @@
+import { generateSignedMediaUrl } from './signed-url';
+
 export const MEDIA_URL_PREFIX = '/api/media/';
 
 export function buildMediaUrl(id: string): string {
-  return `${MEDIA_URL_PREFIX}${id}`;
+  return generateSignedMediaUrl(id);
 }
 
 export function isMediaUrl(value: string): boolean {

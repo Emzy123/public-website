@@ -17,6 +17,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [published, setPublished] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
   const savedSnapshot = useRef<unknown>(null);
 
   const isDirty = data !== null && savedSnapshot.current !== null && contentDiffers(data, savedSnapshot.current);
@@ -39,6 +40,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
       const res = await fetch(`/api/admin/content/${key}`);
       if (!res.ok) throw new Error('Failed to load content');
       const json = await res.json();
+      setCsrfToken(res.headers.get('x-csrf-token') ?? '');
       applyResponse(json);
       if (json.previewPath) {
         setMeta((prev) => ({
@@ -64,7 +66,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
     try {
       const res = await fetch(`/api/admin/content/${key}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
         body: JSON.stringify({ data }),
       });
       const json = await res.json().catch(() => ({}));
@@ -97,7 +99,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
         if (!saved) return;
       }
 
-      const res = await fetch(`/api/admin/content/${key}/publish`, { method: 'POST' });
+      const res = await fetch(`/api/admin/content/${key}/publish`, { method: 'POST', headers: csrfToken ? { 'x-csrf-token': csrfToken } : {} });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? 'Failed to publish');
 
@@ -124,7 +126,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
       if (isDirty) {
         const res = await fetch(`/api/admin/content/${key}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
           body: JSON.stringify({ data }),
         });
         const json = await res.json().catch(() => ({}));
@@ -139,7 +141,7 @@ export function useCmsEditor<K extends CmsKey>(key: K) {
         }
       }
 
-      const enable = await fetch('/api/admin/preview/enable', { method: 'POST' });
+      const enable = await fetch('/api/admin/preview/enable', { method: 'POST', headers: csrfToken ? { 'x-csrf-token': csrfToken } : {} });
       if (!enable.ok) throw new Error('Failed to enable preview mode');
 
       const path = meta?.previewPath ?? '/';

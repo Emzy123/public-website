@@ -3,6 +3,8 @@ import { getSession } from '@admin/lib/auth';
 import { getCmsContentForAdmin, publishCmsContent } from '@admin/lib/cms/repository';
 import { getCmsPreviewPath, isCmsKey } from '@admin/lib/cms/keys';
 import { writeAuditLog } from '@/lib/audit/log';
+import { verifyCsrfToken } from '@/lib/security/csrf-handler';
+import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import type { CmsKey } from '@admin/types/content';
 
 type RouteContext = { params: { key: string } };
@@ -12,6 +14,10 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const csrf = await verifyCsrfToken(_request);
+  if (!csrf.ok) return csrf.response;
+  const limited = await enforceRateLimit(`${session.email}:${getClientIp(_request)}`, 'admin-publish', 5, 5 * 60);
+  if (!limited.ok) return NextResponse.json({ error: 'Too many publish attempts. Try again later.' }, { status: 429, headers: limited.headers });
 
   const key = params.key;
   if (!isCmsKey(key)) {

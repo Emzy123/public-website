@@ -6,13 +6,18 @@ export type AuditAction =
   | 'admin.logout'
   | 'cms.draft_save'
   | 'cms.publish'
-  | 'media.upload';
+  | 'media.upload'
+  | 'application.status_update'
+  | 'application.export'
+  | 'submissions.export'
+  | 'submissions.read_status_update';
 
 export type AuditEntry = {
   action: AuditAction;
   actor: string;
   resource?: string;
   metadata?: Record<string, unknown>;
+  previousValue?: Record<string, unknown>;
   ip?: string;
   createdAt: Date;
 };
