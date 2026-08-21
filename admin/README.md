@@ -11,7 +11,7 @@ Set credentials in `.env.local`:
 
 ```bash
 ADMIN_EMAIL=admin@sinet.africa
-ADMIN_PASSWORD=your-secure-password
+ADMIN_PASSWORD_HASH=<output of npx tsx scripts/hash-admin-password.ts "your-secure-password">
 ADMIN_SESSION_SECRET=random-32-char-secret
 ```
 

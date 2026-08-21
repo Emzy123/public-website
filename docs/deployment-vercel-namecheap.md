@@ -14,6 +14,10 @@ Set these in Vercel Project Settings -> Environment Variables:
 
 - `NODE_ENV=production` (Vercel sets this automatically for production)
 - `NEXT_PUBLIC_SITE_URL=https://sinet.africa`
+- Admin dashboard (required for `/admin`):
+- `ADMIN_EMAIL=admin@sinet.africa`
+- `ADMIN_PASSWORD_HASH=...` (generate with `npx tsx scripts/hash-admin-password.ts "your-password"`)
+- `ADMIN_SESSION_SECRET=...` (generate with `openssl rand -base64 32`)
 - MongoDB (required by `POST /api/contact` and `POST /api/academy`):
 - `MONGODB_URI=...`
 - `MONGODB_DB=sinet`
@@ -76,4 +80,4 @@ Then in Vercel Domains:
 - Contact submit stores data and sends notification email.
 - Academy submit stores interest.
 - `/robots.txt` and `/sitemap.xml` are reachable.
-
+- Sign in at `/admin` with the configured admin account.

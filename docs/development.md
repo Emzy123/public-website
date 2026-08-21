@@ -225,7 +225,7 @@ Content management lives in the `/admin` folder at project root. Routes are at `
 ```bash
 # Set in .env.local
 ADMIN_EMAIL=admin@sinet.africa
-ADMIN_PASSWORD=your-secure-password
+ADMIN_PASSWORD_HASH=<output of npx tsx scripts/hash-admin-password.ts "your-secure-password">
 ADMIN_SESSION_SECRET=random-32-char-secret
 
 # Seed CMS content to MongoDB

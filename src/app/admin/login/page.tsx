@@ -19,11 +19,18 @@ function LoginForm() {
     setLoading(true);
     setError('');
 
-    const res = await fetch('/api/admin/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      setError('Unable to reach the sign-in service. Please try again shortly.');
+      setLoading(false);
+      return;
+    }
 
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));

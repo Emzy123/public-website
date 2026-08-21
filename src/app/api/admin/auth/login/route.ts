@@ -4,6 +4,14 @@ import { isMfaEnabled, verifyTotp } from '@admin/lib/mfa';
 import { writeAuditLog } from '@/lib/audit/log';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
+function isAdminAuthConfigured(): boolean {
+  return Boolean(
+    process.env.ADMIN_EMAIL?.trim() &&
+      process.env.ADMIN_PASSWORD_HASH?.trim() &&
+      process.env.ADMIN_SESSION_SECRET?.trim()
+  );
+}
+
 const accountAttempts = new Map<string, { count: number; lockedUntil: number }>();
 const MAX_ACCOUNT_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -38,6 +46,13 @@ function clearAttempts(email: string): void {
 }
 
 export async function POST(request: NextRequest) {
+  // Fail predictably when a deployment is missing an admin setting. Without
+  // this guard, a valid password reaches JWT signing and becomes a vague 500.
+  if (!isAdminAuthConfigured()) {
+    console.error('Admin login is unavailable: required admin authentication environment variables are missing.');
+    return NextResponse.json({ error: 'Admin sign-in is temporarily unavailable. Please contact site support.' }, { status: 503 });
+  }
+
   const ip = getClientIp(request);
   const limited = await enforceRateLimit(ip, 'admin-login', 5, 15 * 60);
   if (!limited.ok) {

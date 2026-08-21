@@ -52,6 +52,7 @@ npx next start -p 3010
 
 - Confirm Vercel production build is green.
 - Confirm all required production env vars are set.
+- Confirm `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET` are set in the **Production** environment, then sign in at `/admin`.
 - Validate MongoDB network access and credentials.
 - Validate Resend API key, sender identity, and recipient inbox.
 - Run form checks (waitlist, contact, academy) on production preview.
@@ -93,4 +94,3 @@ npx next start -p 3010
   - invalid form fields
   - rate-limit behavior (429)
   - temporary provider failure fallback.
-
