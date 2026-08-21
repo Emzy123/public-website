@@ -259,6 +259,12 @@ export default function AdminDashboardPage() {
             icon="✉️"
           />
           <QuickAction
+            href="/admin/team"
+            label="Leadership Team"
+            description="Add, edit, or remove About page team profiles"
+            icon="👥"
+          />
+          <QuickAction
             href="/admin/content/home"
             label="Edit Content"
             description="Update homepage and page content"

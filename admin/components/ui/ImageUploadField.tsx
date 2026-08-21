@@ -43,14 +43,14 @@ export function ImageUploadField({
               type="button"
               onClick={open}
               disabled={uploading}
-              className="px-3 py-2 rounded-lg bg-[#D4AF37] text-[#0A2342] text-sm font-semibold hover:bg-[#F4D03F] disabled:opacity-50 transition-colors"
+              className="rounded-lg bg-[#d9a23c] px-3 py-2 text-sm font-semibold text-[#0d1a4a] hover:bg-[#eccb7c] disabled:opacity-50 transition-colors"
             >
               {uploading ? 'Uploading…' : 'Upload image'}
             </button>
             <button
               type="button"
               onClick={() => setLibraryOpen(true)}
-              className="px-3 py-2 rounded-lg border border-slate-600 text-sm text-slate-200 hover:border-slate-400 transition-colors"
+              className="rounded-lg border border-[#d9d1bf] px-3 py-2 text-sm font-medium text-[#0d1a4a] hover:bg-[#f6f2e8] transition-colors"
             >
               Pick from library
             </button>
@@ -58,7 +58,7 @@ export function ImageUploadField({
               <button
                 type="button"
                 onClick={() => onChange('')}
-                className="px-3 py-2 rounded-lg border border-slate-700 text-sm text-slate-400 hover:text-white transition-colors"
+                className="rounded-lg border border-[#d9d1bf] px-3 py-2 text-sm text-[#7b7263] hover:text-[#0d1a4a] transition-colors"
               >
                 Clear
               </button>
@@ -76,11 +76,11 @@ export function ImageUploadField({
             placeholder="https://… or /api/media/…"
           />
 
-          {error && <p className="text-xs text-red-400">{error}</p>}
+          {error && <p className="text-xs text-red-600">{error}</p>}
 
           {value && (
             <div
-              className={`rounded-lg border border-slate-700 bg-slate-950 bg-cover bg-center ${previewClassName}`}
+              className={`rounded-lg border border-[#e4dcc9] bg-[#f6f2e8] bg-cover bg-center ${previewClassName}`}
               style={{ backgroundImage: `url('${value}')` }}
               role="img"
               aria-label={`${label} preview`}

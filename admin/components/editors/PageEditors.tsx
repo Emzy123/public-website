@@ -129,43 +129,20 @@ export function AboutPageEditor({ data, onChange }: { data: AboutContent; onChan
         <button type="button" onClick={() => onChange({ ...data, timeline: [...data.timeline, { date: '', emoji: '', title: '', desc: '' }] })} className="text-xs text-[#D4AF37]">+ Add event</button>
       </AdminCard>
       <AdminCard title="Team members">
-        <p className="text-sm text-slate-400">Add leadership team profiles. Leave empty to use built-in defaults on the About page.</p>
-        {data.team.map((member, i) => (
-          <div key={member.id || i} className="p-4 mb-3 bg-slate-950 rounded-lg space-y-2">
-            <div className="grid md:grid-cols-2 gap-3">
-              <AdminInput value={member.name} placeholder="Name" onChange={(e) => { const t = [...data.team]; t[i] = { ...t[i], name: e.target.value }; onChange({ ...data, team: t }); }} />
-              <AdminInput value={member.title} placeholder="Title" onChange={(e) => { const t = [...data.team]; t[i] = { ...t[i], title: e.target.value }; onChange({ ...data, team: t }); }} />
-              <ImageUploadField
-                label="Photo"
-                value={member.photo}
-                onChange={(photo) => {
-                  const t = [...data.team];
-                  t[i] = { ...t[i], photo };
-                  onChange({ ...data, team: t });
-                }}
-                previewClassName="h-24 w-24 bg-contain bg-no-repeat bg-center"
-              />
-              <AdminInput value={member.empire} placeholder="Empire" onChange={(e) => { const t = [...data.team]; t[i] = { ...t[i], empire: e.target.value }; onChange({ ...data, team: t }); }} />
-              <AdminTextarea value={member.brief} placeholder="Brief" onChange={(e) => { const t = [...data.team]; t[i] = { ...t[i], brief: e.target.value }; onChange({ ...data, team: t }); }} />
-            </div>
-            <button type="button" onClick={() => onChange({ ...data, team: data.team.filter((_, j) => j !== i) })} className="text-xs text-red-400">Remove</button>
-          </div>
-        ))}
-        <button
-          type="button"
-          onClick={() =>
-            onChange({
-              ...data,
-              team: [
-                ...data.team,
-                { id: `member-${Date.now()}`, photo: '', name: '', title: '', empire: '', empireEmoji: '', brief: '', quote: '', achievement: '', bio: '', hideContact: false },
-              ],
-            })
-          }
-          className="text-xs text-[#D4AF37]"
-        >
-          + Add team member
-        </button>
+        <p className="text-sm text-slate-400">
+          {data.team.length} profile{data.team.length === 1 ? '' : 's'} configured for the About page.
+          Manage add, edit, view, and remove from the dedicated team page.
+        </p>
+        <ul className="mt-3 space-y-1 text-sm text-slate-300">
+          {data.team.slice(0, 8).map((member) => (
+            <li key={member.id}>{member.name || 'Untitled'} — {member.title || 'No title'}</li>
+          ))}
+          {data.team.length > 8 && <li className="text-slate-500">+{data.team.length - 8} more</li>}
+          {data.team.length === 0 && <li className="text-slate-500">Empty — public site will use built-in defaults.</li>}
+        </ul>
+        <a href="/admin/team" className="mt-4 inline-block text-xs font-semibold text-[#D4AF37] hover:underline">
+          Open Leadership Team manager →
+        </a>
       </AdminCard>
       <AdminCard title="CTA">
         <AdminField label="Subtitle"><AdminTextarea value={data.cta.subtitle} onChange={(e) => onChange({ ...data, cta: { ...data.cta, subtitle: e.target.value } })} /></AdminField>
