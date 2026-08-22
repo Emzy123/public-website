@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminField, AdminInput } from '@admin/components/ui/AdminField';
 
@@ -11,8 +11,17 @@ function LoginForm() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [csrfToken, setCsrfToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/auth/login')
+      .then((res) => setCsrfToken(res.headers.get('x-csrf-token') ?? ''))
+      .catch(() => setCsrfToken(''));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +32,11 @@ function LoginForm() {
     try {
       res = await fetch('/api/admin/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+        body: JSON.stringify({ email, password, totpCode: totpCode || undefined }),
       });
     } catch {
       setError('Unable to reach the sign-in service. Please try again shortly.');
@@ -32,8 +44,14 @@ function LoginForm() {
       return;
     }
 
+    const json = await res.json().catch(() => ({} as { error?: string; mfaRequired?: boolean }));
+
     if (!res.ok) {
-      const json = await res.json().catch(() => ({} as { error?: string }));
+      if (json.mfaRequired) setMfaRequired(true);
+      // Refresh CSRF after failed attempt
+      fetch('/api/admin/auth/login')
+        .then((r) => setCsrfToken(r.headers.get('x-csrf-token') ?? ''))
+        .catch(() => undefined);
       setError(
         json.error ||
           (res.status === 503
@@ -72,6 +90,20 @@ function LoginForm() {
           placeholder="••••••••"
         />
       </AdminField>
+      {(mfaRequired || totpCode) && (
+        <AdminField label="Authentication code" hint="6-digit code from your authenticator app">
+          <AdminInput
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value)}
+            required={mfaRequired}
+            placeholder="123456"
+            maxLength={6}
+          />
+        </AdminField>
+      )}
 
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -81,7 +113,7 @@ function LoginForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !csrfToken}
         className="w-full rounded-lg bg-[#0d1a4a] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1a2d66] disabled:opacity-50"
       >
         {loading ? 'Signing in…' : 'Sign In'}
@@ -94,7 +126,6 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#f6f2e8] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
-        {/* Logo mark */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d1a4a]">
             <span className="text-xl font-bold text-[#d9a23c]">S</span>

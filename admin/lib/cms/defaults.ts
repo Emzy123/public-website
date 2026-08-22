@@ -7,6 +7,7 @@ import type {
   ConnectContent,
   ContactPageContent,
   EmpiresPageContent,
+  GalleryContent,
   HeroSlide,
   HomeContent,
   ImpactContent,
@@ -457,6 +458,16 @@ export const DEFAULT_SECTORS_PAGE: SectorsPageContent = {
   },
 };
 
+export const DEFAULT_GALLERY: GalleryContent = {
+  hero: {
+    badge: 'Gallery',
+    title: 'Real activity across our pillars.',
+    subtitle:
+      'Authentic photos from farms, warehouses, deliveries, markets, and properties — organized by sector, not as one mixed feed.',
+  },
+  items: [],
+};
+
 export const DEFAULT_WAITLIST_PAGE: WaitlistPageContent = {
   title: 'Secure Your Early Access',
   subtitle: 'Tell us about your investment goals and secure your prioritized spot on the SINet waitlist.',
@@ -599,6 +610,7 @@ const DEFAULTS: CmsDataMap = {
   academy: DEFAULT_ACADEMY,
   connect: DEFAULT_CONNECT,
   'sectors-page': DEFAULT_SECTORS_PAGE,
+  gallery: DEFAULT_GALLERY,
   'waitlist-page': DEFAULT_WAITLIST_PAGE,
   'contact-page': DEFAULT_CONTACT_PAGE,
   'site-settings': DEFAULT_SITE_SETTINGS,
@@ -606,6 +618,35 @@ const DEFAULTS: CmsDataMap = {
 
 export function getDefaultContent<K extends CmsKey>(key: K): CmsDataMap[K] {
   return structuredClone(DEFAULTS[key]);
+}
+
+export function normalizeGalleryContent(data: Partial<GalleryContent> | undefined): GalleryContent {
+  const defaults = DEFAULT_GALLERY;
+  if (!data) return structuredClone(defaults);
+
+  const items = Array.isArray(data.items)
+    ? data.items
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => ({
+          id: String(item.id || `gallery-${index}`),
+          pillar: (['agriculture', 'trade-distribution', 'real-estate'].includes(item.pillar)
+            ? item.pillar
+            : 'agriculture') as GalleryContent['items'][number]['pillar'],
+          imageUrl: String(item.imageUrl || ''),
+          caption: String(item.caption || ''),
+          sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
+        }))
+    : [];
+
+  return {
+    hero: {
+      badge: data.hero?.badge ?? defaults.hero.badge,
+      title: data.hero?.title ?? defaults.hero.title,
+      subtitle: data.hero?.subtitle ?? defaults.hero.subtitle,
+      titleAccent: data.hero?.titleAccent,
+    },
+    items,
+  };
 }
 
 export function normalizeSiteSettings(data: Partial<SiteSettings> | undefined): SiteSettings {

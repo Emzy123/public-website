@@ -3,6 +3,11 @@ import { createSession, sessionCookieOptions, validateCredentials } from '@admin
 import { isMfaEnabled, verifyTotp } from '@admin/lib/mfa';
 import { writeAuditLog } from '@/lib/audit/log';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
+import { validateOrigin } from '@/lib/security/origin';
+import { verifyCsrfToken } from '@/lib/security/csrf-handler';
+import { csrfProtect } from '@/lib/csrf';
+import { isProductionMode } from '@/lib/runtime/envMode';
+import { Redis } from '@upstash/redis';
 
 function normalizeEnv(value: string | undefined): string {
   return (value ?? '').trim().replace(/^["']|["']$/g, '');
@@ -15,44 +20,108 @@ function isAdminAuthConfigured(): boolean {
   return Boolean(email && hash.includes(':') && sessionSecret.length >= 32);
 }
 
-const accountAttempts = new Map<string, { count: number; lockedUntil: number }>();
+const memoryAttempts = new Map<string, { count: number; lockedUntil: number }>();
 const MAX_ACCOUNT_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const LOCKOUT_DURATION_MS = 15 * 60 * 1000;
 
-function checkAccountLockout(email: string): { locked: boolean; remainingMs?: number } {
-  const key = email.toLowerCase();
-  const record = accountAttempts.get(key);
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    ? new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    : null;
+
+async function checkAccountLockout(email: string): Promise<{ locked: boolean; remainingMs?: number }> {
+  const key = `sinet:admin-lockout:${email.toLowerCase()}`;
+
+  if (redis) {
+    try {
+      const lockedUntil = await redis.get<number>(key);
+      if (typeof lockedUntil === 'number' && lockedUntil > Date.now()) {
+        return { locked: true, remainingMs: lockedUntil - Date.now() };
+      }
+      return { locked: false };
+    } catch (error) {
+      console.error('Redis lockout check failed:', error);
+      if (isProductionMode()) {
+        // Fail closed on lockout infrastructure failure in production.
+        return { locked: true, remainingMs: LOCKOUT_DURATION_MS };
+      }
+    }
+  }
+
+  const record = memoryAttempts.get(email.toLowerCase());
   if (!record) return { locked: false };
-
   if (record.lockedUntil > Date.now()) {
     return { locked: true, remainingMs: record.lockedUntil - Date.now() };
   }
-
   if (record.lockedUntil > 0 && record.lockedUntil <= Date.now()) {
-    accountAttempts.delete(key);
+    memoryAttempts.delete(email.toLowerCase());
   }
   return { locked: false };
 }
 
-function recordFailedAttempt(email: string): void {
-  const key = email.toLowerCase();
-  const record = accountAttempts.get(key) ?? { count: 0, lockedUntil: 0 };
+async function recordFailedAttempt(email: string): Promise<void> {
+  const normalized = email.toLowerCase();
+  const key = `sinet:admin-lockout-count:${normalized}`;
+
+  if (redis) {
+    try {
+      const count = await redis.incr(key);
+      if (count === 1) await redis.pexpire(key, LOCKOUT_DURATION_MS);
+      if (count >= MAX_ACCOUNT_ATTEMPTS) {
+        await redis.set(`sinet:admin-lockout:${normalized}`, Date.now() + LOCKOUT_DURATION_MS, {
+          px: LOCKOUT_DURATION_MS,
+        });
+      }
+      return;
+    } catch (error) {
+      console.error('Redis lockout write failed:', error);
+    }
+  }
+
+  const record = memoryAttempts.get(normalized) ?? { count: 0, lockedUntil: 0 };
   record.count += 1;
   if (record.count >= MAX_ACCOUNT_ATTEMPTS) {
     record.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
   }
-  accountAttempts.set(key, record);
+  memoryAttempts.set(normalized, record);
 }
 
-function clearAttempts(email: string): void {
-  accountAttempts.delete(email.toLowerCase());
+async function clearAttempts(email: string): Promise<void> {
+  const normalized = email.toLowerCase();
+  memoryAttempts.delete(normalized);
+  if (redis) {
+    try {
+      await redis.del(`sinet:admin-lockout:${normalized}`, `sinet:admin-lockout-count:${normalized}`);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+export async function GET(request: NextRequest) {
+  const response = NextResponse.json({ success: true });
+  await csrfProtect(request, response);
+  return response;
 }
 
 export async function POST(request: NextRequest) {
-  // Fail predictably when a deployment is missing an admin setting. Without
-  // this guard, a valid password reaches JWT signing and becomes a vague 500.
+  if (!validateOrigin(request)) {
+    return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
+  }
+
+  const csrf = await verifyCsrfToken(request);
+  if (!csrf.ok) return csrf.response;
+
   if (!isAdminAuthConfigured()) {
     console.error('Admin login is unavailable: required admin authentication environment variables are missing.');
+    return NextResponse.json({ error: 'Admin sign-in is temporarily unavailable. Please contact site support.' }, { status: 503 });
+  }
+
+  if (isProductionMode() && !isMfaEnabled()) {
+    console.error('Admin login blocked: ADMIN_TOTP_SECRET is required in production.');
     return NextResponse.json({ error: 'Admin sign-in is temporarily unavailable. Please contact site support.' }, { status: 503 });
   }
 
@@ -76,7 +145,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const lockout = checkAccountLockout(email);
+    const lockout = await checkAccountLockout(email);
     if (lockout.locked) {
       const minutes = Math.ceil((lockout.remainingMs ?? 0) / 60000);
       await writeAuditLog({
@@ -102,7 +171,7 @@ export async function POST(request: NextRequest) {
         ip,
         metadata: { reason: 'invalid_credentials' },
       });
-      recordFailedAttempt(email);
+      await recordFailedAttempt(email);
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
@@ -113,11 +182,11 @@ export async function POST(request: NextRequest) {
         ip,
         metadata: { reason: 'invalid_totp' },
       });
-      recordFailedAttempt(email);
+      await recordFailedAttempt(email);
       return NextResponse.json({ error: 'Invalid authentication code' }, { status: 401 });
     }
 
-    clearAttempts(email);
+    await clearAttempts(email);
     const token = await createSession(email);
     await writeAuditLog({
       action: 'admin.login',

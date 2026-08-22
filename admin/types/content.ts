@@ -319,6 +319,21 @@ export type ContactPageContent = {
   connectLabel: string;
 };
 
+export type GalleryPillar = 'agriculture' | 'trade-distribution' | 'real-estate';
+
+export type GalleryItem = {
+  id: string;
+  pillar: GalleryPillar;
+  imageUrl: string;
+  caption: string;
+  sortOrder: number;
+};
+
+export type GalleryContent = {
+  hero: PageHeroContent;
+  items: GalleryItem[];
+};
+
 export type CmsKey =
   | 'hero-slides'
   | 'home'
@@ -332,6 +347,7 @@ export type CmsKey =
   | 'academy'
   | 'connect'
   | 'sectors-page'
+  | 'gallery'
   | 'waitlist-page'
   | 'contact-page'
   | 'site-settings';
@@ -349,6 +365,7 @@ export type CmsDataMap = {
   academy: AcademyContent;
   connect: ConnectContent;
   'sectors-page': SectorsPageContent;
+  gallery: GalleryContent;
   'waitlist-page': WaitlistPageContent;
   'contact-page': ContactPageContent;
   'site-settings': SiteSettings;

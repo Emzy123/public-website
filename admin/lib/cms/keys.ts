@@ -14,6 +14,7 @@ export const CMS_KEYS: { key: CmsKey; label: string; description: string; group:
   { key: 'academy', label: 'Academy Page', description: 'Curriculum and learning path', group: 'Pages', previewPath: '/academy' },
   { key: 'connect', label: 'Connect Page', description: 'Inquiry form options', group: 'Pages', previewPath: '/connect' },
   { key: 'sectors-page', label: 'Sectors Page', description: 'Three pillars hero copy', group: 'Pages', previewPath: '/sectors' },
+  { key: 'gallery', label: 'Gallery', description: 'Pillar-tagged photos for the public gallery', group: 'Pages', previewPath: '/gallery' },
   { key: 'waitlist-page', label: 'Waitlist Page', description: 'Waitlist intro copy', group: 'Pages', previewPath: '/waitlist' },
   { key: 'contact-page', label: 'Contact Page', description: 'Legacy contact page copy', group: 'Pages', previewPath: '/contact' },
   { key: 'site-settings', label: 'Site Settings', description: 'Contact, social, navigation, SEO', group: 'Settings', previewPath: '/' },

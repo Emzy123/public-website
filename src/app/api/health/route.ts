@@ -1,45 +1,43 @@
-import { NextResponse } from 'next/server';
-import { getMongoDb } from '@/lib/db/mongodb';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type CheckStatus = 'ok' | 'degraded' | 'error';
+/**
+ * Public health check returns a minimal payload.
+ * Detailed dependency status requires HEALTH_CHECK_TOKEN.
+ */
+export async function GET(request: NextRequest) {
+  const token = request.headers.get('x-health-token') || request.nextUrl.searchParams.get('token');
+  const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
+  const authorized = Boolean(expected && token && token === expected);
 
-async function checkMongo(): Promise<CheckStatus> {
-  if (!process.env.MONGODB_URI?.trim()) return 'degraded';
-  try {
-    const db = await getMongoDb();
-    await db.command({ ping: 1 });
-    return 'ok';
-  } catch {
-    return 'error';
+  if (!authorized) {
+    return NextResponse.json({ ok: true }, { status: 200 });
   }
-}
 
-function checkRedis(): CheckStatus {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return 'ok';
+  const { getMongoDb } = await import('@/lib/db/mongodb');
+
+  let mongo: 'ok' | 'degraded' | 'error' = 'degraded';
+  if (process.env.MONGODB_URI?.trim()) {
+    try {
+      const db = await getMongoDb();
+      await db.command({ ping: 1 });
+      mongo = 'ok';
+    } catch {
+      mongo = 'error';
+    }
   }
-  return 'degraded';
-}
 
-function checkEmail(): CheckStatus {
-  return process.env.RESEND_API_KEY?.trim() ? 'ok' : 'degraded';
-}
-
-export async function GET() {
-  const [mongo] = await Promise.all([checkMongo()]);
-  const redis = checkRedis();
-  const email = checkEmail();
-
+  const redis =
+    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? 'ok' : 'degraded';
+  const email = process.env.RESEND_API_KEY?.trim() ? 'ok' : 'degraded';
   const checks = { mongo, redis, email };
   const hasError = Object.values(checks).includes('error');
-  const status = hasError ? 'unhealthy' : 'healthy';
 
   return NextResponse.json(
     {
-      status,
+      status: hasError ? 'unhealthy' : 'healthy',
       timestamp: new Date().toISOString(),
       version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'local',
       checks,

@@ -5,6 +5,7 @@ import type { CmsKey } from '@admin/types/content';
 import { CMS_KEYS } from '@admin/lib/cms/keys';
 import { useCmsEditor } from '@admin/hooks/useCmsEditor';
 import { AdminShell, PreviewButton, PublishButton, SaveButton } from './AdminShell';
+import { GalleryEditor } from './editors/GalleryEditor';
 import { HeroEditor } from './editors/HeroEditor';
 import { HomeEditor } from './editors/HomeEditor';
 import {
@@ -29,6 +30,7 @@ import type {
   ConnectContent,
   ContactPageContent,
   EmpiresPageContent,
+  GalleryContent,
   HeroSlide,
   HomeContent,
   ImpactContent,
@@ -129,6 +131,9 @@ export function ContentEditorPage({ contentKey }: { contentKey: CmsKey }) {
           )}
           {contentKey === 'sectors-page' && (
             <SectorsPageEditor data={data as SectorsPageContent} onChange={(d) => setData(d)} />
+          )}
+          {contentKey === 'gallery' && (
+            <GalleryEditor data={data as GalleryContent} onChange={(d) => setData(d)} />
           )}
           {contentKey === 'waitlist-page' && (
             <WaitlistPageEditor data={data as WaitlistPageContent} onChange={(d) => setData(d)} />

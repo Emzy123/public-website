@@ -1,6 +1,6 @@
 import type { CmsDataMap, CmsKey } from '@admin/types/content';
 import { contentDiffers } from './diff';
-import { getDefaultContent, normalizeSiteSettings } from './defaults';
+import { getDefaultContent, normalizeGalleryContent, normalizeSiteSettings } from './defaults';
 import { CMS_COLLECTION } from './keys';
 import { getMongoDb } from '@/lib/db/mongodb';
 
@@ -17,6 +17,9 @@ type CmsDocument = {
 function normalizeContent<K extends CmsKey>(key: K, value: unknown): CmsDataMap[K] {
   if (key === 'site-settings') {
     return normalizeSiteSettings(value as Partial<CmsDataMap['site-settings']>) as CmsDataMap[K];
+  }
+  if (key === 'gallery') {
+    return normalizeGalleryContent(value as Partial<CmsDataMap['gallery']>) as CmsDataMap[K];
   }
   return value as CmsDataMap[K];
 }
@@ -184,6 +187,7 @@ export async function seedAllCmsContent(): Promise<Record<string, boolean>> {
     'academy',
     'connect',
     'sectors-page',
+    'gallery',
     'waitlist-page',
     'contact-page',
     'site-settings',

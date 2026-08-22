@@ -1,6 +1,7 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { isProductionMode } from '@/lib/runtime/envMode';
 
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
@@ -54,9 +55,23 @@ export async function enforceRateLimit(
       }
       return { ok: true, headers: {} };
     } catch (error) {
-      // Misconfigured or unreachable Upstash must not take down auth/forms.
-      console.error(`Upstash rate limit failed for ${prefix}; falling back to memory limiter:`, error);
+      console.error(`Upstash rate limit failed for ${prefix}:`, error);
+      if (isProductionMode()) {
+        // Fail closed in production — do not silently weaken limits.
+        return {
+          ok: false,
+          retryAfterSec: 60,
+          headers: { 'Retry-After': '60' },
+        };
+      }
     }
+  } else if (isProductionMode()) {
+    console.error(`Upstash rate limiter unavailable for ${prefix}; rejecting request in production.`);
+    return {
+      ok: false,
+      retryAfterSec: 60,
+      headers: { 'Retry-After': '60' },
+    };
   }
 
   const memoryKey = `${prefix}:${identifier}`;
@@ -72,6 +87,15 @@ export async function enforceRateLimit(
 }
 
 export function getClientIp(request: Request): string {
+  // Prefer platform-managed headers when present (Vercel).
+  const vercelForwarded = request.headers.get('x-vercel-forwarded-for');
+  if (vercelForwarded) {
+    return vercelForwarded.split(',')[0]?.trim() || 'unknown';
+  }
+
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp?.trim()) return realIp.trim();
+
   const forwarded = request.headers.get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() ?? request.headers.get('x-real-ip') ?? 'unknown';
+  return forwarded?.split(',')[0]?.trim() ?? 'unknown';
 }

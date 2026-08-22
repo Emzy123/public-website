@@ -1,8 +1,12 @@
 import { createCsrfProtect } from '@edge-csrf/nextjs';
+import { isProductionMode } from '@/lib/runtime/envMode';
 
 export const csrfProtect = createCsrfProtect({
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    secure: isProductionMode(),
+    sameSite: 'strict',
+    path: '/',
   },
   token: {
     fieldName: 'csrfToken',

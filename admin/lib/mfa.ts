@@ -26,7 +26,8 @@ export function isMfaEnabled(): boolean {
 
 export function verifyTotp(code: string): boolean {
   const verifier = getVerifier();
-  if (!verifier) return true;
+  // Fail closed when MFA is not configured — callers must gate with isMfaEnabled().
+  if (!verifier) return false;
 
   const normalized = code.replace(/\s/g, '');
   if (!/^\d{6}$/.test(normalized)) return false;

@@ -59,17 +59,23 @@ export const investmentInterests = [
 function buildAllowedOrigins(): string[] {
   const origins = new Set<string>(['https://sinet.africa', 'https://www.sinet.africa']);
 
-  // Allow local development origins.
-  origins.add('http://localhost:3000');
-  origins.add('http://127.0.0.1:3000');
+  // Local development origins only — never in production builds.
+  if (process.env.NODE_ENV !== 'production') {
+    origins.add('http://localhost:3000');
+    origins.add('http://127.0.0.1:3000');
+  }
 
-  // Allow a configured site URL (helps staging environments).
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  if (siteUrl) origins.add(siteUrl);
+  if (siteUrl) {
+    try {
+      origins.add(new URL(siteUrl).origin);
+    } catch {
+      origins.add(siteUrl);
+    }
+  }
 
-  // Allow Vercel preview/deployment URLs (VERCEL_URL is like: my-app-git-branch.vercel.app)
   const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) origins.add(`https://${vercelUrl}`);
+  if (vercelUrl) origins.add(`https://${vercelUrl.replace(/^https?:\/\//, '')}`);
 
   return Array.from(origins);
 }

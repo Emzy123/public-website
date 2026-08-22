@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { getAdminSessionSecret } from '@/lib/runtime/secrets';
+import { isProductionMode } from '@/lib/runtime/envMode';
 import { verifyPassword } from './password';
 
 const COOKIE_NAME = 'sinet_admin_session';
@@ -51,7 +52,7 @@ export function sessionCookieOptions(token: string) {
     name: COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionMode(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: SESSION_MAX_AGE,
@@ -64,7 +65,7 @@ export function clearSessionCookie() {
     name: COOKIE_NAME,
     value: '',
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionMode(),
     sameSite: 'lax' as const,
     path: '/',
     maxAge: 0,
