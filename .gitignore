@@ -25,6 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 debug-*.log
+*.log
 
 # local env files
 .env*.local
@@ -36,4 +37,11 @@ debug-*.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-debug-cf60a3.log
+
+# editor / agent / internal briefs (do not publish)
+.cursor/
+.kiro/
+.idea/
+sinet-*-prompt*.md
+*-master-*-prompt*.md
+*-refining-prompt*.md
