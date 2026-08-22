@@ -56,16 +56,9 @@ export async function enforceRateLimit(
       return { ok: true, headers: {} };
     } catch (error) {
       console.error(`Upstash rate limit failed for ${prefix}:`, error);
-      if (isProductionMode()) {
-        // Fail closed in production — do not silently weaken limits.
-        return {
-          ok: false,
-          retryAfterSec: 60,
-          headers: { 'Retry-After': '60' },
-        };
-      }
+      // Fall through to memory limiter below for availability.
     }
-  } else if (isProductionMode()) {
+  } else if (isProductionMode() && prefix !== 'admin-login') {
     console.error(`Upstash rate limiter unavailable for ${prefix}; rejecting request in production.`);
     return {
       ok: false,

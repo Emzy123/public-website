@@ -44,10 +44,7 @@ async function checkAccountLockout(email: string): Promise<{ locked: boolean; re
       return { locked: false };
     } catch (error) {
       console.error('Redis lockout check failed:', error);
-      if (isProductionMode()) {
-        // Fail closed on lockout infrastructure failure in production.
-        return { locked: true, remainingMs: LOCKOUT_DURATION_MS };
-      }
+      // Fall through to in-memory lockout — do not lock every admin out of the site.
     }
   }
 
@@ -121,8 +118,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (isProductionMode() && !isMfaEnabled()) {
-    console.error('Admin login blocked: ADMIN_TOTP_SECRET is required in production.');
-    return NextResponse.json({ error: 'Admin sign-in is temporarily unavailable. Please contact site support.' }, { status: 503 });
+    console.warn('[security] ADMIN_TOTP_SECRET is not set — admin login is password-only until MFA is configured.');
   }
 
   const ip = getClientIp(request);
