@@ -47,5 +47,5 @@ export type RegistrationLink = {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
-  url?: string;
+  url: string;
 };

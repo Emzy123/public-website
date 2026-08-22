@@ -11,6 +11,12 @@ const STATUS_CLASSES: Record<string, string> = {
   'auto-closed': 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
+function shareableLinkUrl(link: RegistrationLink): string {
+  if (link.url) return link.url;
+  if (typeof window !== 'undefined') return `${window.location.origin}/join/${link.slug}`;
+  return `/join/${link.slug}`;
+}
+
 export default function RegistrationLinksPage() {
   const [links, setLinks] = useState<RegistrationLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +80,10 @@ export default function RegistrationLinksPage() {
       if (!res.ok) throw new Error(data.error || 'Unable to create link');
       setShowForm(false);
       setForm({ name: '', roles: ['volunteer', 'community-member', 'ambassador', 'staff', 'partnership-interest'], expiresAt: '', quota: '' });
+      if (data.link) {
+        setSelected(data.link);
+        void loadDetail(data.link);
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create link');
@@ -188,7 +198,14 @@ export default function RegistrationLinksPage() {
           <div className="space-y-4">
             <AdminCard title={selected.name}>
               <p className="mb-2 text-xs text-[#7b7263]">Shareable URL</p>
-              <code className="block break-all rounded bg-[#f6f2e8] p-2 text-xs">{`/join/${selected.slug}`}</code>
+              <code className="block break-all rounded bg-[#f6f2e8] p-2 text-xs">{shareableLinkUrl(selected)}</code>
+              <button
+                type="button"
+                onClick={() => void navigator.clipboard.writeText(shareableLinkUrl(selected))}
+                className="mt-2 text-xs font-semibold text-[#d9a23c] hover:underline"
+              >
+                Copy link
+              </button>
               <div className="mt-4 flex gap-2">
                 {selected.isOpen ? (
                   <button onClick={() => toggleLink(selected, false)} className="flex-1 rounded-lg border border-red-200 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Close Now</button>
