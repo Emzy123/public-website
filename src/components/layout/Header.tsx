@@ -8,12 +8,14 @@ import { MobileDrawer } from './MobileDrawer';
 
 const PRIMARY_NAV = [
   { label: 'About', href: '/about' },
-  { label: 'How It Works', href: '/investment-plans#how-it-works' },
-  { label: 'Investment Plans', href: '/investment-plans' },
   { label: 'What We Do', href: '/sectors' },
+  { label: 'Products', href: '/products' },
+  { label: 'Gallery', href: '/gallery' },
+  { label: 'News', href: '/news' },
+  { label: 'Partners', href: '/partners' },
+  { label: 'Membership', href: '/membership' },
   { label: 'Student Network', href: '/student-network' },
-  { label: 'Get Involved', href: '/get-involved' },
-  { label: 'Reports', href: '/reports' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 type HeaderProps = { whatsappUrl?: string; stackOffset?: boolean; logoUrl?: string };
@@ -44,8 +46,12 @@ export function Header({ stackOffset = false }: HeaderProps) {
               return <Link key={link.label} href={link.href} className={`px-3 py-2 text-[13px] transition-colors ${active ? 'text-[#0d1a4a] font-semibold' : 'text-[#4f4b43] hover:text-[#d9711b]'}`}>{link.label}</Link>;
             })}
           </nav>
-          <div className="hidden xl:block"><Link href="/start-investing" className="inline-flex bg-[#0d1a4a] px-5 py-3 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]">Start Investing</Link></div>
-          <button type="button" className="flex h-11 w-11 items-center justify-center border border-[#0d1a4a]/20 text-[#0d1a4a] xl:hidden" onClick={() => setIsMobileMenuOpen(true)} aria-label="Open menu"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.8} d="M3 6h18M3 12h18M3 18h18" /></svg></button>
+          <div className="hidden xl:block">
+            <Link href="/membership" className="inline-flex bg-[#0d1a4a] px-5 py-3 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]">Join SINet</Link>
+          </div>
+          <button type="button" className="flex h-11 w-11 items-center justify-center border border-[#0d1a4a]/20 text-[#0d1a4a] xl:hidden" onClick={() => setIsMobileMenuOpen(true)} aria-label="Open menu">
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="square" strokeLinejoin="miter" strokeWidth={1.8} d="M3 6h18M3 12h18M3 18h18" /></svg>
+          </button>
         </div>
       </header>
       <MobileDrawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} links={PRIMARY_NAV} currentPath={pathname} />

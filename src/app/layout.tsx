@@ -15,27 +15,27 @@ const geist = localFont({
 export const metadata: Metadata = {
   metadataBase: new URL('https://sinet.africa'),
   title: {
-    default: 'SINet - Pan-African Investment Ecosystem',
+    default: 'SINet - Business Ecosystem & Community',
     template: '%s | SINet',
   },
   description:
-    "SINet connects investors, students, and projects across Africa's most promising sectors. Join the waitlist for Phase 1 launching soon.",
+    'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'SINet - Pan-African Investment Ecosystem',
+    title: 'SINet - Business Ecosystem & Community',
     description:
-      "SINet connects investors, students, and projects across Africa's most promising sectors. Join the waitlist for Phase 1 launching soon.",
+      'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     type: 'website',
     url: 'https://sinet.africa',
-    images: [{ url: '/images/og-image.jpg', width: 1200, height: 630, alt: 'Build Africa Future' }],
+    images: [{ url: '/images/og-image.jpg', width: 1200, height: 630, alt: 'SINet' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SINet - Pan-African Investment Ecosystem',
+    title: 'SINet - Business Ecosystem & Community',
     description:
-      "SINet connects investors, students, and projects across Africa's most promising sectors. Join the waitlist for Phase 1 launching soon.",
+      'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     images: ['/images/og-image.jpg'],
   },
   icons: {

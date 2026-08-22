@@ -1,4 +1,5 @@
-import { ApplicationWizard } from '@/components/applications/ApplicationWizard';
+import { redirect } from 'next/navigation';
 
-export const metadata = { title: 'Start Investing | SINet', description: 'Submit an investment application to begin SINet review.' };
-export default function StartInvestingPage() { return <ApplicationWizard flow="investment" />; }
+export default function StartInvestingPage() {
+  redirect('/membership');
+}

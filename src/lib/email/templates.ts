@@ -72,74 +72,62 @@ function infoRow(label: string, value: string): string {
 
 export function applicationReceivedHtml(data: {
   name: string;
-  pathway: 'investment' | 'get-involved';
-  tier?: string;
-  plan?: string;
   role?: string;
 }): string {
   const safeFirstName = firstName(data.name);
-  const isInvestment = data.pathway === 'investment';
-  const selectionInfo = isInvestment
-    ? `<p style="margin:0 0 4px;font-size:14px;color:#374151;"><strong>Tier:</strong> ${escapeHtml(data.tier || '—')}</p>
-       <p style="margin:0;font-size:14px;color:#374151;"><strong>Plan:</strong> ${data.plan === 'annual' ? 'Annual (15% target)' : 'Quarterly (5% target)'}</p>`
-    : `<p style="margin:0;font-size:14px;color:#374151;"><strong>Role:</strong> ${escapeHtml(data.role || '—')}</p>`;
 
   return layout(`
     <p style="margin:0 0 4px;font-size:11px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Application received</p>
     <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">Thank you, ${safeFirstName}.</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      Your ${isInvestment ? 'investment application' : 'community registration'} has been recorded. Our team will review it and get back to you by email.
+      Your application has been recorded. Our team will review it and get back to you by email.
     </p>
 
     <div style="background:#f6f2e8;border-left:3px solid #D4AF37;padding:16px 20px;margin-bottom:24px;">
       <p style="margin:0 0 8px;font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">Your selection</p>
-      ${selectionInfo}
+      <p style="margin:0;font-size:14px;color:#374151;"><strong>Role:</strong> ${escapeHtml(data.role || '—')}</p>
     </div>
 
     <h2 style="margin:0 0 8px;font-size:16px;color:#0d1a4a;">What happens next?</h2>
     <ol style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#374151;line-height:1.8;">
       <li>Our team reviews your application</li>
       <li>You receive a decision by email</li>
-      <li>${isInvestment ? 'If approved, we share the participation documentation' : 'If approved, your role is confirmed and onboarding begins'}</li>
+      <li>If approved, your role is confirmed and onboarding begins</li>
     </ol>
 
     <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">
-      ${isInvestment ? 'Submitting an application does not create an investment or payment obligation.' : 'All registrations are subject to review before role assignment.'}
+      All registrations are subject to review before role assignment.
     </p>
 
-    ${btn(`${SITE_URL}/${isInvestment ? 'investment-plans' : 'get-involved'}`, isInvestment ? 'View Investment Plans' : 'Learn More About SINet')}
-  `, `Your ${isInvestment ? 'investment' : 'community'} application has been received.`);
+    ${btn(`${SITE_URL}/membership`, 'Learn More About SINet')}
+  `, 'Your SINet application has been received.');
 }
 
-export function applicationReceivedText(data: { name: string; pathway: string }): string {
+export function applicationReceivedText(data: { name: string }): string {
   const safeFirstName = data.name.trim().split(/\s+/)[0] || 'there';
-  return `Hi ${safeFirstName},\n\nThank you — your ${data.pathway === 'investment' ? 'investment application' : 'community registration'} has been recorded.\n\nOur team will review it and get back to you by email.\n\n— The SINet Team\n${SITE_URL}`;
+  return `Hi ${safeFirstName},\n\nThank you — your SINet application has been recorded.\n\nOur team will review it and get back to you by email.\n\n— The SINet Team\n${SITE_URL}`;
 }
 
 // ─── Application Approved ────────────────────────────────────────────
 
 export function applicationApprovedHtml(data: {
   name: string;
-  pathway: 'investment' | 'get-involved';
-  tier?: string;
-  plan?: string;
+  pathway?: string;
   role?: string;
   reviewNote?: string;
 }): string {
   const safeFirstName = firstName(data.name);
-  const isInvestment = data.pathway === 'investment';
+  const isLegacyInvestment = data.pathway === 'investment';
 
-  const details = isInvestment
-    ? [['Tier', data.tier || '—'], ['Plan', data.plan === 'annual' ? 'Annual (15% target)' : 'Quarterly (5% target)']]
-    : [['Role', data.role || '—']];
+  const details = [['Role', data.role || '—']];
 
   return layout(`
     <p style="margin:0 0 4px;font-size:11px;color:#10b981;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Application approved</p>
     <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">Welcome aboard, ${safeFirstName}.</h1>
     <p style="margin:0 0 20px;font-size:15px;color:#374151;line-height:1.7;">
-      ${isInvestment
-        ? 'Your investment application has been approved. Below are the next steps to complete your participation.'
-        : 'Your community registration has been approved. Welcome to the SINet community.'}
+      ${isLegacyInvestment
+        ? 'Your application has been approved. A member of our team will follow up with next steps.'
+        : 'Your application has been approved. Welcome to the SINet community.'}
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f2e8;margin-bottom:24px;">
@@ -150,40 +138,32 @@ export function applicationApprovedHtml(data: {
       <p style="margin:0;font-size:13px;color:#374151;"><strong>Note from our team:</strong> ${escapeHtml(data.reviewNote)}</p>
     </div>` : ''}
 
-    ${isInvestment ? `<h2 style="margin:0 0 8px;font-size:16px;color:#0d1a4a;">Next steps</h2>
-    <ol style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#374151;line-height:1.8;">
-      <li>Review the participation agreement we will send separately</li>
-      <li>Confirm your payment arrangement</li>
-      <li>Receive your investor member ID and reporting access</li>
-    </ol>
-    <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Returns are targets based on business performance, not guarantees. All participation is subject to SINet's investment policy.</p>` : `<p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      A member of our team will reach out with onboarding details for your role. In the meantime, explore how the community works.
-    </p>`}
+    <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
+      A member of our team will reach out with onboarding details for your role.
+    </p>
 
     ${btn(`${SITE_URL}`, 'Visit SINet', '#0d1a4a', '#D4AF37')}
-  `, `Great news — your ${isInvestment ? 'investment' : 'community'} application has been approved.`);
+  `, 'Great news — your SINet application has been approved.');
 }
 
-export function applicationApprovedText(data: { name: string; pathway: string; reviewNote?: string }): string {
+export function applicationApprovedText(data: { name: string; reviewNote?: string }): string {
   const safeFirstName = data.name.trim().split(/\s+/)[0] || 'there';
-  return `Hi ${safeFirstName},\n\nGreat news — your ${data.pathway === 'investment' ? 'investment application' : 'community registration'} has been approved.\n\n${data.reviewNote ? `Note from our team: ${data.reviewNote}\n\n` : ''}We will follow up with next steps.\n\n— The SINet Team\n${SITE_URL}`;
+  return `Hi ${safeFirstName},\n\nGreat news — your SINet application has been approved.\n\n${data.reviewNote ? `Note from our team: ${data.reviewNote}\n\n` : ''}We will follow up with next steps.\n\n— The SINet Team\n${SITE_URL}`;
 }
 
 // ─── Application Declined ────────────────────────────────────────────
 
 export function applicationDeclinedHtml(data: {
   name: string;
-  pathway: 'investment' | 'get-involved';
   reviewNote?: string;
 }): string {
   const safeFirstName = firstName(data.name);
-  const isInvestment = data.pathway === 'investment';
 
   return layout(`
     <p style="margin:0 0 4px;font-size:11px;color:#d9711b;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Application update</p>
     <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">Hi ${safeFirstName},</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      Thank you for your interest in SINet. After reviewing your ${isInvestment ? 'investment application' : 'community registration'}, we are unable to approve it at this time.
+      Thank you for your interest in SINet. After reviewing your application, we are unable to approve it at this time.
     </p>
 
     ${data.reviewNote ? `<div style="background:#fef3e2;border-left:3px solid #d9711b;padding:12px 16px;margin-bottom:24px;">
@@ -191,43 +171,63 @@ export function applicationDeclinedHtml(data: {
     </div>` : ''}
 
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      This does not prevent you from applying again in the future. If you believe this decision was made in error, or if you have additional information to share, please contact us.
+      This does not prevent you from applying again when a relevant application period opens. If you believe this decision was made in error, please contact us.
     </p>
 
     ${btn(`mailto:sinetworkinggobal@gmail.com`, 'Contact Us', '#d9711b', '#ffffff')}
-  `, `An update on your SINet application.`);
+  `, 'An update on your SINet application.');
 }
 
-export function applicationDeclinedText(data: { name: string; pathway: string; reviewNote?: string }): string {
+export function applicationDeclinedText(data: { name: string; reviewNote?: string }): string {
   const safeFirstName = data.name.trim().split(/\s+/)[0] || 'there';
-  return `Hi ${safeFirstName},\n\nThank you for your interest in SINet. After reviewing your ${data.pathway === 'investment' ? 'investment application' : 'community registration'}, we are unable to approve it at this time.\n\n${data.reviewNote ? `Feedback: ${data.reviewNote}\n\n` : ''}You are welcome to apply again in the future.\n\n— The SINet Team\n${SITE_URL}`;
+  return `Hi ${safeFirstName},\n\nThank you for your interest in SINet. After reviewing your application, we are unable to approve it at this time.\n\n${data.reviewNote ? `Feedback: ${data.reviewNote}\n\n` : ''}You are welcome to apply again when applications reopen.\n\n— The SINet Team\n${SITE_URL}`;
 }
 
 // ─── Application Under Review ────────────────────────────────────────
 
 export function applicationUnderReviewHtml(data: {
   name: string;
-  pathway: 'investment' | 'get-involved';
 }): string {
   const safeFirstName = firstName(data.name);
-  const isInvestment = data.pathway === 'investment';
 
   return layout(`
     <p style="margin:0 0 4px;font-size:11px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Under review</p>
     <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">Hi ${safeFirstName}, we're reviewing your application.</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      Your ${isInvestment ? 'investment application' : 'community registration'} is now being actively reviewed by our team. We will notify you of the outcome by email.
+      Your application is now being actively reviewed by our team. We will notify you of the outcome by email.
     </p>
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      ${isInvestment ? 'This review process ensures all participation meets our investment policy and documentation standards.' : 'This review ensures all community members meet our standards and values.'}
+      This review ensures all community members meet our standards and values.
     </p>
     <p style="margin:0;font-size:13px;color:#6b7280;">No action is needed from you at this time.</p>
-  `, `Your SINet application is now under review.`);
+  `, 'Your SINet application is now under review.');
 }
 
-export function applicationUnderReviewText(data: { name: string; pathway: string }): string {
+export function applicationUnderReviewText(data: { name: string }): string {
   const firstName = data.name.split(' ')[0];
-  return `Hi ${firstName},\n\nYour ${data.pathway === 'investment' ? 'investment application' : 'community registration'} is now under active review. We will notify you of the outcome by email.\n\nNo action is needed from you at this time.\n\n— The SINet Team\n${SITE_URL}`;
+  return `Hi ${firstName},\n\nYour SINet application is now under active review. We will notify you of the outcome by email.\n\nNo action is needed from you at this time.\n\n— The SINet Team\n${SITE_URL}`;
+}
+
+// ─── Custom applicant email ──────────────────────────────────────────
+
+export function customApplicantEmailHtml(data: {
+  applicantName: string;
+  message: string;
+}): string {
+  const safeFirstName = firstName(data.applicantName);
+  const paragraphs = data.message.split('\n').map((p) => `<p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.7;">${escapeHtml(p)}</p>`).join('');
+
+  return layout(`
+    <p style="margin:0 0 4px;font-size:11px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Message from SINet</p>
+    <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">Hi ${safeFirstName},</h1>
+    ${paragraphs}
+    <p style="margin:16px 0 0;font-size:13px;color:#6b7280;">— The SINet Team</p>
+  `, 'A message from the SINet team about your application.');
+}
+
+export function customApplicantEmailText(data: { applicantName: string; message: string }): string {
+  const safeFirstName = data.applicantName.trim().split(/\s+/)[0] || 'there';
+  return `Hi ${safeFirstName},\n\n${data.message}\n\n— The SINet Team\n${SITE_URL}`;
 }
 
 // ─── Newsletter Welcome (waitlist/email capture) ─────────────────────
@@ -239,20 +239,20 @@ export function newsletterWelcomeHtml(data: { name: string }): string {
     <p style="margin:0 0 4px;font-size:11px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:.15em;">Welcome</p>
     <h1 style="margin:0 0 20px;font-size:24px;color:#0d1a4a;">You're on the list, ${firstName}.</h1>
     <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.7;">
-      Thank you for joining the SINet mailing list. You'll receive updates on our progress, investment opportunities, and community activities.
+      Thank you for joining the SINet mailing list. You'll receive updates on our progress, community activities, and business opportunities.
     </p>
 
     <div style="background:#f6f2e8;border-left:3px solid #D4AF37;padding:16px 20px;margin-bottom:24px;">
       <p style="margin:0 0 4px;font-size:12px;color:#9ca3af;font-weight:700;text-transform:uppercase;">What to expect</p>
-      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">Quarterly updates on projects, sector developments, and participation opportunities — not spam.</p>
+      <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">Updates on projects, sector developments, and membership opportunities — not spam.</p>
     </div>
 
-    ${btn(`${SITE_URL}/investment-plans`, 'Explore Investment Plans')}
+    ${btn(`${SITE_URL}/products`, 'View Products')}
     ${btn(`${SITE_URL}/sectors`, 'See What We Do', '#ffffff', '#0d1a4a')}
   `, `Welcome to SINet — you're on the list.`);
 }
 
 export function newsletterWelcomeText(data: { name: string }): string {
   const firstName = data.name.split(' ')[0];
-  return `Hi ${firstName},\n\nThank you for joining the SINet mailing list. You'll receive updates on our progress, investment opportunities, and community activities.\n\nExplore: ${SITE_URL}/investment-plans\n\n— The SINet Team`;
+  return `Hi ${firstName},\n\nThank you for joining the SINet mailing list. You'll receive updates on our progress, community activities, and business opportunities.\n\nExplore: ${SITE_URL}/products\n\n— The SINet Team`;
 }

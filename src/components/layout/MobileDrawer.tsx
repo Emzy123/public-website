@@ -13,8 +13,8 @@ export function MobileDrawer({ isOpen, onClose, links, currentPath }: MobileDraw
     <div className="relative h-full w-full max-w-sm overflow-auto bg-[#f6f2e8] px-7 py-8 shadow-2xl">
       <div className="mb-8 flex items-center justify-between"><span className="font-editorial text-3xl font-semibold text-[#0d1a4a]">SINet<span className="text-[#d9711b]">.</span></span><button onClick={onClose} className="flex h-11 w-11 items-center justify-center text-2xl text-[#0d1a4a]" aria-label="Close menu">×</button></div>
       <div className="mb-6 flex flex-col gap-3">
-        <Link href="/start-investing" onClick={onClose} className="flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-5 text-sm font-bold text-white">Start Investing</Link>
-        <Link href="/get-involved" onClick={onClose} className="flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-5 text-sm font-bold text-[#0d1a4a]">Get Involved</Link>
+        <Link href="/membership" onClick={onClose} className="flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-5 text-sm font-bold text-white">Join SINet</Link>
+        <Link href="/contact" onClick={onClose} className="flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-5 text-sm font-bold text-[#0d1a4a]">Partner With Us</Link>
       </div>
       <nav className="flex flex-col border-t border-[#0d1a4a]/15">{links.map((link) => <Link key={link.label} href={link.href} onClick={onClose} className={`flex min-h-[48px] items-center border-b border-[#0d1a4a]/15 text-lg ${currentPath === link.href ? 'font-semibold text-[#d9711b]' : 'text-[#0d1a4a]'}`}>{link.label}</Link>)}</nav>
     </div>

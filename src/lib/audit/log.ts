@@ -8,9 +8,12 @@ export type AuditAction =
   | 'cms.publish'
   | 'media.upload'
   | 'application.status_update'
+  | 'application.custom_email'
   | 'application.export'
   | 'submissions.export'
-  | 'submissions.read_status_update';
+  | 'submissions.read_status_update'
+  | 'registration_link.create'
+  | 'registration_link.update';
 
 export type AuditEntry = {
   action: AuditAction;

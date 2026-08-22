@@ -35,19 +35,14 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Applications',
     items: [
       {
+        href: '/admin/links',
+        label: 'Link Management',
+        icon: <Icon d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71 M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />,
+      },
+      {
         href: '/admin/applications',
         label: 'All Applications',
         icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
-      },
-      {
-        href: '/admin/applications?pathway=investment',
-        label: 'Investment',
-        icon: <Icon d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6" />,
-      },
-      {
-        href: '/admin/applications?pathway=get-involved',
-        label: 'Get Involved',
-        icon: <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75" />,
       },
     ],
   },
@@ -73,11 +68,6 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         href: '/admin/content/home',
         label: 'Homepage',
         icon: <Icon d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7 M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />,
-      },
-      {
-        href: '/admin/content/returns',
-        label: 'Returns & Reports',
-        icon: <Icon d="M18 20V10 M12 20V4 M6 20v-6" />,
       },
       {
         href: '/admin/content/site-settings',
@@ -165,7 +155,7 @@ function SidebarContent({
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-white">Favour Benjamin</p>
-            <p className="truncate text-xs text-white/40">Director of Investments</p>
+            <p className="truncate text-xs text-white/40">Community Operations</p>
           </div>
         </div>
         <button

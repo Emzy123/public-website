@@ -8,15 +8,15 @@ import {
   applicationDeclinedText,
   applicationUnderReviewHtml,
   applicationUnderReviewText,
+  customApplicantEmailHtml,
+  customApplicantEmailText,
 } from './templates';
 
 export async function sendApplicationStatusEmail(data: {
   email: string;
   name: string;
-  pathway: 'investment' | 'get-involved';
+  pathway: string;
   status: string;
-  tier?: string;
-  plan?: string;
   role?: string;
   reviewNote?: string;
 }): Promise<void> {
@@ -58,9 +58,6 @@ export async function sendApplicationStatusEmail(data: {
 export async function sendApplicationReceivedEmail(data: {
   email: string;
   name: string;
-  pathway: 'investment' | 'get-involved';
-  tier?: string;
-  plan?: string;
   role?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
@@ -69,14 +66,36 @@ export async function sendApplicationReceivedEmail(data: {
   if (!apiKey || !data.email) return;
 
   const resend = new Resend(apiKey);
-  const isInvestment = data.pathway === 'investment';
 
   const { error } = await resend.emails.send({
     from,
     to: [data.email],
-    subject: `Your ${isInvestment ? 'investment application' : 'community registration'} has been received — SINet`,
+    subject: 'Your SINet application has been received',
     html: applicationReceivedHtml(data),
     text: applicationReceivedText(data),
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function sendCustomApplicantEmail(data: {
+  to: string;
+  subject: string;
+  message: string;
+  applicantName: string;
+}): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
+
+  if (!apiKey || !data.to) return;
+
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from,
+    to: [data.to],
+    subject: data.subject,
+    html: customApplicantEmailHtml(data),
+    text: customApplicantEmailText(data),
   });
 
   if (error) throw new Error(error.message);

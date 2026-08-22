@@ -1,42 +1,152 @@
-import Link from 'next/link';
-import { InstitutionalHero } from './InstitutionalHero';
+'use client';
 
-const SECTORS = [
-  { status: 'LEADING FOCUS', name: 'Real Estate & Property', body: 'Property marketing, developer partnerships, and a disciplined path into property investment.' },
-  { status: 'SECONDARY', name: 'Agriculture', body: 'Selective agricultural activity that supports enterprise cash flow and community participation.' },
-  { status: 'EXPLORING', name: 'Manufacturing', body: 'A future direction being evaluated through practical market insight and operating experience.' },
+import Link from 'next/link';
+
+const PILLARS = [
+  {
+    name: 'Agriculture',
+    body: 'Production, aggregation, processing, and agribusiness — building practical enterprise from the ground up.',
+    href: '/sectors#agriculture',
+  },
+  {
+    name: 'Trade & Goods Distribution',
+    body: 'Wholesale supply, logistics, and distribution across Nigeria — connecting producers to markets.',
+    href: '/sectors#trade',
+  },
+  {
+    name: 'Real Estate',
+    body: 'Property marketing, strategic partnerships, and future development — with verified, real listings only.',
+    href: '/sectors#real-estate',
+  },
 ];
+
+export function InstitutionalHero() {
+  return (
+    <section className="relative mx-auto max-w-[1380px] overflow-hidden px-4 pb-20 pt-12 xs:px-5 md:pb-24 md:pt-16 lg:px-8 lg:pt-24">
+      <div className="absolute -right-32 top-24 h-64 w-64 rounded-full border border-[#0d1a4a]/10 md:h-[36rem] md:w-[36rem] lg:-right-[21rem] lg:top-[10rem] lg:h-[54rem] lg:w-[54rem]" />
+      <div className="relative z-10 max-w-[780px]">
+        <p className="mb-8 flex items-center gap-3 font-data text-[11px] uppercase tracking-[.16em] text-[#60594d]">
+          <span className="h-px w-7 bg-[#d9711b]" /> A business ecosystem built on community
+        </p>
+        <h1 className="max-w-[690px] font-editorial text-[clamp(3rem,7.5vw,7rem)] leading-[.88] tracking-[-.07em] text-[#0d1a4a]">
+          One Community. Three Pillars. Endless Opportunities.
+        </h1>
+        <p className="mt-10 max-w-[520px] text-[17px] leading-7 text-[#464238]">
+          Agriculture, Trade &amp; Goods Distribution, and Real Estate work together to create sustainable businesses and long-term impact.
+        </p>
+        <p className="mt-6 max-w-[520px] text-sm italic leading-7 text-[#5b554a]">
+          &ldquo;Investment is one of our tools — not our identity. Our identity is community.&rdquo;
+        </p>
+        <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+          <Link href="/membership" className="bg-[#0d1a4a] px-7 py-4 text-center text-sm font-bold text-white transition-colors hover:bg-[#d9711b]">Join SINet</Link>
+          <Link href="/contact" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Partner With Us</Link>
+          <Link href="/products" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">View Products</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function InstitutionalHome() {
   return (
     <div className="overflow-hidden bg-[#f6f2e8] text-[#0d1a4a]">
       <InstitutionalHero />
 
-      <div className="border-y border-[#0d1a4a]/20 bg-[#0d1a4a] py-3 text-[#f6f2e8]" style={{ touchAction: 'pan-y' }}><div className="flex min-w-max items-center justify-center gap-4 overflow-x-auto px-4 font-data text-[11px] uppercase tracking-[.13em] xs:gap-8 md:gap-12"><span>Property & housing</span><i className="text-[#d9a23c]">◆</i><span>Agriculture</span><i className="text-[#d9a23c]">◆</i><span>Community participation</span><i className="text-[#d9a23c]">◆</i><span>Quarterly reporting</span><i className="text-[#d9a23c]">◆</i><span>Annual reporting</span></div></div>
-      <div className="border-b border-[#0d1a4a]/20 bg-[#eee6d0]"><div className="mx-auto grid max-w-[1180px] gap-4 px-5 py-4 text-center text-xs text-[#37332c] md:grid-cols-3 md:px-8"><p><strong>Community-led</strong> value creation</p><p><strong>Documented</strong> participation pathways</p><p><strong>Clear</strong> governance and reporting</p></div></div>
-
-      <section className="mx-auto grid max-w-[1180px] gap-8 px-4 py-16 xs:px-5 md:gap-12 md:py-24 lg:grid-cols-[1.2fr_1fr] lg:px-8">
-        <div><p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Where value is built</p><h2 className="mt-5 max-w-[550px] font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.055em]">One community,<br />three directions.</h2></div>
-        <p className="self-end text-lg leading-8 text-[#524d43]">Our immediate focus is real estate — building expertise and partnerships by marketing property across states. Agriculture supports the journey; manufacturing remains an opportunity under study.</p>
+      {/* About */}
+      <section className="border-y border-[#0d1a4a]/20 bg-[#eee6d0] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
+          <div>
+            <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">About SINet</p>
+            <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">A company built on three equal pillars.</h2>
+          </div>
+          <p className="self-end text-lg leading-8 text-[#524d43]">
+            SINet is a business ecosystem offering products, services, partnerships, and community membership — not primarily an investment platform. We build through agriculture, trade &amp; distribution, and real estate, with people at the centre.
+          </p>
+        </div>
       </section>
-      <section className="grid border-y border-[#0d1a4a]/20 lg:grid-cols-[1.15fr_.85fr]">
-        <div className="flex min-h-[320px] flex-col justify-between bg-[#0d1a4a] p-6 text-[#f6f2e8] xs:p-9 md:min-h-[460px] lg:p-14"><div><p className="font-data text-[11px] uppercase tracking-[.15em] text-[#eccb7c]">Lead focus</p><h2 className="mt-5 max-w-xs font-editorial text-[clamp(2.5rem,6vw,3.5rem)] leading-[.92] tracking-[-.05em]">Real Estate<br />& Property</h2></div><p className="max-w-sm text-[17px] leading-7 text-[#c8ccdb]">We are growing through credible property marketing, developer relationships, and transparent participation — not invented promises.</p></div>
-        <div className="divide-y divide-[#0d1a4a]/20">{SECTORS.slice(1).map((sector) => <div key={sector.name} className="min-h-[180px] bg-[#f6f2e8] p-6 xs:p-9 md:min-h-[230px] lg:p-12"><p className="font-data text-[11px] uppercase tracking-[.15em] text-[#d9711b]">{sector.status}</p><h3 className="mt-4 font-editorial text-3xl">{sector.name}</h3><p className="mt-2 max-w-md text-sm leading-6 text-[#5b554a]">{sector.body}</p></div>)}</div>
+
+      {/* Three Pillars — equal weight */}
+      <section className="mx-auto max-w-[1180px] px-4 py-16 xs:px-5 md:py-24 lg:px-8">
+        <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Three pillars</p>
+        <h2 className="mt-5 font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.055em]">Equal focus. Real work.</h2>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {PILLARS.map((pillar) => (
+            <Link key={pillar.name} href={pillar.href} className="flex min-h-[240px] flex-col border border-[#0d1a4a]/20 bg-white p-6 transition-colors hover:border-[#d9711b] xs:p-8">
+              <h3 className="font-editorial text-2xl tracking-[-.03em]">{pillar.name}</h3>
+              <p className="mt-4 flex-1 text-sm leading-6 text-[#5b554a]">{pillar.body}</p>
+              <span className="mt-6 text-xs font-bold uppercase tracking-wider text-[#d9711b]">Learn more →</span>
+            </Link>
+          ))}
+        </div>
       </section>
 
-      <section className="bg-[#0d1a4a] px-4 py-16 text-[#f6f2e8] xs:px-5 md:py-24 lg:px-8"><div className="mx-auto max-w-[1180px]"><div className="grid gap-8 md:gap-12 lg:grid-cols-2"><div><p className="font-data text-[11px] uppercase tracking-[.16em] text-[#eccb7c]">Investment plans</p><h2 className="mt-5 font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.05em]">Two ways to participate.</h2></div><p className="self-end text-lg leading-8 text-[#c8ccdb]">Choose a cadence that fits your capital and timeline. Both plans are subject to the same investment policy, review process, and reporting standards.</p></div>
-        <div className="mt-10 grid gap-8 md:mt-16 md:gap-12 lg:grid-cols-[1fr_.95fr]"><div className="border-y border-white/20"><div className="flex items-end justify-between border-b border-white/20 py-7"><div><p className="font-data text-[11px] uppercase tracking-[.14em] text-[#aab2d4]">Quarterly plan</p><h3 className="mt-2 font-editorial text-2xl">Declared every 3 months</h3></div><div className="font-editorial text-6xl text-[#eccb7c]">5<sup className="text-xl">%</sup></div></div><div className="flex items-end justify-between py-7"><div><p className="font-data text-[11px] uppercase tracking-[.14em] text-[#aab2d4]">Annual plan</p><h3 className="mt-2 font-editorial text-2xl">Declared once a year</h3></div><div className="font-editorial text-6xl text-[#eccb7c]">15<sup className="text-xl">%</sup></div></div></div><div className="border border-white/20 p-7"><p className="font-data text-[11px] uppercase tracking-[.13em] text-[#eccb7c]">Target-return comparison</p><div className="relative mt-12 h-36 border-b border-white/20 border-l"><span className="absolute bottom-7 left-0 h-px w-[92%] origin-left rotate-[-17deg] bg-[#eccb7c]" /><span className="absolute bottom-7 left-0 h-px w-[92%] origin-left rotate-[-30deg] bg-[#d9a23c]" /><span className="absolute right-0 top-3 font-data text-[10px] text-[#eccb7c]">Annual</span><span className="absolute bottom-9 right-0 font-data text-[10px] text-[#f6f2e8]">Quarterly</span></div></div></div>
-        <p className="mt-10 border-t border-white/20 pt-6 text-xs leading-6 text-[#c8ccdb]">Returns shown are targets, not guarantees. Actual returns depend on business performance and are subject to SINet&apos;s investment policy. A portion of any profit may be retained for growth and expansion.</p>
-        <Link href="/investment-plans" className="mt-8 inline-flex border border-[#eccb7c] px-6 py-3 text-sm font-bold text-[#eccb7c] transition-colors hover:bg-[#eccb7c] hover:text-[#0d1a4a]">Compare plans in full →</Link>
-      </div></section>
+      {/* Products & Services */}
+      <section className="border-y border-[#0d1a4a]/20 bg-[#0d1a4a] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
+          <div>
+            <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#eccb7c]">Products &amp; services</p>
+            <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">What we offer across our pillars.</h2>
+          </div>
+          <div className="self-end">
+            <p className="text-[17px] leading-7 text-[#c8ccdb]">Agricultural products, distributed goods, and available property opportunities — curated and verified before publication.</p>
+            <Link href="/products" className="mt-7 inline-flex border border-[#eccb7c] px-6 py-3 text-sm font-bold text-[#eccb7c] hover:bg-[#eccb7c] hover:text-[#0d1a4a]">View Products →</Link>
+          </div>
+        </div>
+      </section>
 
-      <section className="border-b border-[#0d1a4a]/20 bg-[#24399f] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8"><div className="mx-auto max-w-[1280px]"><p className="font-data text-[11px] uppercase tracking-[.16em] text-[#eccb7c]">Projects & enterprise</p><h2 className="mt-7 max-w-lg font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.05em]">Progress you can review.</h2></div></section>
-      <section className="grid border-b border-[#0d1a4a]/20 md:grid-cols-3">{[['Property', 'Current property marketing opportunities'], ['Agriculture', 'Updates published as work is verified'], ['Reporting', 'Quarterly and annual reports when declared']].map(([tag, title]) => <Link href="/reports" key={tag} className="min-h-[180px] border-b border-[#0d1a4a]/20 bg-[#eee6d0] p-6 transition-colors hover:bg-[#e5d5ac] xs:p-8 md:min-h-[220px] md:border-b-0 md:border-r last:border-r-0"><p className="font-data text-[11px] uppercase tracking-[.14em] text-[#d9711b]">{tag}</p><h3 className="mt-24 font-editorial text-2xl">{title}</h3></Link>)}</section>
+      {/* Featured Projects */}
+      <section className="mx-auto max-w-[1180px] px-4 py-16 xs:px-5 md:py-24 lg:px-8">
+        <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Featured projects</p>
+        <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Progress you can review.</h2>
+        <p className="mt-4 max-w-xl text-sm leading-7 text-[#5b554a]">Updates published as work is verified — we do not fabricate proof points.</p>
+        <Link href="/news" className="mt-6 inline-flex text-sm font-bold text-[#d9711b] hover:underline">News &amp; Updates →</Link>
+      </section>
 
-      <section className="mx-auto max-w-[1000px] px-4 py-16 text-center xs:px-5 md:py-28"><blockquote className="mx-auto font-editorial text-[clamp(1.75rem,5vw,3.75rem)] leading-[1.15] tracking-[-.04em] text-[#0d1a4a]">“Credibility is built in the open: with clear participation, honest updates, and people who can ask questions.”</blockquote><p className="mt-8 font-data text-[11px] uppercase tracking-[.16em] text-[#655d50]">The SINet commitment</p></section>
+      {/* Gallery */}
+      <section className="border-y border-[#0d1a4a]/20 bg-[#24399f] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
+          <h2 className="font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">Real activity. Three pillars.</h2>
+          <div className="self-end">
+            <p className="leading-7 text-[#c9ccda]">Authentic photos and video from farms, warehouses, deliveries, markets, and properties — filterable by pillar.</p>
+            <Link href="/gallery" className="mt-7 inline-flex bg-[#f6f2e8] px-6 py-3 text-sm font-bold text-[#24399f] hover:bg-[#eccb7c]">View Gallery →</Link>
+          </div>
+        </div>
+      </section>
 
-      <section className="orange-grid bg-[#d9711b] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8"><div className="mx-auto grid max-w-[1180px] gap-10 lg:grid-cols-[1fr_auto] lg:items-end"><div><p className="font-data text-[11px] uppercase tracking-[.16em]">Student Network</p><h2 className="mt-5 max-w-2xl font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.05em]">Built by students,<br />still at the core.</h2><p className="mt-7 max-w-lg text-[17px] leading-7 text-[#fff4df]">SINet began with a student community. The Student Network remains a dedicated pathway to verified membership, learning, and responsible participation.</p><Link href="/student-network" className="mt-8 inline-flex bg-[#f6f2e8] px-7 py-4 text-sm font-bold text-[#d9711b] transition-colors hover:bg-[#0d1a4a] hover:text-white">Visit the Student Network →</Link></div><div className="font-editorial text-[clamp(5rem,15vw,10rem)] leading-none tracking-[-.08em] text-[#f6f2e8]/85">01</div></div></section>
-      <section className="border-b border-[#0d1a4a]/20 bg-[#f6f2e8] px-4 py-14 xs:px-5 md:py-20 lg:px-8"><div className="mx-auto grid max-w-[1180px] gap-8 lg:grid-cols-[1.2fr_1fr]"><h2 className="font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.05em]">Choose your way<br />to contribute.</h2><div className="flex flex-col gap-3 sm:flex-row lg:items-end"><Link href="/start-investing" className="flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-center text-sm font-bold text-white transition-colors hover:bg-[#d9711b]">Start Investing</Link><Link href="/get-involved" className="flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Get Involved</Link></div></div></section>
+      {/* Membership */}
+      <section className="mx-auto max-w-[1180px] px-4 py-16 xs:px-5 md:py-24 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div>
+            <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Membership</p>
+            <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Join when applications are open.</h2>
+            <p className="mt-6 leading-7 text-[#5b554a]">Registration is admin-controlled — apply through a campaign link when SINet opens a period for your role. The Student Network remains a separate, always-open pathway.</p>
+          </div>
+          <div className="flex flex-col justify-center gap-3">
+            <Link href="/membership" className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b]">Join SINet</Link>
+            <Link href="/student-network" className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold hover:border-[#d9711b]">Student Network</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Partners */}
+      <section className="border-t border-[#0d1a4a]/20 bg-[#eee6d0] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-[1180px] text-center">
+          <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Partners</p>
+          <h2 className="mt-5 font-editorial text-4xl">Strategic partnerships across our pillars.</h2>
+          <Link href="/partners" className="mt-8 inline-flex text-sm font-bold text-[#0d1a4a] hover:text-[#d9711b]">Meet our partners →</Link>
+        </div>
+      </section>
+
+      {/* Contact CTA */}
+      <section className="orange-grid bg-[#d9711b] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto flex max-w-[1180px] flex-col items-start justify-between gap-8 lg:flex-row lg:items-end">
+          <div>
+            <h2 className="font-editorial text-[clamp(2.5rem,6vw,3.75rem)] leading-[.92] tracking-[-.05em]">Ready to connect?</h2>
+            <p className="mt-5 max-w-lg text-[17px] leading-7 text-[#fff4df]">Partner with us, explore products, or get in touch — we respond to every genuine inquiry.</p>
+          </div>
+          <Link href="/contact" className="inline-flex bg-[#f6f2e8] px-7 py-4 text-sm font-bold text-[#d9711b] hover:bg-[#0d1a4a] hover:text-white">Contact Us →</Link>
+        </div>
+      </section>
     </div>
   );
 }
