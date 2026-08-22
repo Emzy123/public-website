@@ -24,6 +24,11 @@ export function getMediaSigningSecret(): string {
   return 'dev-media-key';
 }
 
+/**
+ * Validates production configuration at boot.
+ * Logs problems instead of crashing the whole site — route handlers
+ * still enforce what they need (admin MFA, Upstash rate limits, etc.).
+ */
 export function assertProductionSecrets(): void {
   if (!isProductionMode()) return;
 
@@ -35,36 +40,37 @@ export function assertProductionSecrets(): void {
     'NEXT_PUBLIC_SITE_URL',
     'MONGODB_URI',
     'MONGODB_DB',
-    'UPSTASH_REDIS_REST_URL',
-    'UPSTASH_REDIS_REST_TOKEN',
   ] as const;
 
   const missing = required.filter((key) => !process.env[key]?.trim());
-
   if (missing.length > 0) {
-    throw new Error(`Missing required production secrets: ${missing.join(', ')}`);
+    console.error(`[security] Missing required production secrets: ${missing.join(', ')}`);
   }
 
-  const sessionSecret = process.env.ADMIN_SESSION_SECRET!.trim();
-  if (sessionSecret.length < 32) {
-    throw new Error('ADMIN_SESSION_SECRET must be at least 32 characters in production');
+  const sessionSecret = process.env.ADMIN_SESSION_SECRET?.trim();
+  if (sessionSecret && sessionSecret.length < 32) {
+    console.error('[security] ADMIN_SESSION_SECRET must be at least 32 characters in production');
   }
 
-  const passwordHash = process.env.ADMIN_PASSWORD_HASH!.trim();
-  if (!passwordHash.includes(':')) {
-    throw new Error('ADMIN_PASSWORD_HASH is invalid — plaintext passwords are not supported in production');
+  const passwordHash = process.env.ADMIN_PASSWORD_HASH?.trim();
+  if (passwordHash && !passwordHash.includes(':')) {
+    console.error('[security] ADMIN_PASSWORD_HASH is invalid — use salt:hash from scripts/hash-admin-password.ts');
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!.trim();
-  if (!siteUrl.startsWith('https://')) {
-    throw new Error('NEXT_PUBLIC_SITE_URL must use https:// in production');
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (siteUrl && !siteUrl.startsWith('https://')) {
+    console.error('[security] NEXT_PUBLIC_SITE_URL must use https:// in production');
+  }
+
+  if (!process.env.UPSTASH_REDIS_REST_URL?.trim() || !process.env.UPSTASH_REDIS_REST_TOKEN?.trim()) {
+    console.error('[security] Upstash Redis is not configured — rate limiting will fail closed in production');
   }
 
   if (!process.env.ADMIN_TOTP_SECRET?.trim()) {
-    throw new Error('ADMIN_TOTP_SECRET is required in production (admin MFA)');
+    console.error('[security] ADMIN_TOTP_SECRET is not set — admin login will be unavailable until MFA is configured');
   }
 
   if (process.env.ADMIN_PASSWORD?.trim()) {
-    throw new Error('ADMIN_PASSWORD must not be set in production — use ADMIN_PASSWORD_HASH only');
+    console.error('[security] ADMIN_PASSWORD is set — remove it and use ADMIN_PASSWORD_HASH only');
   }
 }

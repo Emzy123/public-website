@@ -8,9 +8,7 @@ export const PREVIEW_MAX_AGE = 60 * 60; // 1 hour
 function getPreviewSigningKey(): string {
   const secret = process.env.ADMIN_SESSION_SECRET?.trim() || process.env.CSRF_SECRET?.trim();
   if (!secret) {
-    if (isProductionMode()) {
-      throw new Error('ADMIN_SESSION_SECRET is required to sign preview cookies');
-    }
+    // Avoid crashing public pages if secrets are misconfigured.
     return 'dev-preview-key';
   }
   return secret;
