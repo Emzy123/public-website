@@ -17,8 +17,13 @@ export default function PartnersPage() {
       <section className="border-b border-[#0d1a4a]/20 px-4 py-14 xs:px-5 md:py-20 lg:px-8 lg:py-28">
         <div className="mx-auto max-w-[1180px]">
           <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Partners</p>
-          <h1 className="mt-6 max-w-4xl font-editorial text-[clamp(2.75rem,8vw,5.5rem)] leading-[.86] tracking-[-.06em]">Built with trusted partners.</h1>
-          <p className="mt-9 max-w-2xl text-lg leading-8 text-[#554e43]">Logos and brief descriptions of strategic partnerships — curated in the admin dashboard as relationships are verified.</p>
+          <h1 className="mt-6 max-w-4xl font-editorial text-[clamp(2.75rem,8vw,5.5rem)] leading-[.86] tracking-[-.06em]">
+            Built with trusted partners.
+          </h1>
+          <p className="mt-9 max-w-2xl text-lg leading-8 text-[#554e43]">
+            SINet works with operators and institutions across our three pillars. Public partner profiles are added
+            once relationships are confirmed.
+          </p>
         </div>
       </section>
       <section className="mx-auto max-w-[1180px] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
@@ -30,9 +35,17 @@ export default function PartnersPage() {
             </div>
           ))}
         </div>
-        <div className="mt-12 border border-dashed border-[#0d1a4a]/25 bg-[#eee6d0] p-10 text-center">
-          <p className="text-sm text-[#5b554a]">Partner logos and profiles will be listed here as they are added in admin.</p>
-          <Link href="/contact" className="mt-6 inline-flex bg-[#0d1a4a] px-6 py-3 text-sm font-bold text-white hover:bg-[#d9711b]">Partner With Us</Link>
+        <div className="mt-12 border border-[#0d1a4a]/20 bg-[#eee6d0] p-10 text-center">
+          <p className="font-editorial text-2xl text-[#0d1a4a]">Interested in partnering?</p>
+          <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#5b554a]">
+            Tell us about your organisation and how you want to collaborate across our pillars.
+          </p>
+          <Link
+            href="/contact"
+            className="mt-8 inline-flex bg-[#0d1a4a] px-6 py-3 text-sm font-bold text-white hover:bg-[#d9711b]"
+          >
+            Partner with us
+          </Link>
         </div>
       </section>
     </div>

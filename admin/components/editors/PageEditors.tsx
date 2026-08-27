@@ -382,101 +382,50 @@ export function SiteSettingsEditor({ data, onChange }: { data: SiteSettings; onC
       </AdminCard>
       <AdminCard title="Contact Information">
         <div className="grid md:grid-cols-2 gap-4">
-          {(['whatsapp', 'whatsappDisplay', 'phone', 'phoneDisplay', 'email', 'address', 'businessHours'] as const).map((key) => (
-            <AdminField key={key} label={key}>
-              <AdminInput value={data.contact[key]} onChange={(e) => onChange({ ...data, contact: { ...data.contact, [key]: e.target.value } })} />
+          {(
+            [
+              ['whatsapp', 'WhatsApp URL'],
+              ['whatsappDisplay', 'WhatsApp display'],
+              ['phone', 'Phone (tel link)'],
+              ['phoneDisplay', 'Phone display'],
+              ['email', 'Email'],
+              ['address', 'Address'],
+              ['businessHours', 'Business hours'],
+            ] as const
+          ).map(([key, label]) => (
+            <AdminField key={key} label={label}>
+              <AdminInput
+                value={data.contact[key]}
+                onChange={(e) => onChange({ ...data, contact: { ...data.contact, [key]: e.target.value } })}
+              />
             </AdminField>
           ))}
         </div>
       </AdminCard>
       <AdminCard title="Social Links">
         <div className="grid md:grid-cols-2 gap-4">
-          {(['whatsapp', 'instagram', 'linkedin', 'x', 'facebook'] as const).map((key) => (
-            <AdminField key={key} label={key}>
-              <AdminInput value={data.social[key]} onChange={(e) => onChange({ ...data, social: { ...data.social, [key]: e.target.value } })} />
+          {(
+            [
+              ['whatsapp', 'WhatsApp'],
+              ['instagram', 'Instagram'],
+              ['linkedin', 'LinkedIn'],
+              ['x', 'X (Twitter)'],
+              ['facebook', 'Facebook'],
+            ] as const
+          ).map(([key, label]) => (
+            <AdminField key={key} label={label}>
+              <AdminInput
+                value={data.social[key]}
+                onChange={(e) => onChange({ ...data, social: { ...data.social, [key]: e.target.value } })}
+              />
             </AdminField>
           ))}
         </div>
       </AdminCard>
-      <AdminCard title="Navigation">
-        {data.navigation.map((link, i) => (
-          <div key={i} className="flex gap-3 mb-2">
-            <AdminInput value={link.label} placeholder="Label" onChange={(e) => { const n = [...data.navigation]; n[i] = { ...n[i], label: e.target.value }; onChange({ ...data, navigation: n }); }} />
-            <AdminInput value={link.href} placeholder="Href" onChange={(e) => { const n = [...data.navigation]; n[i] = { ...n[i], href: e.target.value }; onChange({ ...data, navigation: n }); }} />
-            <button type="button" onClick={() => onChange({ ...data, navigation: data.navigation.filter((_, j) => j !== i) })} className="text-red-400 text-xs">×</button>
-          </div>
-        ))}
-        <button type="button" onClick={() => onChange({ ...data, navigation: [...data.navigation, { label: '', href: '' }] })} className="text-xs text-[#D4AF37]">+ Add nav link</button>
-      </AdminCard>
-      <AdminCard title="Footer">
-        <AdminMarkdownField
-          label="Footer brand copy"
-          value={data.footer.brandCopy}
-          onChange={(value) => onChange({ ...data, footer: { ...data.footer, brandCopy: value } })}
-        />
-        {data.footer.columns.map((column, ci) => (
-          <div key={ci} className="mt-4 p-4 rounded-lg border border-slate-800 space-y-2">
-            <AdminField label="Column title">
-              <AdminInput
-                value={column.title}
-                onChange={(e) => {
-                  const columns = [...data.footer.columns];
-                  columns[ci] = { ...columns[ci], title: e.target.value };
-                  onChange({ ...data, footer: { ...data.footer, columns } });
-                }}
-              />
-            </AdminField>
-            {column.links.map((link, li) => (
-              <div key={li} className="flex gap-3">
-                <AdminInput
-                  value={link.label}
-                  placeholder="Label"
-                  onChange={(e) => {
-                    const columns = [...data.footer.columns];
-                    const links = [...columns[ci].links];
-                    links[li] = { ...links[li], label: e.target.value };
-                    columns[ci] = { ...columns[ci], links };
-                    onChange({ ...data, footer: { ...data.footer, columns } });
-                  }}
-                />
-                <AdminInput
-                  value={link.href}
-                  placeholder="Href"
-                  onChange={(e) => {
-                    const columns = [...data.footer.columns];
-                    const links = [...columns[ci].links];
-                    links[li] = { ...links[li], href: e.target.value };
-                    columns[ci] = { ...columns[ci], links };
-                    onChange({ ...data, footer: { ...data.footer, columns } });
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const columns = [...data.footer.columns];
-                    columns[ci] = { ...columns[ci], links: columns[ci].links.filter((_, j) => j !== li) };
-                    onChange({ ...data, footer: { ...data.footer, columns } });
-                  }}
-                  className="text-red-400 text-xs"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                const columns = [...data.footer.columns];
-                columns[ci] = { ...columns[ci], links: [...columns[ci].links, { label: '', href: '' }] };
-                onChange({ ...data, footer: { ...data.footer, columns } });
-              }}
-              className="text-xs text-[#D4AF37]"
-            >
-              + Add link
-            </button>
-          </div>
-        ))}
-      </AdminCard>
+      <p className="rounded-lg border border-[#e4dcc9] bg-[#f9f7f2] px-4 py-3 text-sm text-[#7b7263]">
+        Primary navigation and footer link columns are managed in code for the institutional site.
+        Edit contact, social, and logos here — they appear on the public Header and Footer.
+      </p>
       <AdminCard title="Default SEO">
         <AdminField label="Default SEO title">
           <AdminInput value={data.seo.defaultTitle} onChange={(e) => onChange({ ...data, seo: { ...data.seo, defaultTitle: e.target.value } })} />

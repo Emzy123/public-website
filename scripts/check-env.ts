@@ -32,7 +32,6 @@ const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }>
     vars: [
       'NEXT_PUBLIC_RECAPTCHA_SITE_KEY',
       'RECAPTCHA_SECRET_KEY',
-      'CSRF_SECRET',
       'EMAIL_SERVICE',
       'RESEND_AUDIENCE_ID',
     ],
@@ -45,6 +44,8 @@ const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }>
 };
 
 const optional = [
+  'CSRF_SECRET',
+  'ADMIN_TOTP_SECRET',
   'UPSTASH_REDIS_REST_URL',
   'UPSTASH_REDIS_REST_TOKEN',
   'MONGODB_URI_DIRECT',

@@ -28,7 +28,7 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
         subtitle={content.hero.subtitle}
       />
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex flex-wrap gap-3 mb-10 justify-center">
             {empires.map((e, i) => (
@@ -38,8 +38,8 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
                 onClick={() => setActiveEmpire(i)}
                 className={`flex items-center gap-2 px-5 py-3 rounded-full text-sm font-bold transition-all duration-200 ${
                   i === activeEmpire
-                    ? 'bg-[#0A2342] text-white shadow-lg'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:border-[#D4AF37]/50 hover:text-[#0A2342]'
+                    ? 'bg-[#0d1a4a] text-white shadow-lg'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:border-[#d9711b]/50 hover:text-[#0d1a4a]'
                 }`}
               >
                 <span>{e.emoji}</span>
@@ -54,12 +54,12 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url('${empire.bgImage}')` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0A2342]/90 via-[#0A2342]/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0d1a4a]/90 via-[#0d1a4a]/60 to-transparent" />
               <div className="absolute inset-0 flex items-center px-8 md:px-12">
                 <div>
                   <span className="text-5xl mb-2 block">{empire.emoji}</span>
                   <h2 className="text-3xl md:text-4xl font-extrabold text-white">
-                    {empire.name}<span className="text-[#D4AF37]"> Empire</span>
+                    {empire.name}<span className="text-[#d9711b]"> Empire</span>
                   </h2>
                 </div>
               </div>
@@ -74,15 +74,15 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
                 <p className="text-slate-700 text-sm leading-relaxed">{empire.active}</p>
               </div>
 
-              <div className="p-8 bg-[#F8F4E9]/50">
+              <div className="p-8 bg-[#f6f2e8]/50">
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#d9711b] animate-pulse" />
                   <span className={`${colors.text} text-xs font-bold uppercase tracking-widest`}>Building Now</span>
                 </div>
                 <ul className="space-y-2.5 mb-4">
                   {empire.building.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-sm text-slate-700">
-                      <span className="w-4 h-4 rounded bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-0.5 text-[#D4AF37] text-[10px] font-bold">→</span>
+                      <span className="w-4 h-4 rounded bg-[#d9711b]/20 flex items-center justify-center flex-shrink-0 mt-0.5 text-[#d9711b] text-[10px] font-bold">→</span>
                       {item}
                     </li>
                   ))}
@@ -90,10 +90,10 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
                 <div>
                   <div className="flex justify-between text-xs text-slate-400 mb-1">
                     <span>Construction Progress</span>
-                    <span className="font-bold text-[#D4AF37]">{empire.buildingProgress}%</span>
+                    <span className="font-bold text-[#d9711b]">{empire.buildingProgress}%</span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#D4AF37] rounded-full transition-all duration-500" style={{ width: `${empire.buildingProgress}%` }} />
+                    <div className="h-full bg-[#d9711b] rounded-full transition-all duration-500" style={{ width: `${empire.buildingProgress}%` }} />
                   </div>
                 </div>
               </div>
@@ -111,14 +111,14 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
           <div className="flex justify-between items-center mt-8">
             <button
               onClick={() => setActiveEmpire((activeEmpire - 1 + empires.length) % empires.length)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 hover:border-[#D4AF37]/50 text-slate-600 hover:text-[#0A2342] text-sm font-medium transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 hover:border-[#d9711b]/50 text-slate-600 hover:text-[#0d1a4a] text-sm font-medium transition-all"
             >
               ← Previous
             </button>
             <span className="text-slate-400 text-sm">{activeEmpire + 1} / {empires.length}</span>
             <button
               onClick={() => setActiveEmpire((activeEmpire + 1) % empires.length)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 hover:border-[#D4AF37]/50 text-slate-600 hover:text-[#0A2342] text-sm font-medium transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 hover:border-[#d9711b]/50 text-slate-600 hover:text-[#0d1a4a] text-sm font-medium transition-all"
             >
               Next →
             </button>
@@ -126,10 +126,10 @@ export default function EmpiresClient({ content }: { content: EmpiresPageContent
 
           <div className="text-center mt-12">
             <Link
-              href="/investor-journey"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] font-bold rounded-xl transition-all duration-200 shadow-lg text-base"
+              href="/membership"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-[#d9711b] hover:bg-[#b9560b] text-white font-bold transition-all duration-200 shadow-lg text-base"
             >
-              Invest in These Empires →
+              Explore membership →
             </Link>
           </div>
         </div>

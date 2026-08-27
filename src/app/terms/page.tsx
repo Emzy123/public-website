@@ -16,14 +16,14 @@ export default function TermsPage() {
   return (
     <div className="pt-20">
       {/* Hero */}
-      <section className="bg-[#0A2342] pt-28 pb-16">
+      <section className="bg-[#0d1a4a] pt-28 pb-16">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
-          <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">Legal</span>
+          <span className="text-xs text-[#d9711b] uppercase tracking-[0.3em] font-semibold">Legal</span>
           <h1 className="text-4xl md:text-5xl font-extrabold text-white mt-3 mb-3">Terms of Service</h1>
           <p className="text-slate-400 text-sm">Effective Date: {EFFECTIVE_DATE}</p>
         </div>
       </section>
-      <div className="h-1 bg-gradient-to-r from-[#D4AF37] via-[#F4D03F] to-[#D4AF37]" />
+      <div className="h-1 bg-gradient-to-r from-[#d9711b] via-[#eccb7c] to-[#d9711b]" />
 
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
@@ -131,8 +131,8 @@ export default function TermsPage() {
               },
             ].map((s) => (
               <div key={s.n} id={`section-${s.n}`}>
-                <h2 className="text-xl font-extrabold text-[#0A2342] mb-4 flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">{s.n}</span>
+                <h2 className="text-xl font-extrabold text-[#0d1a4a] mb-4 flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg bg-[#d9711b] flex items-center justify-center text-[#0d1a4a] text-sm font-extrabold flex-shrink-0">{s.n}</span>
                   {s.title}
                 </h2>
                 <div className="pl-11">{s.body}</div>
@@ -141,20 +141,20 @@ export default function TermsPage() {
 
             {/* Contact */}
             <div className="border-t border-slate-100 pt-10">
-              <h2 className="text-xl font-extrabold text-[#0A2342] mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-lg bg-[#D4AF37] flex items-center justify-center text-[#0A2342] text-sm font-extrabold flex-shrink-0">11</span>
+              <h2 className="text-xl font-extrabold text-[#0d1a4a] mb-4 flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-[#d9711b] flex items-center justify-center text-[#0d1a4a] text-sm font-extrabold flex-shrink-0">11</span>
                 Contact Information
               </h2>
               <div className="pl-11">
                 <p className="text-slate-600 text-sm mb-4">For questions about these Terms, please contact us:</p>
-                <div className="bg-[#F8F4E9] rounded-2xl p-6 space-y-3">
+                <div className="bg-[#f6f2e8] rounded-2xl p-6 space-y-3">
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-[#D4AF37]">✉️</span>
-                    <a href="mailto:sinetworkinggobal@gmail.com" className="text-[#0A2342] font-medium hover:text-[#D4AF37] transition-colors">sinetworkinggobal@gmail.com</a>
+                    <span className="text-[#d9711b]">✉️</span>
+                    <a href="mailto:sinetworkinggobal@gmail.com" className="text-[#0d1a4a] font-medium hover:text-[#d9711b] transition-colors">sinetworkinggobal@gmail.com</a>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="text-[#D4AF37]">💬</span>
-                    <a href="https://wa.me/2349028239706" target="_blank" rel="noopener noreferrer" className="text-[#0A2342] font-medium hover:text-[#D4AF37] transition-colors">WhatsApp: 0902 823 9706</a>
+                    <span className="text-[#d9711b]">💬</span>
+                    <a href="https://wa.me/2349028239706" target="_blank" rel="noopener noreferrer" className="text-[#0d1a4a] font-medium hover:text-[#d9711b] transition-colors">WhatsApp: 0902 823 9706</a>
                   </div>
                 </div>
               </div>
@@ -163,13 +163,13 @@ export default function TermsPage() {
 
           {/* Footer nav */}
           <div className="mt-12 pt-8 border-t border-slate-100 flex flex-wrap gap-4">
-            <Link href="/privacy" className="text-sm font-semibold text-[#D4AF37] hover:text-[#0A2342] transition-colors">
+            <Link href="/privacy" className="text-sm font-semibold text-[#d9711b] hover:text-[#0d1a4a] transition-colors">
               Privacy Policy →
             </Link>
-            <Link href="/transparency" className="text-sm text-slate-500 hover:text-[#0A2342] transition-colors">
+            <Link href="/transparency" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
               Transparency & FAQ
             </Link>
-            <Link href="/connect" className="text-sm text-slate-500 hover:text-[#0A2342] transition-colors">
+            <Link href="/connect" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
               Contact Us
             </Link>
           </div>

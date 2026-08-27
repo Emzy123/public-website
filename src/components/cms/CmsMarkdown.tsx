@@ -18,7 +18,7 @@ export function CmsMarkdown({ content, className = '' }: CmsMarkdownProps) {
         remarkPlugins={[remarkGfm]}
         components={{
         a: ({ href, children }) => (
-          <a href={href} className="text-[#D4AF37] hover:underline" target="_blank" rel="noopener noreferrer">
+          <a href={href} className="text-[#d9711b] hover:underline" target="_blank" rel="noopener noreferrer">
             {children}
           </a>
         ),

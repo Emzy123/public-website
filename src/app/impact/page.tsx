@@ -12,10 +12,10 @@ export async function generateMetadata() {
 }
 
 const STAT_STYLES = [
-  { bg: 'bg-[#0A2342]', text: 'text-[#D4AF37]' },
-  { bg: 'bg-[#D4AF37]', text: 'text-[#0A2342]' },
-  { bg: 'bg-[#F8F4E9]', text: 'text-[#0A2342]' },
-  { bg: 'bg-[#0A2342]', text: 'text-white' },
+  { bg: 'bg-[#0d1a4a]', text: 'text-[#d9711b]' },
+  { bg: 'bg-[#d9711b]', text: 'text-[#0d1a4a]' },
+  { bg: 'bg-[#f6f2e8]', text: 'text-[#0d1a4a]' },
+  { bg: 'bg-[#0d1a4a]', text: 'text-white' },
 ];
 
 export default async function ImpactPage() {
@@ -29,16 +29,16 @@ export default async function ImpactPage() {
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">{certificateSection.eyebrow}</span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2342] mt-3 mb-6">
-                {certificateSection.title}<br />to <span className="text-[#D4AF37]">{certificateSection.titleAccent}</span>
+              <span className="text-xs text-[#d9711b] uppercase tracking-[0.3em] font-semibold">{certificateSection.eyebrow}</span>
+              <h2 className="text-3xl md:text-4xl font-extrabold text-[#0d1a4a] mt-3 mb-6">
+                {certificateSection.title}<br />to <span className="text-[#d9711b]">{certificateSection.titleAccent}</span>
               </h2>
               <div className="space-y-4 text-slate-600 leading-relaxed">
                 {certificateSection.paragraphs.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
-                <div className="inline-block bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-xl px-6 py-4 mt-2">
-                  <p className="text-[#0A2342] font-bold text-sm">{certificateSection.highlight}</p>
+                <div className="inline-block bg-[#d9711b]/10 border border-[#d9711b]/30 rounded-xl px-6 py-4 mt-2">
+                  <p className="text-[#0d1a4a] font-bold text-sm">{certificateSection.highlight}</p>
                 </div>
               </div>
             </div>
@@ -49,7 +49,7 @@ export default async function ImpactPage() {
                 return (
                   <div key={item.stat} className={`${style.bg} rounded-2xl p-6`}>
                     <div className={`text-3xl font-extrabold ${style.text} mb-2`}>{item.stat}</div>
-                    <div className={`text-sm ${style.text === 'text-[#D4AF37]' || style.text === 'text-[#0A2342]' ? 'opacity-70' : 'text-slate-300'} leading-tight`}>{item.label}</div>
+                    <div className={`text-sm ${style.text === 'text-[#d9711b]' || style.text === 'text-[#0d1a4a]' ? 'opacity-70' : 'text-slate-300'} leading-tight`}>{item.label}</div>
                   </div>
                 );
               })}
@@ -58,19 +58,19 @@ export default async function ImpactPage() {
         </div>
       </section>
 
-      <section className="py-20 bg-[#0A2342]">
+      <section className="py-20 bg-[#0d1a4a]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
-            <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">{ownershipSection.eyebrow}</span>
+            <span className="text-xs text-[#d9711b] uppercase tracking-[0.3em] font-semibold">{ownershipSection.eyebrow}</span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-3 mb-4">
-              {ownershipSection.title} <span className="text-[#D4AF37]">{ownershipSection.titleAccent}</span>
+              {ownershipSection.title} <span className="text-[#d9711b]">{ownershipSection.titleAccent}</span>
             </h2>
             <p className="text-slate-300 max-w-2xl mx-auto leading-relaxed">{ownershipSection.subtitle}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             {ownershipSection.items.map((item) => (
-              <div key={item.label} className="glass-card rounded-2xl p-6 text-center hover:border-[#D4AF37]/40 hover:-translate-y-1 transition-all duration-300">
+              <div key={item.label} className="glass-card rounded-2xl p-6 text-center hover:border-[#d9711b]/40 hover:-translate-y-1 transition-all duration-300">
                 <div className="text-4xl mb-3">{item.icon}</div>
                 <div className="text-white font-bold text-sm mb-1">{item.label}</div>
                 <div className="text-slate-400 text-xs leading-relaxed">{item.desc}</div>
@@ -78,14 +78,14 @@ export default async function ImpactPage() {
             ))}
           </div>
 
-          <div className="text-center bg-[#0A1929] rounded-2xl p-8 border border-[#D4AF37]/20">
+          <div className="text-center bg-[#0d1a4a] rounded-2xl p-8 border border-[#d9711b]/20">
             <p className="text-slate-300 text-lg leading-relaxed mb-2">{ownershipSection.closingLine}</p>
-            <p className="text-[#D4AF37] text-3xl font-extrabold">{ownershipSection.closingAccent}</p>
+            <p className="text-[#d9711b] text-3xl font-extrabold">{ownershipSection.closingAccent}</p>
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <SectionHeader
             badge={rolesSection.eyebrow}
@@ -98,14 +98,14 @@ export default async function ImpactPage() {
             {rolesSection.roles.map((role) => (
               <div
                 key={role.title}
-                className="bg-white rounded-2xl p-8 border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-xl hover:shadow-[#D4AF37]/10 hover:-translate-y-1 transition-all duration-300 group"
+                className="bg-white rounded-2xl p-8 border border-slate-200 hover:border-[#d9711b]/50 hover:shadow-xl hover:shadow-[#d9711b]/10 hover:-translate-y-1 transition-all duration-300 group"
               >
                 <div className="text-4xl mb-4">{role.icon}</div>
-                <h3 className="text-xl font-bold text-[#0A2342] mb-3 group-hover:text-[#D4AF37] transition-colors">{role.title}</h3>
+                <h3 className="text-xl font-bold text-[#0d1a4a] mb-3 group-hover:text-[#d9711b] transition-colors">{role.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed mb-6">{role.desc}</p>
                 <Link
                   href="/connect"
-                  className="inline-flex items-center gap-2 text-[#D4AF37] font-semibold text-sm hover:text-[#F4D03F] transition-colors"
+                  className="inline-flex items-center gap-2 text-[#d9711b] font-semibold text-sm hover:text-[#eccb7c] transition-colors"
                 >
                   {role.cta}
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +119,7 @@ export default async function ImpactPage() {
           <div className="text-center mt-12">
             <Link
               href={rolesSection.ctaHref}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#0A2342] hover:bg-[#1E3A5F] text-white font-bold rounded-xl transition-all duration-200 text-base"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-[#0d1a4a] hover:bg-[#1E3A5F] text-white font-bold rounded-xl transition-all duration-200 text-base"
             >
               {rolesSection.ctaLabel}
             </Link>

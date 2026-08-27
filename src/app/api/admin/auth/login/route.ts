@@ -118,7 +118,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (isProductionMode() && !isMfaEnabled()) {
-    console.warn('[security] ADMIN_TOTP_SECRET is not set — admin login is password-only until MFA is configured.');
+    console.error('[security] ADMIN_TOTP_SECRET is not set — admin login is unavailable until MFA is configured.');
+    return NextResponse.json(
+      { error: 'Admin sign-in requires multi-factor authentication. Please contact site support.' },
+      { status: 503 }
+    );
   }
 
   const ip = getClientIp(request);

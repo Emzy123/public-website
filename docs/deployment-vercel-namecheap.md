@@ -18,23 +18,24 @@ Set these in Vercel Project Settings -> Environment Variables:
 - `ADMIN_EMAIL=admin@sinet.africa`
 - `ADMIN_PASSWORD_HASH=...` (generate with `npx tsx scripts/hash-admin-password.ts "your-password"`)
 - `ADMIN_SESSION_SECRET=...` (generate with `openssl rand -base64 32`)
+- `ADMIN_TOTP_SECRET=...` (**required in production** — authenticator app TOTP secret)
 - MongoDB (required by `POST /api/contact` and `POST /api/academy`):
 - `MONGODB_URI=...`
 - `MONGODB_DB=sinet`
 - Waitlist security (required by `POST /api/waitlist`):
-- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...`
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...` (reCAPTCHA **v3**)
 - `RECAPTCHA_SECRET_KEY=...`
-- `CSRF_SECRET=...`
 - `EMAIL_SERVICE=resend`
 - `RESEND_API_KEY=...`
 - `RESEND_AUDIENCE_ID=...`
 - `RESEND_FROM_EMAIL=...`
 - `RESEND_CONTACT_TO_EMAIL=contact@sinet.africa`
-- Optional rate limiting (Upstash Redis):
+- Rate limiting (**required in production** — Upstash Redis; forms fail closed without it):
 - `UPSTASH_REDIS_REST_URL=...`
 - `UPSTASH_REDIS_REST_TOKEN=...`
 - `NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX`
 - Optional:
+  - `CSRF_SECRET` (not used by `@edge-csrf`; optional preview signing fallback)
   - `NEXT_PUBLIC_FACEBOOK_PIXEL_ID`
   - `NEXT_PUBLIC_SOCIAL_X_URL`
   - `NEXT_PUBLIC_SOCIAL_LINKEDIN_URL`

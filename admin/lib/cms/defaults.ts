@@ -254,9 +254,9 @@ export const DEFAULT_ABOUT: AboutContent = {
     titleAccent: 'Movement',
     subtitle: 'Whether you want to invest, build, create, or connect — there is a place for you in SINet. Africa is waiting for its builders.',
     buttons: [
-      { label: 'Start Investing →', href: '/investor-journey' },
-      { label: 'Explore the 5 Empires', href: '/empires' },
-      { label: 'Connect With Us', href: '/connect' },
+      { label: 'Explore membership →', href: '/membership' },
+      { label: 'See what we do', href: '/sectors' },
+      { label: 'Contact us', href: '/contact' },
     ],
   },
 };
@@ -564,8 +564,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
           { label: 'Home', href: '/' },
           { label: 'The SINet Blueprint', href: '/blueprint' },
           { label: 'The 5 Empires', href: '/empires' },
-          { label: 'Investor Journey', href: '/investor-journey' },
-          { label: 'Returns & Track Record', href: '/returns' },
+          { label: 'Membership', href: '/membership' },
+          { label: 'What We Do', href: '/sectors' },
         ],
       },
       {
@@ -584,7 +584,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { label: 'About', href: '/about' },
     { label: 'Blueprint', href: '/blueprint' },
     { label: 'Empires', href: '/empires' },
-    { label: 'Returns', href: '/returns' },
+    { label: 'Membership', href: '/membership' },
     { label: 'Impact', href: '/impact' },
     { label: 'Connect', href: '/connect' },
   ],

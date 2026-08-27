@@ -46,20 +46,28 @@ Everything else is optional for local dev. Features that depend on missing keys 
 
 | Variable | How to get it |
 |---|---|
-| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Go to [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin) → Register a new site → choose reCAPTCHA v2 (checkbox) → copy **Site Key**. |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Go to [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin) → Register a new site → choose **reCAPTCHA v3** → copy **Site Key**. |
 | `RECAPTCHA_SECRET_KEY` | Same page as above → copy **Secret Key**. |
 
-### Security: CSRF (required in production)
+### Security: CSRF
+
+CSRF protection uses `@edge-csrf/nextjs`, which generates per-cookie secrets automatically. Form routes issue tokens via `GET` (response header `x-csrf-token`).
 
 | Variable | How to get it |
 |---|---|
-| `CSRF_SECRET` | Generate with `openssl rand -base64 32`. Must be 32+ characters. |
+| `CSRF_SECRET` | Optional. Not read by the CSRF library. May be used as a fallback signing secret for CMS preview when `ADMIN_SESSION_SECRET` is unset. Generate with `openssl rand -base64 32` if desired. |
+
+### Admin MFA (required in production)
+
+| Variable | How to get it |
+|---|---|
+| `ADMIN_TOTP_SECRET` | Base32 TOTP secret for an authenticator app. **Required in production** — admin login returns 503 without it. |
 
 ### Rate Limiting (required in production)
 
 | Variable | How to get it |
 |---|---|
-| `UPSTASH_REDIS_REST_URL` | Sign up at [Upstash](https://console.upstash.com) → Create a Redis database → copy **REST URL** from the dashboard. |
+| `UPSTASH_REDIS_REST_URL` | Sign up at [Upstash](https://console.upstash.com) → Create a Redis database → copy **REST URL**. **Required in production** — public form rate limits fail closed (503) without it. |
 | `UPSTASH_REDIS_REST_TOKEN` | Same Upstash dashboard → copy **REST Token**. |
 
 ### Email: Resend (required for email features)

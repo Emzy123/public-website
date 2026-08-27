@@ -113,7 +113,13 @@ describe('validateRouteSecurityConfig', () => {
     it('requires a verified sender configuration', () => {
       withEnv({ NODE_ENV: 'development', MONGODB_URI: 'mongodb://localhost:27017', MONGODB_DB: 'sinet' });
       expect(validateRouteSecurityConfig('applications').ok).toBe(false);
-      withEnv({ RESEND_API_KEY: 'key', RESEND_FROM_EMAIL: 'SINet <noreply@sinet.africa>' });
+      withEnv({
+        NODE_ENV: 'development',
+        MONGODB_URI: 'mongodb://localhost:27017',
+        MONGODB_DB: 'sinet',
+        RESEND_API_KEY: 'key',
+        RESEND_FROM_EMAIL: 'SINet <noreply@sinet.africa>',
+      });
       expect(validateRouteSecurityConfig('applications').ok).toBe(true);
     });
   });

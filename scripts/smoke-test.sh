@@ -29,22 +29,26 @@ echo ""
 # Homepage
 check "Homepage" "GET" "/" "200"
 
-# API routes
+# API routes — GET issues CSRF tokens (200), not 405
 check "Waitlist CSRF token" "GET" "/api/waitlist" "200"
-check "Contact rejects GET" "GET" "/api/contact" "405"
-check "Academy rejects GET" "GET" "/api/academy" "405"
+check "Contact CSRF token" "GET" "/api/contact" "200"
+check "Academy CSRF token" "GET" "/api/academy" "200"
+check "Admin login CSRF token" "GET" "/api/admin/auth/login" "200"
+check "Health" "GET" "/api/health" "200"
 
 # Key pages
 check "Waitlist page" "GET" "/waitlist" "200"
 check "Contact page" "GET" "/contact" "200"
 check "About page" "GET" "/about" "200"
 check "Sectors page" "GET" "/sectors" "200"
+check "Membership page" "GET" "/membership" "200"
+check "Gallery page" "GET" "/gallery" "200"
 
 # Admin API (unauthenticated should 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
 check "Admin media API requires auth" "GET" "/api/admin/media" "401"
 check "Admin submissions API requires auth" "GET" "/api/admin/submissions" "401"
-check "Admin login rejects GET" "GET" "/api/admin/auth/login" "405"
+check "Admin applications API requires auth" "GET" "/api/admin/applications" "401"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"

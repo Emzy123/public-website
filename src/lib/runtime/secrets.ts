@@ -36,7 +36,7 @@ export function assertProductionSecrets(): void {
     'ADMIN_SESSION_SECRET',
     'ADMIN_EMAIL',
     'ADMIN_PASSWORD_HASH',
-    'CSRF_SECRET',
+    'ADMIN_TOTP_SECRET',
     'NEXT_PUBLIC_SITE_URL',
     'MONGODB_URI',
     'MONGODB_DB',
@@ -64,10 +64,6 @@ export function assertProductionSecrets(): void {
 
   if (!process.env.UPSTASH_REDIS_REST_URL?.trim() || !process.env.UPSTASH_REDIS_REST_TOKEN?.trim()) {
     console.error('[security] Upstash Redis is not configured — rate limiting will fail closed in production');
-  }
-
-  if (!process.env.ADMIN_TOTP_SECRET?.trim()) {
-    console.error('[security] ADMIN_TOTP_SECRET is not set — admin login will be unavailable until MFA is configured');
   }
 
   if (process.env.ADMIN_PASSWORD?.trim()) {

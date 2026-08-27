@@ -176,8 +176,8 @@ function buildAutoReplyHtml(name: string): string {
                 </tr>
                 <tr>
                   <td align="center">
-                    <a href="${SITE_URL}/investor-journey" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0A2342;color:#D4AF37;font-weight:700;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none;">
-                      Read: How Investing Works →
+                    <a href="${SITE_URL}/membership" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:#0d1a4a;color:#ffffff;font-weight:700;font-size:14px;padding:12px 28px;text-decoration:none;">
+                      Learn about membership →
                     </a>
                   </td>
                 </tr>

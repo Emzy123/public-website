@@ -12,8 +12,8 @@ Guide for local setup, testing, and adding features to the SINet public website.
 | Validation | Zod |
 | Database | MongoDB (Atlas in prod; local Docker optional) |
 | Email | Resend |
-| Rate limiting | Upstash Redis (waitlist) + in-memory (contact/academy) |
-| Security | CSRF, reCAPTCHA v3, origin allowlist, honeypot fields |
+| Rate limiting | Upstash Redis (required in production; memory fallback only in development) |
+| Security | CSRF (GET token issue), reCAPTCHA v3, origin allowlist, honeypot fields, admin TOTP MFA |
 
 ## Project layout
 
@@ -83,12 +83,13 @@ All of Tier B, plus:
 ```bash
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=<site_key>
 RECAPTCHA_SECRET_KEY=<secret_key>
-CSRF_SECRET=<random_32+_chars>
 EMAIL_SERVICE=resend
 RESEND_AUDIENCE_ID=<audience_id>
-UPSTASH_REDIS_REST_URL=<url>   # optional locally; rate limit skipped if unset
+UPSTASH_REDIS_REST_URL=<url>   # optional locally (memory fallback); required in production
 UPSTASH_REDIS_REST_TOKEN=<token>
 ```
+
+CSRF tokens are issued by form API `GET` handlers (`x-csrf-token` header). `CSRF_SECRET` is optional and not used by `@edge-csrf/nextjs`.
 
 Run `npm run check:env` anytime to see what's configured and what's missing.
 
@@ -250,5 +251,6 @@ Production runs on Vercel with MongoDB Atlas. See:
 | `querySrv ECONNREFUSED` connecting to Atlas | Set `MONGODB_URI_DIRECT` in `.env.local` with a non-SRV connection string |
 | Waitlist returns 403 CSRF | `GET /api/waitlist` first to obtain a token before POST |
 | Waitlist returns 403 origin | Ensure `NEXT_PUBLIC_SITE_URL` matches your local URL |
-| Rate limit skipped locally | Normal — Upstash vars are optional; waitlist rate limit is disabled without them |
+| Rate limit uses memory locally | Normal — without Upstash, development falls back to in-memory limits; production fail-closes |
+| Admin login 503 in production | Set `ADMIN_TOTP_SECRET` — MFA is required in production |
 | `npm run seed:db` fails | Check `MONGODB_URI` and `MONGODB_DB`; try local Docker MongoDB |

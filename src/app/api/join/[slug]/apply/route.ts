@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectId } from 'mongodb';
 import { createHash } from 'node:crypto';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { campaignApplicationSchema } from '@/lib/schemas/application.schema';
 import { waitlistSchema } from '@/lib/schemas/registration-link.schema';
-import { verifyCsrfToken, issueCsrfToken } from '@/lib/security/csrf-handler';
-import { validateOrigin } from '@/lib/security/origin';
-import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
+import { issueCsrfToken } from '@/lib/security/csrf-handler';
+import { getClientIp } from '@/lib/security/rate-limit-unified';
+import { enforcePublicFormGuards, isHoneypotTriggered } from '@/lib/security/public-form';
 import { isDevelopmentMode } from '@/lib/runtime/envMode';
-import { validateRouteSecurityConfig } from '@/lib/runtime/securityConfig';
 import { sendApplicationReceivedEmail } from '@/lib/email/application-mail';
+import { attachDocumentsToApplication } from '@/lib/applications/document-storage';
+import { getRoleDefinition } from '@/lib/applications/role-definitions';
 import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
-  isLinkAcceptingApplications,
-  maybeAutoCloseLink,
+  tryReserveApplicationSlot,
 } from '@/lib/registration-links';
 import type { ApplicationRole } from '@/lib/types/membership';
 import { ROLE_LABELS } from '@/lib/types/membership';
@@ -24,23 +23,20 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest, { params }: { params: { slug: string } }) {
-  const configCheck = validateRouteSecurityConfig('applications');
-  if (!configCheck.ok) return NextResponse.json({ error: configCheck.message }, { status: configCheck.status });
-
-  if (!validateOrigin(request)) {
-    return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
-  }
-
-  const csrf = await verifyCsrfToken(request);
-  if (!csrf.ok) return csrf.response;
-
-  const limited = await enforceRateLimit(getClientIp(request), 'join-applications', 5, 15 * 60);
-  if (!limited.ok) {
-    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429, headers: limited.headers });
-  }
+  const blocked = await enforcePublicFormGuards(request, {
+    routeKey: 'applications',
+    rateLimitPrefix: 'join-applications',
+    maxRequests: 5,
+    windowSeconds: 15 * 60,
+  });
+  if (blocked) return blocked;
 
   try {
     const body = await request.json();
+
+    if (isHoneypotTriggered(body)) {
+      return NextResponse.json({ success: true, applicationId: 'ok' }, { status: 201 });
+    }
 
     if (body?.waitlist === true) {
       const parsed = waitlistSchema.safeParse(body);
@@ -69,18 +65,19 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
     const data = parsed.data;
     const db = await getMongoDb();
-    const link = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
-    if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
-    if (link.isOpen) await maybeAutoCloseLink(db, link as typeof link & { _id: ObjectId });
-    const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
-    if (!isLinkAcceptingApplications(refreshed!)) {
-      return NextResponse.json({ error: 'This application period has closed.' }, { status: 403 });
-    }
+    const existing = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
+    if (!existing) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
     const role = data.role as ApplicationRole;
-    if (!refreshed!.roles.includes(role)) {
+    if (!existing.roles.includes(role)) {
       return NextResponse.json({ error: 'This role is not accepted through this link.' }, { status: 400 });
+    }
+
+    const docIds = Object.values(data.documents).filter((id): id is string => Boolean(id));
+    const reserved = await tryReserveApplicationSlot(db, params.slug);
+    if (!reserved) {
+      return NextResponse.json({ error: 'This application period has closed.' }, { status: 403 });
     }
 
     const submittedAt = new Date();
@@ -90,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       acceptedAt: submittedAt.toISOString(),
       version: 'community-code-of-conduct-v2',
       textHash: createHash('sha256').update(agreementText).digest('hex'),
-      ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown',
+      ip: getClientIp(request),
       userAgent: request.headers.get('user-agent') || 'unknown',
     };
 
@@ -100,21 +97,20 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       status: 'pending',
       data,
       agreementMeta,
-      sourceLinkId: refreshed!._id,
-      sourceLinkName: refreshed!.name,
-      sourceLinkSlug: refreshed!.slug,
+      sourceLinkId: reserved._id,
+      sourceLinkName: reserved.name,
+      sourceLinkSlug: reserved.slug,
       submittedAt,
       updatedAt: submittedAt,
     };
 
     const insert = await db.collection('applications').insertOne(application);
-    await db.collection(REGISTRATION_LINKS_COLLECTION).updateOne(
-      { _id: refreshed!._id },
-      { $inc: { applicationCount: 1 }, $set: { updatedAt: submittedAt } },
-    );
+    const applicationId = String(insert.insertedId);
 
-    const updatedLink = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ _id: refreshed!._id });
-    if (updatedLink) await maybeAutoCloseLink(db, updatedLink as typeof updatedLink & { _id: ObjectId });
+    const attached = await attachDocumentsToApplication(docIds, params.slug, role, applicationId);
+    if (!attached.ok) {
+      console.error('Document attach failed after application insert:', attached.error, applicationId);
+    }
 
     await db.collection('members').updateOne(
       { email: data.email.toLowerCase() },
@@ -124,7 +120,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
           email: data.email.toLowerCase(),
           phone: data.phone,
           pathway: role,
-          sourceLink: refreshed!.name,
+          sourceLink: reserved.name,
           updatedAt: submittedAt,
         },
         $setOnInsert: { createdAt: submittedAt, status: 'pending' },
@@ -136,10 +132,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     sendApplicationReceivedEmail({
       email: data.email,
       name: data.fullName,
-      role: ROLE_LABELS[role],
+      role: ROLE_LABELS[role] || getRoleDefinition(role).label,
     }).catch((err) => console.warn('Application received email failed:', err));
 
-    return NextResponse.json({ success: true, applicationId: String(insert.insertedId) }, { status: 201 });
+    return NextResponse.json({ success: true, applicationId }, { status: 201 });
   } catch (error) {
     console.error('Campaign application submission error:', error);
     const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;

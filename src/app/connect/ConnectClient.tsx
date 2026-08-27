@@ -50,7 +50,7 @@ export default function ConnectClient({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
         </svg>
       ),
-      bg: 'bg-[#0A2342]',
+      bg: 'bg-[#0d1a4a]',
       label: 'Call Us',
       value: contact.phoneDisplay,
       href: contact.phone,
@@ -65,7 +65,7 @@ export default function ConnectClient({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
         </svg>
       ),
-      bg: 'bg-[#D4AF37]',
+      bg: 'bg-[#d9711b]',
       label: 'Email',
       value: contact.email,
       href: `mailto:${contact.email}`,
@@ -114,8 +114,8 @@ export default function ConnectClient({
   };
 
   const inputClass = `w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 
-    placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 
-    focus:border-[#D4AF37] transition-colors text-sm disabled:opacity-60 bg-white`;
+    placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#d9711b]/50 
+    focus:border-[#d9711b] transition-colors text-sm disabled:opacity-60 bg-white`;
 
   return (
     <div className="pt-20">
@@ -126,10 +126,10 @@ export default function ConnectClient({
         subtitle={content.hero.subtitle}
       />
 
-      <div className="bg-[#D4AF37]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex flex-wrap items-center justify-center gap-6 text-[#0A2342] text-sm font-semibold">
+      <div className="bg-[#d9711b]">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex flex-wrap items-center justify-center gap-6 text-[#0d1a4a] text-sm font-semibold">
           <span className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#0A2342] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#0d1a4a] animate-pulse" />
             We reply to every message within 24 hours
           </span>
           <span className="opacity-60 hidden sm:block">·</span>
@@ -141,30 +141,30 @@ export default function ConnectClient({
         </div>
       </div>
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="grid lg:grid-cols-5 gap-12">
             <div className="lg:col-span-2 space-y-6">
               <div>
-                <h2 className="text-2xl font-extrabold text-[#0A2342] mb-1">Quick Contact</h2>
+                <h2 className="text-2xl font-extrabold text-[#0d1a4a] mb-1">Quick Contact</h2>
                 <p className="text-slate-500 text-sm">Prefer to reach us directly? Choose your channel below.</p>
               </div>
 
               {contactCards.map((card) => (
-                <div key={card.id} className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-lg transition-all duration-300">
+                <div key={card.id} className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#d9711b]/50 hover:shadow-lg transition-all duration-300">
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
                       {card.icon}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{card.label}</p>
-                      <p className="font-bold text-[#0A2342] text-sm break-all">{card.value}</p>
+                      <p className="font-bold text-[#0d1a4a] text-sm break-all">{card.value}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{card.note}</p>
                       <a
                         href={card.href}
                         target={card.target}
                         rel={card.target === '_blank' ? 'noopener noreferrer' : undefined}
-                        className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-[#D4AF37] hover:text-[#F4D03F] transition-colors"
+                        className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-[#d9711b] hover:text-[#eccb7c] transition-colors"
                       >
                         {card.cta}
                       </a>
@@ -176,14 +176,14 @@ export default function ConnectClient({
               <div className="bg-white rounded-2xl p-5 border border-slate-200">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-[#0A2342]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <svg className="w-6 h-6 text-[#0d1a4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Office</p>
-                    <p className="font-bold text-[#0A2342] text-sm">{contact.address}</p>
+                    <p className="font-bold text-[#0d1a4a] text-sm">{contact.address}</p>
                     <p className="text-xs text-slate-400 mt-0.5">Operations active across Nigeria</p>
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export default function ConnectClient({
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-slate-200 p-8 md:p-10 shadow-sm">
-                  <h2 className="text-xl font-extrabold text-[#0A2342] mb-1">{content.formTitle}</h2>
+                  <h2 className="text-xl font-extrabold text-[#0d1a4a] mb-1">{content.formTitle}</h2>
                   <p className="text-slate-400 text-sm mb-7">{content.formSubtitle}</p>
 
                   <input
@@ -281,7 +281,7 @@ export default function ConnectClient({
                       <input
                         type="checkbox" name="consent" checked={form.consent}
                         onChange={handleChange} required disabled={status === 'loading'}
-                        className="w-5 h-5 rounded border-slate-300 text-[#D4AF37] focus:ring-[#D4AF37] mt-0.5 flex-shrink-0 cursor-pointer"
+                        className="w-5 h-5 rounded border-slate-300 text-[#d9711b] focus:ring-[#d9711b] mt-0.5 flex-shrink-0 cursor-pointer"
                       />
                       <span className="text-sm text-slate-600 leading-relaxed group-hover:text-slate-800 transition-colors">
                         I agree to be contacted by SINet regarding investment opportunities and platform updates.
@@ -300,12 +300,12 @@ export default function ConnectClient({
                   <button
                     type="submit"
                     disabled={status === 'loading' || !form.consent}
-                    className="w-full py-4 bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] font-bold rounded-xl transition-all duration-200 text-base shadow-lg hover:shadow-[#D4AF37]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 bg-[#d9711b] hover:bg-[#eccb7c] text-[#0d1a4a] font-bold rounded-xl transition-all duration-200 text-base shadow-lg hover:shadow-[#d9711b]/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {status === 'loading' ? 'Sending…' : 'Send Inquiry'}
                   </button>
                   <p className="text-center text-xs text-slate-400 mt-3">
-                    Response guaranteed within 24 hours · <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" className="text-[#D4AF37] hover:underline">Faster via WhatsApp</a>
+                    Response guaranteed within 24 hours · <a href={contact.whatsapp} target="_blank" rel="noopener noreferrer" className="text-[#d9711b] hover:underline">Faster via WhatsApp</a>
                   </p>
                 </form>
               )}
@@ -314,12 +314,12 @@ export default function ConnectClient({
         </div>
       </section>
 
-      <section className="py-10 bg-[#0A2342]">
+      <section className="py-10 bg-[#0d1a4a]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-slate-400 text-sm mb-4">Or explore before you commit</p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link href="/investor-journey" className="px-5 py-2.5 bg-[#D4AF37] text-[#0A2342] rounded-xl text-sm font-bold hover:bg-[#F4D03F] transition-colors">How Investing Works</Link>
-            <Link href="/returns" className="px-5 py-2.5 border border-white/20 text-white rounded-xl text-sm font-medium hover:bg-white/10 transition-colors">See Returns</Link>
+            <Link href="/membership" className="px-5 py-2.5 bg-[#d9711b] text-white text-sm font-bold hover:bg-[#b9560b] transition-colors">Explore membership</Link>
+            <Link href="/sectors" className="px-5 py-2.5 border border-white/20 text-white text-sm font-medium hover:bg-white/10 transition-colors">See what we do</Link>
             <Link href="/transparency" className="px-5 py-2.5 border border-white/20 text-white rounded-xl text-sm font-medium hover:bg-white/10 transition-colors">Read FAQ</Link>
           </div>
         </div>

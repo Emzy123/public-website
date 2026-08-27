@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { APPLICATION_ROLES } from '@/lib/types/membership';
+import { APPLICATION_ROLES, type ApplicationRole } from '@/lib/types/membership';
+import {
+  ROLE_DEFINITIONS,
+  type RoleFieldDef,
+  type RoleDocumentDef,
+} from '@/lib/applications/role-definitions';
 
 const contactFields = {
   fullName: z.string().trim().min(2, 'Enter your full name').max(120),
@@ -7,42 +12,99 @@ const contactFields = {
   phone: z.string().trim().min(7, 'Enter a valid phone number').max(30),
 };
 
-const communityRoleFields = {
-  ...contactFields,
-  location: z.string().trim().min(2, 'Enter your state or location').max(120),
-  skills: z.array(z.string().trim().min(1).max(60)).min(1, 'Select at least one relevant skill').max(8),
-  availability: z.array(z.string().trim().min(1).max(60)).min(1, 'Select your availability'),
-  motivation: z.string().trim().min(15, 'Tell us a little more about your interest').max(1_500),
-  codeOfConductAccepted: z.literal(true),
-};
+/** 24-char hex ObjectId without importing mongodb (keeps schema testable). */
+const objectIdString = z
+  .string()
+  .trim()
+  .regex(/^[a-fA-F0-9]{24}$/, 'Invalid document reference');
 
-export const volunteerApplicationSchema = z.object({
-  role: z.literal('volunteer'),
-  ...communityRoleFields,
-});
+function fieldSchema(field: RoleFieldDef): z.ZodTypeAny {
+  const required = field.required !== false;
 
-export const ambassadorApplicationSchema = z.object({
-  role: z.literal('ambassador'),
-  ...communityRoleFields,
-});
+  switch (field.type) {
+    case 'multiselect': {
+      let arr = z.array(z.string().trim().min(1).max(120));
+      if (field.minItems != null) arr = arr.min(field.minItems, `Select at least ${field.minItems}`);
+      if (field.maxItems != null) arr = arr.max(field.maxItems);
+      if (field.options?.length) {
+        const allowed = new Set(field.options);
+        arr = arr.superRefine((vals, ctx) => {
+          for (const v of vals) {
+            if (!allowed.has(v)) {
+              ctx.addIssue({ code: 'custom', message: `Invalid option: ${v}` });
+            }
+          }
+        }) as typeof arr;
+      }
+      return required ? arr : arr.optional().default([]);
+    }
+    case 'select': {
+      if (field.options?.length) {
+        const enumSchema = z.enum(field.options as [string, ...string[]]);
+        return required ? enumSchema : enumSchema.optional();
+      }
+      let s = z.string().trim();
+      if (required) s = s.min(1);
+      return required ? s : s.optional();
+    }
+    case 'textarea':
+    case 'text':
+    case 'phone': {
+      let s = z.string().trim();
+      if (required) s = s.min(field.minLength ?? 1, `${field.label} is required`);
+      else if (field.minLength) s = s.min(field.minLength);
+      if (field.maxLength) s = s.max(field.maxLength);
+      return required ? s : s.optional().or(z.literal(''));
+    }
+    case 'email': {
+      const s = z.string().trim().email();
+      return required ? s : s.optional().or(z.literal(''));
+    }
+    case 'url': {
+      const s = z
+        .string()
+        .trim()
+        .max(field.maxLength ?? 300)
+        .refine((v) => !v || /^https?:\/\//i.test(v), { message: 'Enter a valid URL starting with http:// or https://' });
+      return required ? s.min(1) : s.optional().or(z.literal(''));
+    }
+    default:
+      return z.string().optional();
+  }
+}
 
-export const communityMemberApplicationSchema = z.object({
-  role: z.literal('community-member'),
-  ...communityRoleFields,
-});
+function documentsSchema(docs: RoleDocumentDef[]) {
+  const shape: Record<string, z.ZodTypeAny> = {};
+  for (const doc of docs) {
+    shape[doc.key] = doc.required
+      ? objectIdString
+      : objectIdString.optional().or(z.literal('')).transform((v) => (v ? v : undefined));
+  }
+  return z.object(shape);
+}
 
-export const staffApplicationSchema = z.object({
-  role: z.literal('staff'),
-  ...communityRoleFields,
-});
+function buildRoleSchema(role: ApplicationRole) {
+  const def = ROLE_DEFINITIONS[role];
+  const roleFields: Record<string, z.ZodTypeAny> = {};
+  for (const field of def.fields) {
+    roleFields[field.key] = fieldSchema(field);
+  }
 
-export const partnershipInterestApplicationSchema = z.object({
-  role: z.literal('partnership-interest'),
-  ...contactFields,
-  organization: z.string().trim().max(200).optional(),
-  interestDescription: z.string().trim().min(15, 'Describe your interest').max(2_000),
-  codeOfConductAccepted: z.literal(true),
-});
+  return z.object({
+    role: z.literal(role),
+    ...contactFields,
+    ...roleFields,
+    documents: documentsSchema(def.documents),
+    codeOfConductAccepted: z.literal(true),
+    website: z.string().max(0).optional(),
+  });
+}
+
+export const volunteerApplicationSchema = buildRoleSchema('volunteer');
+export const ambassadorApplicationSchema = buildRoleSchema('ambassador');
+export const communityMemberApplicationSchema = buildRoleSchema('community-member');
+export const staffApplicationSchema = buildRoleSchema('staff');
+export const partnershipInterestApplicationSchema = buildRoleSchema('partnership-interest');
 
 export const campaignApplicationSchema = z.discriminatedUnion('role', [
   volunteerApplicationSchema,

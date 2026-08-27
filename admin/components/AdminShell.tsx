@@ -70,9 +70,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         icon: <Icon d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />,
       },
       {
-        href: '/admin/content/home',
-        label: 'Homepage',
-        icon: <Icon d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7 M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />,
+        href: '/admin/content',
+        label: 'All Pages',
+        icon: <Icon d="M4 6h16M4 12h16M4 18h10" />,
       },
       {
         href: '/admin/content/site-settings',

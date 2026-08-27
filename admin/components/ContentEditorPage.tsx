@@ -84,8 +84,15 @@ export function ContentEditorPage({ contentKey }: { contentKey: CmsKey }) {
         </div>
       }
     >
+      {meta.archived && (
+        <div className="mb-4 rounded-lg border border-[#e4dcc9] bg-[#f9f7f2] px-4 py-3 text-sm text-[#7b7263]">
+          This content key is <strong className="text-[#0d1a4a]">archived</strong> and does not drive the live
+          institutional homepage or redirected routes. Edits are kept for history only.
+        </div>
+      )}
+
       {editorMeta?.hasUnpublishedChanges && (
-        <div className="mb-4 p-3 rounded-lg bg-amber-900/20 border border-amber-700/40 text-amber-200 text-sm">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           This section has a draft that differs from the live site. Use <strong>Preview</strong> to review, then{' '}
           <strong>Publish</strong> to go live.
         </div>

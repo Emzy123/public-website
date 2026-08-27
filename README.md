@@ -16,12 +16,13 @@ For the full development guide (architecture, testing, adding features), see [do
 ## Security Features
 
 - Security headers configured in `next.config.mjs`
-- CSRF validation via `@edge-csrf/nextjs`
-- Rate limiting (5 requests/minute/IP) via Upstash
+- CSRF validation via `@edge-csrf/nextjs` (tokens issued on form API GET)
+- Rate limiting via Upstash Redis (**required in production**; fail-closed)
 - reCAPTCHA v3 verification on waitlist submissions
-- Origin allowlist validation for waitlist API
+- Origin allowlist validation for public form APIs
 - Zod validation on client and server
 - Honeypot field for bot filtering
+- Admin TOTP MFA (**required in production**)
 
 ## Development Commands
 
@@ -39,11 +40,11 @@ See `.env.example` for all keys. Run `npm run check:env` to see what's configure
 
 Key variables:
 
-- `MONGODB_URI` / `MONGODB_DB` — contact and academy forms
+- `MONGODB_URI` / `MONGODB_DB` — contact, academy, CMS, applications
 - `RESEND_API_KEY` / `RESEND_AUDIENCE_ID` — waitlist email
 - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` — waitlist bot protection
-- `CSRF_SECRET` — waitlist CSRF tokens
-- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — waitlist rate limiting (optional locally)
+- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — rate limiting (optional locally; required in production)
+- `ADMIN_TOTP_SECRET` — admin MFA (required in production)
 - `NEXT_PUBLIC_SITE_URL`
 
 ## Deployment (Vercel + Namecheap)

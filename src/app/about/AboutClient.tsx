@@ -25,7 +25,7 @@ function TeamModal({
         className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-[#0A2342] rounded-t-3xl p-8 relative">
+        <div className="bg-[#0d1a4a] rounded-t-3xl p-8 relative">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
@@ -34,12 +34,12 @@ function TeamModal({
             ✕
           </button>
           <div className="flex items-center gap-5">
-            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#D4AF37] flex-shrink-0">
+            <div className="relative w-20 h-20 rounded-2xl overflow-hidden border-2 border-[#d9711b] flex-shrink-0">
               <Image src={member.photo} alt={member.name} fill className="object-cover" />
             </div>
             <div>
               <h2 className="text-xl font-extrabold text-white">{member.name}</h2>
-              <p className="text-[#D4AF37] font-semibold text-sm">{member.title}</p>
+              <p className="text-[#d9711b] font-semibold text-sm">{member.title}</p>
               <p className="text-slate-300 text-xs mt-1">{member.empireEmoji} {member.empire}</p>
             </div>
           </div>
@@ -47,16 +47,16 @@ function TeamModal({
 
         <div className="p-8 space-y-6">
           <div>
-            <h3 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-2">About</h3>
+            <h3 className="text-xs text-[#d9711b] font-bold uppercase tracking-widest mb-2">About</h3>
             <p className="text-slate-600 leading-relaxed text-sm">{member.bio}</p>
           </div>
 
-          <div className="bg-[#F8F4E9] rounded-2xl p-5 border-l-4 border-[#D4AF37]">
-            <p className="italic text-[#0A2342] font-medium leading-relaxed">&ldquo;{member.quote}&rdquo;</p>
+          <div className="bg-[#f6f2e8] rounded-2xl p-5 border-l-4 border-[#d9711b]">
+            <p className="italic text-[#0d1a4a] font-medium leading-relaxed">&ldquo;{member.quote}&rdquo;</p>
           </div>
 
-          <div className="bg-[#0A2342] rounded-2xl p-5">
-            <h3 className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest mb-2">Key Achievement</h3>
+          <div className="bg-[#0d1a4a] rounded-2xl p-5">
+            <h3 className="text-xs text-[#d9711b] font-bold uppercase tracking-widest mb-2">Key Achievement</h3>
             <p className="text-slate-200 text-sm leading-relaxed">{member.achievement}</p>
           </div>
 
@@ -77,7 +77,7 @@ function TeamModal({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-[#D4AF37] hover:text-[#0A2342] transition-colors text-sm whitespace-nowrap"
+                className="font-bold text-[#d9711b] hover:text-[#0d1a4a] transition-colors text-sm whitespace-nowrap"
               >
                 {whatsappDisplay}
               </a>
@@ -103,14 +103,14 @@ export default function AboutClient({
 
   return (
     <div className="pt-20">
-      <section className="bg-[#0A2342] pt-32 pb-20 relative overflow-hidden">
+      <section className="bg-[#0d1a4a] pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(212,175,55,0.12)_0%,_transparent_60%)]" />
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center relative z-10">
-          <span className="inline-block text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold px-4 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 mb-6">
+          <span className="inline-block text-xs text-[#d9711b] uppercase tracking-[0.3em] font-semibold px-4 py-1.5 rounded-full bg-[#d9711b]/10 border border-[#d9711b]/30 mb-6">
             {hero.badge}
           </span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-6">
-            {hero.title}<br /><span className="text-[#D4AF37]">{hero.titleAccent}</span>
+            {hero.title}<br /><span className="text-[#d9711b]">{hero.titleAccent}</span>
           </h1>
           <p className="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
             {hero.subtitle}
@@ -118,19 +118,19 @@ export default function AboutClient({
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-bold">{origin.problemEyebrow}</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0A2342] mt-2 mb-4">{origin.problemTitle}</h2>
+              <span className="text-xs text-[#d9711b] uppercase tracking-widest font-bold">{origin.problemEyebrow}</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0d1a4a] mt-2 mb-4">{origin.problemTitle}</h2>
               {origin.problemParagraphs.map((p, i) => (
                 <p key={i} className="text-slate-600 leading-relaxed mb-4">{p}</p>
               ))}
             </div>
             <div>
-              <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-bold">{origin.sparkEyebrow}</span>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0A2342] mt-2 mb-4">{origin.sparkTitle}</h2>
+              <span className="text-xs text-[#d9711b] uppercase tracking-widest font-bold">{origin.sparkEyebrow}</span>
+              <h2 className="text-2xl md:text-3xl font-extrabold text-[#0d1a4a] mt-2 mb-4">{origin.sparkTitle}</h2>
               {origin.sparkParagraphs.map((p, i) => (
                 <p key={i} className="text-slate-600 leading-relaxed mb-4">{p}</p>
               ))}
@@ -139,22 +139,22 @@ export default function AboutClient({
         </div>
       </section>
 
-      <section className="py-20 bg-[#0A2342]">
+      <section className="py-20 bg-[#0d1a4a]">
         <div className="max-w-5xl mx-auto px-4 md:px-6">
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-[#0A1929] rounded-2xl p-8 md:p-10 border border-[#D4AF37]/20 relative overflow-hidden group hover:border-[#D4AF37]/40 transition-colors">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/5 rounded-bl-full" />
+            <div className="bg-[#0d1a4a] rounded-2xl p-8 md:p-10 border border-[#d9711b]/20 relative overflow-hidden group hover:border-[#d9711b]/40 transition-colors">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#d9711b]/5 rounded-bl-full" />
               <div className="text-4xl mb-4">{missionVision.visionEmoji}</div>
-              <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-bold">{missionVision.visionEyebrow}</span>
+              <span className="text-xs text-[#d9711b] uppercase tracking-widest font-bold">{missionVision.visionEyebrow}</span>
               <h2 className="text-2xl font-extrabold text-white mt-2 mb-4">{missionVision.visionTitle}</h2>
               <p className="text-slate-300 leading-relaxed text-sm">{missionVision.visionText}</p>
             </div>
-            <div className="bg-[#D4AF37] rounded-2xl p-8 md:p-10 relative overflow-hidden group">
+            <div className="bg-[#d9711b] rounded-2xl p-8 md:p-10 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full" />
               <div className="text-4xl mb-4">{missionVision.missionEmoji}</div>
-              <span className="text-xs text-[#0A2342]/70 uppercase tracking-widest font-bold">{missionVision.missionEyebrow}</span>
-              <h2 className="text-2xl font-extrabold text-[#0A2342] mt-2 mb-4">{missionVision.missionTitle}</h2>
-              <p className="text-[#0A2342]/80 leading-relaxed text-sm">{missionVision.missionText}</p>
+              <span className="text-xs text-[#0d1a4a]/70 uppercase tracking-widest font-bold">{missionVision.missionEyebrow}</span>
+              <h2 className="text-2xl font-extrabold text-[#0d1a4a] mt-2 mb-4">{missionVision.missionTitle}</h2>
+              <p className="text-[#0d1a4a]/80 leading-relaxed text-sm">{missionVision.missionText}</p>
             </div>
           </div>
         </div>
@@ -163,29 +163,29 @@ export default function AboutClient({
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
-            <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-semibold">{philosophy.eyebrow}</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2342] mt-3">{philosophy.title}</h2>
+            <span className="text-xs text-[#d9711b] uppercase tracking-widest font-semibold">{philosophy.eyebrow}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0d1a4a] mt-3">{philosophy.title}</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {philosophy.principles.map((p) => (
-              <div key={p.title} className="text-center p-8 rounded-2xl border border-slate-200 hover:border-[#D4AF37]/50 hover:shadow-xl hover:shadow-[#D4AF37]/10 hover:-translate-y-1 transition-all duration-300 group">
+              <div key={p.title} className="text-center p-8 rounded-2xl border border-slate-200 hover:border-[#d9711b]/50 hover:shadow-xl hover:shadow-[#d9711b]/10 hover:-translate-y-1 transition-all duration-300 group">
                 <div className="text-5xl mb-4">{p.icon}</div>
-                <h3 className="text-xl font-extrabold text-[#0A2342] mb-3 group-hover:text-[#D4AF37] transition-colors">{p.title}</h3>
+                <h3 className="text-xl font-extrabold text-[#0d1a4a] mb-3 group-hover:text-[#d9711b] transition-colors">{p.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{p.desc}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-12 p-8 bg-[#0A2342]/5 rounded-2xl border border-[#D4AF37]/20">
+          <div className="mt-12 p-8 bg-[#0d1a4a]/5 rounded-2xl border border-[#d9711b]/20">
             <div className="flex items-center gap-3 mb-4">
-              <span className="w-10 h-10 rounded-xl bg-[#D4AF37] flex items-center justify-center text-[#0A2342] font-extrabold text-lg flex-shrink-0">{philosophy.beyondReturns.icon}</span>
-              <h3 className="text-xl font-extrabold text-[#0A2342]">{philosophy.beyondReturns.title}</h3>
+              <span className="w-10 h-10 rounded-xl bg-[#d9711b] flex items-center justify-center text-[#0d1a4a] font-extrabold text-lg flex-shrink-0">{philosophy.beyondReturns.icon}</span>
+              <h3 className="text-xl font-extrabold text-[#0d1a4a]">{philosophy.beyondReturns.title}</h3>
             </div>
             <p className="text-slate-600 mb-6 leading-relaxed">{philosophy.beyondReturns.description}</p>
             <div className="grid md:grid-cols-2 gap-4">
               {philosophy.beyondReturns.bullets.map((item) => (
                 <div key={item} className="flex items-start gap-3">
-                  <span className="text-[#D4AF37] font-bold text-lg mt-0.5 flex-shrink-0">✓</span>
+                  <span className="text-[#d9711b] font-bold text-lg mt-0.5 flex-shrink-0">✓</span>
                   <span className="text-slate-700 text-sm leading-relaxed">{item}</span>
                 </div>
               ))}
@@ -194,26 +194,26 @@ export default function AboutClient({
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
-            <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-semibold">The Visionary</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2342] mt-3">Meet Our Founder</h2>
+            <span className="text-xs text-[#d9711b] uppercase tracking-widest font-semibold">The Visionary</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0d1a4a] mt-3">Meet Our Founder</h2>
           </div>
 
           <div className="grid md:grid-cols-5 gap-10 md:gap-16 items-start">
             <div className="md:col-span-2 flex flex-col items-center text-center">
               <div className="relative mb-5">
-                <div className="absolute inset-0 bg-[#D4AF37] rounded-full blur-2xl opacity-20 scale-110" />
-                <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-[#D4AF37] shadow-2xl">
+                <div className="absolute inset-0 bg-[#d9711b] rounded-full blur-2xl opacity-20 scale-110" />
+                <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-[#d9711b] shadow-2xl">
                   <Image src={founder.photo} alt={founder.name} fill className="object-cover" />
                 </div>
               </div>
-              <h3 className="text-2xl font-extrabold text-[#0A2342]">{founder.name}</h3>
-              <p className="text-[#D4AF37] font-semibold text-sm mb-3">{founder.title}</p>
+              <h3 className="text-2xl font-extrabold text-[#0d1a4a]">{founder.name}</h3>
+              <p className="text-[#d9711b] font-semibold text-sm mb-3">{founder.title}</p>
               <div className="flex flex-wrap gap-1.5 justify-center">
                 {founder.empires.map((e) => (
-                  <span key={e} className="text-xs px-2 py-0.5 rounded-full bg-[#0A2342]/10 text-[#0A2342] font-medium">{e}</span>
+                  <span key={e} className="text-xs px-2 py-0.5 rounded-full bg-[#0d1a4a]/10 text-[#0d1a4a] font-medium">{e}</span>
                 ))}
               </div>
             </div>
@@ -226,24 +226,24 @@ export default function AboutClient({
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mt-12">
-            <div className="bg-[#0A2342] rounded-2xl p-8 text-white">
-              <svg className="w-10 h-10 text-[#D4AF37] mb-4 opacity-80" fill="currentColor" viewBox="0 0 24 24">
+            <div className="bg-[#0d1a4a] rounded-2xl p-8 text-white">
+              <svg className="w-10 h-10 text-[#d9711b] mb-4 opacity-80" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
               </svg>
               <p className="text-lg md:text-xl italic leading-relaxed mb-4">&ldquo;{founder.quote}&rdquo;</p>
-              <p className="text-[#D4AF37] font-semibold text-sm">— {founder.name}</p>
+              <p className="text-[#d9711b] font-semibold text-sm">— {founder.name}</p>
             </div>
 
             <div className="bg-white rounded-2xl p-8 border border-slate-200">
               <div className="flex items-center gap-3 mb-4">
-                <span className="w-10 h-10 rounded-xl bg-[#D4AF37] flex items-center justify-center text-[#0A2342] font-extrabold text-lg">★</span>
-                <h4 className="font-extrabold text-[#0A2342] text-lg">Key Achievement</h4>
+                <span className="w-10 h-10 rounded-xl bg-[#d9711b] flex items-center justify-center text-[#0d1a4a] font-extrabold text-lg">★</span>
+                <h4 className="font-extrabold text-[#0d1a4a] text-lg">Key Achievement</h4>
               </div>
               <p className="text-slate-600 text-sm leading-relaxed">{founder.achievement}</p>
               <div className="grid grid-cols-2 gap-3 mt-5">
                 {founderStats.map((stat) => (
-                  <div key={stat.label} className="text-center p-3 bg-[#F8F4E9] rounded-xl">
-                    <div className="text-2xl font-extrabold text-[#D4AF37]">{stat.value}</div>
+                  <div key={stat.label} className="text-center p-3 bg-[#f6f2e8] rounded-xl">
+                    <div className="text-2xl font-extrabold text-[#d9711b]">{stat.value}</div>
                     <div className="text-xs text-slate-500">{stat.label}</div>
                   </div>
                 ))}
@@ -256,8 +256,8 @@ export default function AboutClient({
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="text-center mb-12">
-            <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-semibold">{teamSection.eyebrow}</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2342] mt-3">{teamSection.title}</h2>
+            <span className="text-xs text-[#d9711b] uppercase tracking-widest font-semibold">{teamSection.eyebrow}</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#0d1a4a] mt-3">{teamSection.title}</h2>
             <p className="text-slate-500 mt-3 max-w-xl mx-auto text-sm">{teamSection.subtitle}</p>
           </div>
 
@@ -266,7 +266,7 @@ export default function AboutClient({
               <button
                 key={member.id}
                 onClick={() => setSelectedMember(member)}
-                className="group text-left bg-[#F8F4E9] rounded-2xl overflow-hidden border border-slate-200 hover:border-[#D4AF37]/60 hover:shadow-xl hover:shadow-[#D4AF37]/10 hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]"
+                className="group text-left bg-[#f6f2e8] rounded-2xl overflow-hidden border border-slate-200 hover:border-[#d9711b]/60 hover:shadow-xl hover:shadow-[#d9711b]/10 hover:-translate-y-1 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#d9711b]"
               >
                 <div className="relative h-52 overflow-hidden bg-slate-200">
                   <Image
@@ -275,17 +275,17 @@ export default function AboutClient({
                     fill
                     className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0A2342]/80 backdrop-blur-sm text-white text-xs font-semibold border border-[#D4AF37]/30">
+                  <div className="absolute top-3 left-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0d1a4a]/80 backdrop-blur-sm text-white text-xs font-semibold border border-[#d9711b]/30">
                     <span>{member.empireEmoji}</span>
                   </div>
-                  <div className="absolute inset-0 bg-[#0A2342]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 text-center">
-                    <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider mb-2">View Profile</p>
+                  <div className="absolute inset-0 bg-[#0d1a4a]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 text-center">
+                    <p className="text-[#d9711b] text-xs font-bold uppercase tracking-wider mb-2">View Profile</p>
                     <p className="text-white text-xs leading-relaxed">{member.brief}</p>
                   </div>
                 </div>
 
                 <div className="p-5">
-                  <h3 className="font-extrabold text-[#0A2342] text-base group-hover:text-[#D4AF37] transition-colors">{member.name}</h3>
+                  <h3 className="font-extrabold text-[#0d1a4a] text-base group-hover:text-[#d9711b] transition-colors">{member.name}</h3>
                   <p className="text-slate-500 text-xs mt-0.5">{member.title}</p>
                   <p className="text-slate-400 text-xs mt-2 line-clamp-2 italic">&ldquo;{member.quote}&rdquo;</p>
                 </div>
@@ -295,29 +295,29 @@ export default function AboutClient({
         </div>
       </section>
 
-      <section className="py-20 bg-[#0A2342]">
+      <section className="py-20 bg-[#0d1a4a]">
         <div className="max-w-4xl mx-auto px-4 md:px-6">
           <div className="text-center mb-14">
-            <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-semibold">{timelineSection.eyebrow}</span>
+            <span className="text-xs text-[#d9711b] uppercase tracking-widest font-semibold">{timelineSection.eyebrow}</span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-3">{timelineSection.title}</h2>
           </div>
 
           <div className="relative">
-            <div className="absolute left-6 top-0 bottom-0 w-px bg-[#D4AF37]/20 md:left-1/2" />
+            <div className="absolute left-6 top-0 bottom-0 w-px bg-[#d9711b]/20 md:left-1/2" />
 
             <div className="space-y-10">
               {timeline.map((item, i) => (
                 <div key={item.date} className={`flex gap-6 md:gap-0 ${i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                   <div className={`flex-1 md:w-5/12 ${i % 2 === 0 ? 'md:pr-12' : 'md:pl-12'}`}>
-                    <div className="bg-[#0A1929] rounded-2xl p-6 border border-slate-700/50 hover:border-[#D4AF37]/30 transition-colors ml-10 md:ml-0">
-                      <p className="text-[#D4AF37] text-xs font-mono font-bold uppercase tracking-widest mb-1">{item.date}</p>
+                    <div className="bg-[#0d1a4a] rounded-2xl p-6 border border-slate-700/50 hover:border-[#d9711b]/30 transition-colors ml-10 md:ml-0">
+                      <p className="text-[#d9711b] text-xs font-mono font-bold uppercase tracking-widest mb-1">{item.date}</p>
                       <h3 className="text-white font-extrabold text-base mb-2">{item.title}</h3>
                       <p className="text-slate-400 text-sm leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
 
                   <div className="flex-shrink-0 absolute left-0 md:static md:flex md:w-14 md:justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#D4AF37] flex items-center justify-center text-xl shadow-lg shadow-[#D4AF37]/30 border-4 border-[#0A2342]">
+                    <div className="w-12 h-12 rounded-full bg-[#d9711b] flex items-center justify-center text-xl shadow-lg shadow-[#d9711b]/30 border-4 border-[#0d1a4a]">
                       {item.emoji}
                     </div>
                   </div>
@@ -330,11 +330,11 @@ export default function AboutClient({
         </div>
       </section>
 
-      <section className="py-20 bg-[#F8F4E9]">
+      <section className="py-20 bg-[#f6f2e8]">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <span className="text-xs text-[#D4AF37] uppercase tracking-widest font-semibold">{cta.eyebrow}</span>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-[#0A2342] mt-3 mb-4">
-            {cta.title} <span className="text-[#D4AF37]">{cta.titleAccent}</span>
+          <span className="text-xs text-[#d9711b] uppercase tracking-widest font-semibold">{cta.eyebrow}</span>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-[#0d1a4a] mt-3 mb-4">
+            {cta.title} <span className="text-[#d9711b]">{cta.titleAccent}</span>
           </h2>
           <p className="text-slate-600 leading-relaxed mb-8 max-w-xl mx-auto">{cta.subtitle}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -344,10 +344,10 @@ export default function AboutClient({
                 href={btn.href}
                 className={`inline-flex items-center justify-center gap-2 px-8 py-4 font-bold rounded-xl transition-all duration-200 ${
                   i === 0
-                    ? 'bg-[#D4AF37] hover:bg-[#F4D03F] text-[#0A2342] shadow-lg'
+                    ? 'bg-[#d9711b] hover:bg-[#eccb7c] text-[#0d1a4a] shadow-lg'
                     : i === 1
-                      ? 'bg-[#0A2342] hover:bg-[#1E3A5F] text-white'
-                      : 'border-2 border-[#0A2342] hover:bg-[#0A2342]/5 text-[#0A2342]'
+                      ? 'bg-[#0d1a4a] hover:bg-[#1E3A5F] text-white'
+                      : 'border-2 border-[#0d1a4a] hover:bg-[#0d1a4a]/5 text-[#0d1a4a]'
                 }`}
               >
                 {btn.label}

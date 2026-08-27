@@ -10,21 +10,32 @@ interface PageHeroProps {
 
 export function PageHero({ badge, title, titleAccent, subtitle, dark = true }: PageHeroProps) {
   return (
-    <section className={`pt-32 pb-16 ${dark ? 'bg-[#0A2342]' : 'bg-[#F8F4E9]'}`}>
-      <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
+    <section className={`border-b border-[#0d1a4a]/15 pt-28 pb-16 ${dark ? 'bg-[#0d1a4a]' : 'bg-[#f6f2e8]'}`}>
+      <div className="mx-auto max-w-4xl px-4 text-center md:px-6">
         {badge && (
-          <span className={`inline-block text-xs uppercase tracking-[0.3em] font-semibold mb-4 px-4 py-1.5 rounded-full ${
-            dark ? 'text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/30' : 'text-[#0A2342] bg-[#0A2342]/10 border border-[#0A2342]/20'
-          }`}>
+          <span
+            className={`mb-4 inline-block px-4 py-1.5 font-data text-[11px] font-semibold uppercase tracking-[0.16em] ${
+              dark
+                ? 'border border-[#d9711b]/40 bg-[#d9711b]/15 text-[#eccb7c]'
+                : 'border border-[#0d1a4a]/20 bg-white text-[#d9711b]'
+            }`}
+          >
             {badge}
           </span>
         )}
-        <h1 className={`text-4xl md:text-6xl font-extrabold leading-tight mb-4 ${dark ? 'text-white' : 'text-[#0A2342]'}`}>
-          {title}{' '}
-          {titleAccent && <span className="text-[#D4AF37]">{titleAccent}</span>}
+        <h1
+          className={`font-editorial text-4xl leading-[.92] tracking-[-.04em] md:text-6xl ${
+            dark ? 'text-[#f6f2e8]' : 'text-[#0d1a4a]'
+          }`}
+        >
+          {title} {titleAccent && <span className="text-[#d9711b]">{titleAccent}</span>}
         </h1>
         {subtitle && (
-          <p className={`text-lg md:text-xl max-w-2xl mx-auto leading-relaxed ${dark ? 'text-slate-300' : 'text-slate-600'}`}>
+          <p
+            className={`mx-auto mt-5 max-w-2xl text-lg leading-relaxed ${
+              dark ? 'text-[#c9ccda]' : 'text-[#554e43]'
+            }`}
+          >
             {subtitle}
           </p>
         )}
@@ -42,17 +53,35 @@ interface SectionHeaderProps {
   align?: 'left' | 'center';
 }
 
-export function SectionHeader({ badge, title, titleAccent, subtitle, dark = false, align = 'center' }: SectionHeaderProps) {
+export function SectionHeader({
+  badge,
+  title,
+  titleAccent,
+  subtitle,
+  dark = false,
+  align = 'center',
+}: SectionHeaderProps) {
   return (
     <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'}`}>
       {badge && (
-        <span className="text-xs text-[#D4AF37] uppercase tracking-[0.3em] font-semibold">{badge}</span>
+        <span className="font-data text-[11px] font-semibold uppercase tracking-[0.16em] text-[#d9711b]">
+          {badge}
+        </span>
       )}
-      <h2 className={`text-3xl md:text-4xl font-extrabold mt-2 mb-3 ${dark ? 'text-white' : 'text-[#0A2342]'}`}>
-        {title}{titleAccent && <span className="text-[#D4AF37]"> {titleAccent}</span>}
+      <h2
+        className={`mt-2 font-editorial text-3xl tracking-[-.03em] md:text-4xl ${
+          dark ? 'text-[#f6f2e8]' : 'text-[#0d1a4a]'
+        }`}
+      >
+        {title}
+        {titleAccent && <span className="text-[#d9711b]"> {titleAccent}</span>}
       </h2>
       {subtitle && (
-        <p className={`max-w-2xl ${align === 'center' ? 'mx-auto' : ''} leading-relaxed ${dark ? 'text-slate-300' : 'text-slate-600'}`}>
+        <p
+          className={`mt-3 max-w-2xl leading-relaxed ${align === 'center' ? 'mx-auto' : ''} ${
+            dark ? 'text-[#c9ccda]' : 'text-[#554e43]'
+          }`}
+        >
           {subtitle}
         </p>
       )}

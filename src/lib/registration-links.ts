@@ -53,6 +53,44 @@ export async function maybeAutoCloseLink(
   return true;
 }
 
+/**
+ * Atomically reserve one application slot on an open link.
+ * Returns the updated link doc, or null if the link cannot accept applications
+ * (closed, expired, or quota exhausted) — safe under concurrent submits.
+ */
+export async function tryReserveApplicationSlot(
+  db: Awaited<ReturnType<typeof import('@/lib/db/mongodb').getMongoDb>>,
+  slug: string,
+): Promise<(LinkDoc & { _id: import('mongodb').ObjectId }) | null> {
+  const now = new Date();
+  const filter: Record<string, unknown> = {
+    slug,
+    isOpen: true,
+    $and: [
+      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: now } }] },
+      {
+        $or: [
+          { quota: { $exists: false } },
+          { quota: null },
+          { $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$quota'] } },
+        ],
+      },
+    ],
+  };
+
+  const updated = await db.collection(REGISTRATION_LINKS_COLLECTION).findOneAndUpdate(
+    filter,
+    { $inc: { applicationCount: 1 }, $set: { updatedAt: now } },
+    { returnDocument: 'after' },
+  );
+
+  if (!updated) return null;
+
+  const link = updated as LinkDoc & { _id: import('mongodb').ObjectId };
+  await maybeAutoCloseLink(db, link);
+  return link;
+}
+
 export function serialiseRegistrationLink(doc: Document) {
   const link = doc as LinkDoc & { _id: import('mongodb').ObjectId; name: string; slug: string; roles: ApplicationRole[]; createdBy: string; createdAt: Date; updatedAt: Date };
   return {
