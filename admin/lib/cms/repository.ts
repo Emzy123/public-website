@@ -1,6 +1,6 @@
 import type { CmsDataMap, CmsKey } from '@admin/types/content';
 import { contentDiffers } from './diff';
-import { getDefaultContent, normalizeGalleryContent, normalizeSiteSettings } from './defaults';
+import { getDefaultContent, normalizeAdvertsContent, normalizeGalleryContent, normalizeNewsContent, normalizePartnersContent, normalizeProductsContent, normalizeSiteSettings } from './defaults';
 import { CMS_COLLECTION } from './keys';
 import { getMongoDb } from '@/lib/db/mongodb';
 
@@ -20,6 +20,18 @@ function normalizeContent<K extends CmsKey>(key: K, value: unknown): CmsDataMap[
   }
   if (key === 'gallery') {
     return normalizeGalleryContent(value as Partial<CmsDataMap['gallery']>) as CmsDataMap[K];
+  }
+  if (key === 'news') {
+    return normalizeNewsContent(value as Partial<CmsDataMap['news']>) as CmsDataMap[K];
+  }
+  if (key === 'products-page') {
+    return normalizeProductsContent(value as Partial<CmsDataMap['products-page']>) as CmsDataMap[K];
+  }
+  if (key === 'partners-page') {
+    return normalizePartnersContent(value as Partial<CmsDataMap['partners-page']>) as CmsDataMap[K];
+  }
+  if (key === 'adverts') {
+    return normalizeAdvertsContent(value as Partial<CmsDataMap['adverts']>) as CmsDataMap[K];
   }
   return value as CmsDataMap[K];
 }
@@ -188,6 +200,10 @@ export async function seedAllCmsContent(): Promise<Record<string, boolean>> {
     'connect',
     'sectors-page',
     'gallery',
+    'news',
+    'products-page',
+    'partners-page',
+    'adverts',
     'waitlist-page',
     'contact-page',
     'site-settings',

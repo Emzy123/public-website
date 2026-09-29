@@ -70,6 +70,16 @@ const navGroups: { label: string; items: NavItem[] }[] = [
         icon: <Icon d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />,
       },
       {
+        href: '/admin/content/adverts',
+        label: 'Events & Flyers',
+        icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />,
+      },
+      {
+        href: '/admin/content/news',
+        label: 'News',
+        icon: <Icon d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z" />,
+      },
+      {
         href: '/admin/content',
         label: 'All Pages',
         icon: <Icon d="M4 6h16M4 12h16M4 18h10" />,
@@ -348,14 +358,21 @@ export function AdminCard({
   title,
   children,
   className = '',
+  actions,
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  actions?: React.ReactNode;
 }) {
   return (
     <div className={`rounded-xl border border-[#e4dcc9] bg-white p-6 ${className}`}>
-      {title && <h2 className="mb-4 text-base font-semibold text-[#0d1a4a]">{title}</h2>}
+      {(title || actions) && (
+        <div className="mb-4 flex items-start justify-between gap-3">
+          {title ? <h2 className="text-base font-semibold text-[#0d1a4a]">{title}</h2> : <span />}
+          {actions}
+        </div>
+      )}
       {children}
     </div>
   );

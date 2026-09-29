@@ -134,9 +134,11 @@ export default function AdminDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <QuickAction href="/admin/links" label="Link Management" description="Create and control registration links" icon="🔗" />
           <QuickAction href="/admin/applications" label="Review Applications" description="View and process pending applications" icon="📋" />
+          <QuickAction href="/admin/content/adverts" label="Events & Flyers" description="Post special events, adverts, and flyers" icon="📣" />
+          <QuickAction href="/admin/content/news" label="News & Updates" description="Publish milestones and announcements" icon="📰" />
           <QuickAction href="/admin/submissions" label="Form Submissions" description="Contact messages and academy interest" icon="✉️" />
           <QuickAction href="/admin/team" label="Leadership Team" description="Manage About page team profiles" icon="👥" />
-          <QuickAction href="/admin/content/home" label="Edit Content" description="Update homepage and page content" icon="✏️" />
+          <QuickAction href="/admin/content" label="Edit Content" description="Update pages, products, partners, gallery" icon="✏️" />
           <QuickAction href="/admin/content/site-settings" label="Site Settings" description="Logo, contact links, global config" icon="⚙️" />
           <QuickAction href="/" label="View Public Site" description="Open the live site" icon="🌐" />
         </div>

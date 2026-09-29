@@ -8,6 +8,9 @@ import { AdminShell, PreviewButton, PublishButton, SaveButton } from './AdminShe
 import { GalleryEditor } from './editors/GalleryEditor';
 import { HeroEditor } from './editors/HeroEditor';
 import { HomeEditor } from './editors/HomeEditor';
+import { AdvertsEditor } from './editors/AdvertsEditor';
+import { NewsEditor } from './editors/NewsEditor';
+import { PartnersPageEditor, ProductsPageEditor } from './editors/CatalogEditors';
 import {
   AboutPageEditor,
   AcademyPageEditor,
@@ -26,6 +29,7 @@ import {
 import type {
   AboutContent,
   AcademyContent,
+  AdvertsContent,
   BlueprintContent,
   ConnectContent,
   ContactPageContent,
@@ -35,6 +39,9 @@ import type {
   HomeContent,
   ImpactContent,
   InvestorJourneyContent,
+  NewsContent,
+  PartnersPageContent,
+  ProductsPageContent,
   ReturnsContent,
   SectorsPageContent,
   SiteSettings,
@@ -141,6 +148,18 @@ export function ContentEditorPage({ contentKey }: { contentKey: CmsKey }) {
           )}
           {contentKey === 'gallery' && (
             <GalleryEditor data={data as GalleryContent} onChange={(d) => setData(d)} />
+          )}
+          {contentKey === 'news' && (
+            <NewsEditor data={data as NewsContent} onChange={(d) => setData(d)} />
+          )}
+          {contentKey === 'products-page' && (
+            <ProductsPageEditor data={data as ProductsPageContent} onChange={(d) => setData(d)} />
+          )}
+          {contentKey === 'partners-page' && (
+            <PartnersPageEditor data={data as PartnersPageContent} onChange={(d) => setData(d)} />
+          )}
+          {contentKey === 'adverts' && (
+            <AdvertsEditor data={data as AdvertsContent} onChange={(d) => setData(d)} />
           )}
           {contentKey === 'waitlist-page' && (
             <WaitlistPageEditor data={data as WaitlistPageContent} onChange={(d) => setData(d)} />

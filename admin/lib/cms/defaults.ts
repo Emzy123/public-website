@@ -1,6 +1,7 @@
 import type {
   AboutContent,
   AcademyContent,
+  AdvertsContent,
   BlueprintContent,
   CmsDataMap,
   CmsKey,
@@ -12,6 +13,9 @@ import type {
   HomeContent,
   ImpactContent,
   InvestorJourneyContent,
+  NewsContent,
+  PartnersPageContent,
+  ProductsPageContent,
   ReturnsContent,
   SectorsPageContent,
   SiteSettings,
@@ -369,18 +373,23 @@ export const DEFAULT_RETURNS: ReturnsContent = {
 };
 
 export const DEFAULT_ACADEMY: AcademyContent = {
-  hero: { badge: 'COMING SOON', title: 'Investor Academy – Coming Soon', subtitle: 'Build conviction with structured learning—so when the portal opens, you invest with clarity and discipline.' },
+  hero: {
+    badge: 'COMING SOON',
+    title: 'SINet Academy – Coming Soon',
+    subtitle:
+      'Structured learning across agriculture, trade & distribution, and real estate — so members build clarity before they take on more responsibility.',
+  },
   learnItems: [
-    { icon: '📚', title: 'Investment fundamentals', body: 'Risk, reward, and portfolio design for African markets.' },
-    { icon: '✅', title: 'Due diligence', body: 'Financials, founders, and red flags—practical frameworks you can reuse.' },
-    { icon: '🏛️', title: 'Sector deep dives', body: 'Empire-level nuance—from agribusiness to creative economies.' },
-    { icon: '⚖️', title: 'Regulatory navigation', body: 'Compliance, tax, and cross-border considerations explained clearly.' },
+    { icon: '🌾', title: 'Agriculture operations', body: 'How farms, aggregation, and agribusiness output move through SINet.' },
+    { icon: '🚚', title: 'Trade & distribution', body: 'Wholesale goods, logistics, and verified market routes.' },
+    { icon: '🏠', title: 'Real estate pathway', body: 'Property opportunities, marketing, and community housing projects.' },
+    { icon: '🤝', title: 'Community leadership', body: 'Roles, outreach, and how membership turns into on-ground impact.' },
   ],
   pathSteps: [
-    { number: '1', title: 'Foundations', body: 'Self-paced modules on literacy, markets, and mindset.' },
-    { number: '2', title: 'Masterclasses', body: 'Live sessions with operators, founders, and experts.' },
-    { number: '3', title: 'Practical simulation', body: 'Term sheets, decks, and mock investment committees.' },
-    { number: '4', title: 'Portfolio readiness', body: 'Templates and checkpoints before you deploy capital in Phase 1.' },
+    { number: '1', title: 'Foundations', body: 'Self-paced modules on SINet pillars, membership, and responsible participation.' },
+    { number: '2', title: 'Masterclasses', body: 'Live sessions with operators, partners, and community leaders.' },
+    { number: '3', title: 'Field practice', body: 'Practical exercises tied to real SINet activity across the pillars.' },
+    { number: '4', title: 'Ready to contribute', body: 'Clear checkpoints before you take on volunteer, ambassador, or partner roles.' },
   ],
 };
 
@@ -471,6 +480,102 @@ export const DEFAULT_GALLERY: GalleryContent = {
 export const DEFAULT_WAITLIST_PAGE: WaitlistPageContent = {
   title: 'Secure Your Early Access',
   subtitle: 'Tell us about your investment goals and secure your prioritized spot on the SINet waitlist.',
+};
+
+export const DEFAULT_NEWS: NewsContent = {
+  hero: {
+    badge: 'News & updates',
+    title: "What we're working on.",
+    subtitle: 'Project milestones and announcements — published when there is something substantive to share.',
+  },
+  posts: [],
+};
+
+export const DEFAULT_PRODUCTS_PAGE: ProductsPageContent = {
+  hero: {
+    badge: 'Products',
+    title: 'What SINet offers.',
+    subtitle:
+      'Three product areas aligned to our pillars — agricultural products, distributed goods, and property opportunities.',
+  },
+  items: [
+    {
+      id: 'product-agri',
+      title: 'Agricultural Products',
+      body: "Farm produce and agribusiness outputs from SINet's agriculture pillar — listed as verified inventory becomes available.",
+      pillar: 'agriculture',
+      imageUrl: '',
+      href: '/sectors#agriculture',
+      available: true,
+      sortOrder: 0,
+    },
+    {
+      id: 'product-trade',
+      title: 'Distributed Goods',
+      body: "Wholesale goods moving through SINet's trade & distribution network — markets, warehouses, and logistics.",
+      pillar: 'trade-distribution',
+      imageUrl: '',
+      href: '/sectors#trade',
+      available: true,
+      sortOrder: 1,
+    },
+    {
+      id: 'product-re',
+      title: 'Property Opportunities',
+      body: 'Available property listings and marketing opportunities under real estate — published only when verified.',
+      pillar: 'real-estate',
+      imageUrl: '',
+      href: '/sectors#real-estate',
+      available: true,
+      sortOrder: 2,
+    },
+  ],
+};
+
+export const DEFAULT_PARTNERS_PAGE: PartnersPageContent = {
+  hero: {
+    badge: 'Partners',
+    title: 'Built with trusted partners.',
+    subtitle:
+      'SINet works with operators and institutions across our three pillars. Public partner profiles are added once relationships are confirmed.',
+  },
+  items: [
+    {
+      id: 'partner-re',
+      name: 'Real Estate',
+      body: 'Developer partnerships and property marketing collaborators.',
+      pillar: 'real-estate',
+      logoUrl: '',
+      href: '',
+      sortOrder: 0,
+    },
+    {
+      id: 'partner-trade',
+      name: 'Trade & Goods Distribution',
+      body: 'Distribution partners, logistics providers, and wholesale relationships.',
+      pillar: 'trade-distribution',
+      logoUrl: '',
+      href: '',
+      sortOrder: 1,
+    },
+    {
+      id: 'partner-agri',
+      name: 'Agriculture',
+      body: 'Farm, aggregation, and processing partners in the agriculture pillar.',
+      pillar: 'agriculture',
+      logoUrl: '',
+      href: '',
+      sortOrder: 2,
+    },
+  ],
+  ctaTitle: 'Interested in partnering?',
+  ctaBody: 'Tell us about your organisation and how you want to collaborate across our pillars.',
+  ctaLabel: 'Partner with us',
+  ctaHref: '/contact',
+};
+
+export const DEFAULT_ADVERTS: AdvertsContent = {
+  items: [],
 };
 
 export const DEFAULT_CONTACT_PAGE: ContactPageContent = {
@@ -611,6 +716,10 @@ const DEFAULTS: CmsDataMap = {
   connect: DEFAULT_CONNECT,
   'sectors-page': DEFAULT_SECTORS_PAGE,
   gallery: DEFAULT_GALLERY,
+  news: DEFAULT_NEWS,
+  'products-page': DEFAULT_PRODUCTS_PAGE,
+  'partners-page': DEFAULT_PARTNERS_PAGE,
+  adverts: DEFAULT_ADVERTS,
   'waitlist-page': DEFAULT_WAITLIST_PAGE,
   'contact-page': DEFAULT_CONTACT_PAGE,
   'site-settings': DEFAULT_SITE_SETTINGS,
@@ -647,6 +756,144 @@ export function normalizeGalleryContent(data: Partial<GalleryContent> | undefine
     },
     items,
   };
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+}
+
+const CATALOG_PILLARS = ['agriculture', 'trade-distribution', 'real-estate', 'general'] as const;
+
+export function normalizeNewsContent(data: Partial<NewsContent> | undefined): NewsContent {
+  const defaults = DEFAULT_NEWS;
+  if (!data) return structuredClone(defaults);
+
+  const posts = Array.isArray(data.posts)
+    ? data.posts
+        .filter((post) => post && typeof post === 'object')
+        .map((post, index) => {
+          const title = String(post.title || '');
+          return {
+            id: String(post.id || `news-${index}`),
+            title,
+            slug: String(post.slug || slugify(title) || `post-${index}`),
+            excerpt: String(post.excerpt || ''),
+            body: String(post.body || ''),
+            imageUrl: String(post.imageUrl || ''),
+            publishedAt: String(post.publishedAt || ''),
+            published: Boolean(post.published),
+            sortOrder: typeof post.sortOrder === 'number' ? post.sortOrder : index,
+          };
+        })
+    : [];
+
+  return {
+    hero: {
+      badge: data.hero?.badge ?? defaults.hero.badge,
+      title: data.hero?.title ?? defaults.hero.title,
+      subtitle: data.hero?.subtitle ?? defaults.hero.subtitle,
+      titleAccent: data.hero?.titleAccent,
+    },
+    posts,
+  };
+}
+
+export function normalizeProductsContent(data: Partial<ProductsPageContent> | undefined): ProductsPageContent {
+  const defaults = DEFAULT_PRODUCTS_PAGE;
+  if (!data) return structuredClone(defaults);
+
+  const items = Array.isArray(data.items)
+    ? data.items
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => ({
+          id: String(item.id || `product-${index}`),
+          title: String(item.title || ''),
+          body: String(item.body || ''),
+          pillar: (CATALOG_PILLARS.includes(item.pillar as (typeof CATALOG_PILLARS)[number])
+            ? item.pillar
+            : 'general') as ProductsPageContent['items'][number]['pillar'],
+          imageUrl: String(item.imageUrl || ''),
+          href: String(item.href || ''),
+          available: item.available !== false,
+          sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
+        }))
+    : defaults.items;
+
+  return {
+    hero: {
+      badge: data.hero?.badge ?? defaults.hero.badge,
+      title: data.hero?.title ?? defaults.hero.title,
+      subtitle: data.hero?.subtitle ?? defaults.hero.subtitle,
+      titleAccent: data.hero?.titleAccent,
+    },
+    items,
+  };
+}
+
+export function normalizePartnersContent(data: Partial<PartnersPageContent> | undefined): PartnersPageContent {
+  const defaults = DEFAULT_PARTNERS_PAGE;
+  if (!data) return structuredClone(defaults);
+
+  const items = Array.isArray(data.items)
+    ? data.items
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => ({
+          id: String(item.id || `partner-${index}`),
+          name: String(item.name || ''),
+          body: String(item.body || ''),
+          pillar: (CATALOG_PILLARS.includes(item.pillar as (typeof CATALOG_PILLARS)[number])
+            ? item.pillar
+            : 'general') as PartnersPageContent['items'][number]['pillar'],
+          logoUrl: String(item.logoUrl || ''),
+          href: String(item.href || ''),
+          sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
+        }))
+    : defaults.items;
+
+  return {
+    hero: {
+      badge: data.hero?.badge ?? defaults.hero.badge,
+      title: data.hero?.title ?? defaults.hero.title,
+      subtitle: data.hero?.subtitle ?? defaults.hero.subtitle,
+      titleAccent: data.hero?.titleAccent,
+    },
+    items,
+    ctaTitle: data.ctaTitle ?? defaults.ctaTitle,
+    ctaBody: data.ctaBody ?? defaults.ctaBody,
+    ctaLabel: data.ctaLabel ?? defaults.ctaLabel,
+    ctaHref: data.ctaHref ?? defaults.ctaHref,
+  };
+}
+
+export function normalizeAdvertsContent(data: Partial<AdvertsContent> | undefined): AdvertsContent {
+  const defaults = DEFAULT_ADVERTS;
+  if (!data) return structuredClone(defaults);
+
+  const items = Array.isArray(data.items)
+    ? data.items
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => ({
+          id: String(item.id || `advert-${index}`),
+          title: String(item.title || ''),
+          eyebrow: String(item.eyebrow || ''),
+          body: String(item.body || ''),
+          imageUrl: String(item.imageUrl || ''),
+          ctaLabel: String(item.ctaLabel || ''),
+          ctaHref: String(item.ctaHref || ''),
+          enabled: Boolean(item.enabled),
+          showModal: item.showModal !== false,
+          startsAt: String(item.startsAt || ''),
+          endsAt: String(item.endsAt || ''),
+          sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
+        }))
+    : [];
+
+  return { items };
 }
 
 export function normalizeSiteSettings(data: Partial<SiteSettings> | undefined): SiteSettings {

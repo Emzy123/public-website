@@ -50,6 +50,12 @@ src/app/api/admin/  # Auth + content API
 | `returns` | Returns Page | `/returns` metrics + track record |
 | `academy` | Academy Page | `/academy` curriculum + learning path |
 | `connect` | Connect Page | `/connect` inquiry form options |
+| `sectors-page` | Sectors Page | `/sectors` pillars copy |
+| `gallery` | Gallery | `/gallery` pillar-tagged photos |
+| `news` | News & Updates | `/news` and `/news/[slug]` |
+| `products-page` | Products Page | `/products` listings |
+| `partners-page` | Partners Page | `/partners` profiles + CTA |
+| `adverts` | Events & Flyers | Site-wide spotlight strip + flyer modal |
 | `site-settings` | Site Settings | Contact, social, navigation, footer |
 
 ## Seed content

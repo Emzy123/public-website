@@ -334,6 +334,81 @@ export type GalleryContent = {
   items: GalleryItem[];
 };
 
+export type NewsPost = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  body: string;
+  imageUrl: string;
+  publishedAt: string;
+  published: boolean;
+  sortOrder: number;
+};
+
+export type NewsContent = {
+  hero: PageHeroContent;
+  posts: NewsPost[];
+};
+
+export type CatalogPillar = GalleryPillar | 'general';
+
+export type ProductItem = {
+  id: string;
+  title: string;
+  body: string;
+  pillar: CatalogPillar;
+  imageUrl: string;
+  href: string;
+  available: boolean;
+  sortOrder: number;
+};
+
+export type ProductsPageContent = {
+  hero: PageHeroContent;
+  items: ProductItem[];
+};
+
+export type PartnerItem = {
+  id: string;
+  name: string;
+  body: string;
+  pillar: CatalogPillar;
+  logoUrl: string;
+  href: string;
+  sortOrder: number;
+};
+
+export type PartnersPageContent = {
+  hero: PageHeroContent;
+  items: PartnerItem[];
+  ctaTitle: string;
+  ctaBody: string;
+  ctaLabel: string;
+  ctaHref: string;
+};
+
+/** Site-wide event flyers, adverts, and special-activity promos */
+export type AdvertItem = {
+  id: string;
+  title: string;
+  eyebrow: string;
+  body: string;
+  imageUrl: string;
+  ctaLabel: string;
+  ctaHref: string;
+  enabled: boolean;
+  /** Open the flyer modal for first-time visitors while this advert is active */
+  showModal: boolean;
+  startsAt: string;
+  endsAt: string;
+  sortOrder: number;
+};
+
+export type AdvertsContent = {
+  items: AdvertItem[];
+};
+
 export type CmsKey =
   | 'hero-slides'
   | 'home'
@@ -348,6 +423,10 @@ export type CmsKey =
   | 'connect'
   | 'sectors-page'
   | 'gallery'
+  | 'news'
+  | 'products-page'
+  | 'partners-page'
+  | 'adverts'
   | 'waitlist-page'
   | 'contact-page'
   | 'site-settings';
@@ -366,6 +445,10 @@ export type CmsDataMap = {
   connect: ConnectContent;
   'sectors-page': SectorsPageContent;
   gallery: GalleryContent;
+  news: NewsContent;
+  'products-page': ProductsPageContent;
+  'partners-page': PartnersPageContent;
+  adverts: AdvertsContent;
   'waitlist-page': WaitlistPageContent;
   'contact-page': ContactPageContent;
   'site-settings': SiteSettings;
