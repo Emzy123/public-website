@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 170" width="170" height="170" role="img" aria-label="SINet">
+  <defs>
+    <linearGradient id="sgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#24399f"/>
+      <stop offset="100%" stop-color="#0d1a4a"/>
+    </linearGradient>
+    <linearGradient id="goldgrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#eccb7c"/>
+      <stop offset="100%" stop-color="#d9a23c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="85" cy="85" r="83" fill="none" stroke="url(#goldgrad)" stroke-width="2" opacity="0.35"/>
+  <path
+    d="M 123 26 C 83 14, 37 30, 33 66 C 30 92, 59 100, 87 104 C 113 108, 133 118, 129 140 C 125 162, 89 162, 65 152"
+    fill="none"
+    stroke="url(#sgrad)"
+    stroke-width="17"
+    stroke-linecap="round"
+  />
+  <g stroke="url(#goldgrad)" stroke-width="2.3" fill="none" opacity="0.9">
+    <ellipse cx="103" cy="84" rx="53" ry="53" stroke-dasharray="3 6"/>
+    <line x1="103" y1="31" x2="135" y2="62"/>
+    <line x1="135" y1="62" x2="133" y2="104"/>
+    <line x1="133" y1="104" x2="103" y2="132"/>
+  </g>
+  <circle cx="103" cy="31" r="5" fill="url(#goldgrad)"/>
+  <circle cx="135" cy="62" r="6.5" fill="url(#goldgrad)"/>
+  <circle cx="133" cy="104" r="6.5" fill="url(#goldgrad)"/>
+  <circle cx="103" cy="132" r="5" fill="url(#goldgrad)"/>
+</svg>

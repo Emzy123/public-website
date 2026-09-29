@@ -698,8 +698,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     defaultDescription: "SINet connects investors, students, and projects across Africa's most promising sectors.",
   },
   pageSeo: DEFAULT_PAGE_SEO,
-  logoUrl: '/images/logo.jpg',
-  footerLogoUrl: '/images/logo.jpg',
+  logoUrl: '/images/logo-icon.svg',
+  footerLogoUrl: '/images/sinet-logo.svg',
 };
 
 const DEFAULTS: CmsDataMap = {
@@ -910,7 +910,21 @@ export function normalizeSiteSettings(data: Partial<SiteSettings> | undefined): 
     navigation: data.navigation?.length ? data.navigation : defaults.navigation,
     seo: { ...defaults.seo, ...data.seo },
     pageSeo: { ...defaults.pageSeo, ...data.pageSeo },
-    logoUrl: data.logoUrl ?? defaults.logoUrl,
-    footerLogoUrl: data.footerLogoUrl ?? defaults.footerLogoUrl,
+    logoUrl: normalizeLogoPath(data.logoUrl, defaults.logoUrl ?? '/images/logo-icon.svg'),
+    footerLogoUrl: normalizeLogoPath(data.footerLogoUrl, defaults.footerLogoUrl ?? '/images/sinet-logo.svg'),
   };
+}
+
+/** Remap deleted/legacy logo assets so the public site never 404s a mark. */
+function normalizeLogoPath(value: string | undefined, fallback: string): string {
+  const url = value?.trim();
+  if (!url) return fallback;
+  const broken = [
+    '/images/logo.jpg',
+    '/images/logo.jpeg',
+    '/images/logo.png',
+    'images/logo.jpg',
+  ];
+  if (broken.some((path) => url === path || url.endsWith(path))) return fallback;
+  return url;
 }

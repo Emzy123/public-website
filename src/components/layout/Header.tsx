@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MobileDrawer } from './MobileDrawer';
@@ -18,13 +17,26 @@ const PRIMARY_NAV = [
   { label: 'Contact', href: '/contact' },
 ];
 
+const DEFAULT_LOGO = '/images/logo-icon.svg';
+
 type HeaderProps = { whatsappUrl?: string; stackOffset?: boolean; logoUrl?: string };
+
+function isWordmark(url: string): boolean {
+  const lower = url.toLowerCase();
+  return lower.includes('sinet-logo') || lower.includes('logo-primary') || lower.includes('wordmark');
+}
 
 export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const pathname = usePathname();
-  const brandLogo = logoUrl?.trim() || '/images/favicon.svg';
+  const brandLogo = logoFailed ? DEFAULT_LOGO : logoUrl?.trim() || DEFAULT_LOGO;
+  const wordmark = isWordmark(brandLogo);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoUrl]);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
@@ -42,17 +54,24 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
       >
         <div className="mx-auto flex h-[77px] max-w-[1220px] items-center justify-between px-5 lg:px-8">
           <Link href="/" className="group flex items-center gap-2.5" aria-label="SINet home">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={brandLogo}
               alt=""
-              width={34}
-              height={34}
-              className="h-8 w-8 object-contain transition-transform group-hover:-rotate-6"
-              priority
+              width={wordmark ? 160 : 36}
+              height={wordmark ? 48 : 36}
+              className={
+                wordmark
+                  ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
+                  : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
+              }
+              onError={() => setLogoFailed(true)}
             />
-            <span className="font-editorial text-[26px] font-semibold tracking-[-.04em] text-[#0d1a4a]">
-              SINet<span className="text-[#d9711b]">.</span>
-            </span>
+            {!wordmark && (
+              <span className="font-editorial text-[26px] font-semibold tracking-[-.04em] text-[#0d1a4a]">
+                SINet<span className="text-[#d9711b]">.</span>
+              </span>
+            )}
           </Link>
           <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary navigation">
             {PRIMARY_NAV.map((link) => {

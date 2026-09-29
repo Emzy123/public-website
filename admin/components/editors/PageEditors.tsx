@@ -368,15 +368,17 @@ export function SiteSettingsEditor({ data, onChange }: { data: SiteSettings; onC
         <div className="grid md:grid-cols-2 gap-4">
           <ImageUploadField
             label="Header Logo"
-            value={data.logoUrl ?? '/images/logo.jpg'}
+            value={data.logoUrl ?? '/images/logo-icon.svg'}
             onChange={(url) => onChange({ ...data, logoUrl: url })}
             previewClassName="h-12 bg-contain bg-no-repeat bg-center"
+            hint="Square mark for the header. Default: /images/logo-icon.svg"
           />
           <ImageUploadField
             label="Footer Logo"
-            value={data.footerLogoUrl ?? '/images/logo.jpg'}
+            value={data.footerLogoUrl ?? '/images/sinet-logo.svg'}
             onChange={(url) => onChange({ ...data, footerLogoUrl: url })}
-            previewClassName="h-12 bg-contain bg-no-repeat bg-center"
+            previewClassName="h-12 bg-contain bg-no-repeat bg-center bg-[#0d1a4a] rounded"
+            hint="Wordmark for the dark footer. Default: /images/sinet-logo.svg"
           />
         </div>
       </AdminCard>

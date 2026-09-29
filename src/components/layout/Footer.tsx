@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import type { SiteSettings } from '@admin/types/content';
 
@@ -39,7 +38,7 @@ export function Footer({ settings }: FooterProps) {
   const brandCopy =
     settings?.footer?.brandCopy?.trim() ||
     'A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.';
-  const footerLogo = settings?.footerLogoUrl?.trim();
+  const footerLogo = settings?.footerLogoUrl?.trim() || '/images/sinet-logo.svg';
 
   const socialLinks = [
     social?.instagram && { label: 'Instagram', href: social.instagram },
@@ -56,9 +55,14 @@ export function Footer({ settings }: FooterProps) {
           <div className="font-editorial text-[clamp(3.5rem,14vw,11rem)] leading-[.75] tracking-[-.07em]">
             SINet<span className="text-[#eccb7c]">.</span>
           </div>
-          {footerLogo && (
-            <Image src={footerLogo} alt="SINet" width={120} height={40} className="h-10 w-auto object-contain opacity-90" />
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={footerLogo}
+            alt="SINet"
+            width={220}
+            height={70}
+            className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
+          />
         </div>
       </div>
       <div className="mx-auto grid max-w-[1380px] gap-8 px-4 py-10 xs:gap-10 xs:px-5 xs:py-12 md:grid-cols-2 lg:grid-cols-[1.35fr_repeat(3,1fr)] lg:px-8">
