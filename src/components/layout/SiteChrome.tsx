@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { isPreviewMode } from '@admin/lib/preview';
 import { getCmsContent } from '@/lib/cms';
-import { getPrimaryMergedAdvert } from '@/lib/adverts/active';
+import { mergeAdvertSources } from '@/lib/adverts/active';
 import { getOpenRegistrationLinkAdverts } from '@/lib/adverts/from-links';
 import { Header } from './Header';
 import { Footer } from './Footer';
@@ -22,7 +22,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
     getCmsContent('adverts'),
     getOpenRegistrationLinkAdverts(),
   ]);
-  const primaryAdvert = getPrimaryMergedAdvert(adverts, linkAdverts);
+  const spotlightAdverts = mergeAdvertSources(adverts, linkAdverts);
 
   return (
     <>
@@ -32,7 +32,9 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
         stackOffset={preview}
         logoUrl={settings.logoUrl}
       />
-      {primaryAdvert && <AdvertSpotlight advert={primaryAdvert} stackOffset={preview} />}
+      {spotlightAdverts.length > 0 && (
+        <AdvertSpotlight adverts={spotlightAdverts} stackOffset={preview} />
+      )}
       <main className={`flex-grow ${preview ? 'pt-10' : ''}`}>{children}</main>
       <Footer settings={settings} />
     </>

@@ -1,134 +1,180 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { AdvertItem } from '@admin/types/content';
 
-const DISMISS_KEY = 'sinet-advert-dismiss';
-const MODAL_SEEN_KEY = 'sinet-advert-modal-seen';
+const DISMISS_KEY = 'sinet-advert-strip-dismissed';
+const ROTATE_MS = 4000;
 
 function isMediaUrl(url: string): boolean {
   return Boolean(url) && (url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://'));
 }
 
 type Props = {
-  advert: AdvertItem;
+  adverts: AdvertItem[];
   stackOffset?: boolean;
 };
 
-export function AdvertSpotlight({ advert, stackOffset = false }: Props) {
-  const [dismissed, setDismissed] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
+export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
+  const items = useMemo(
+    () => adverts.filter((item) => item && item.enabled && String(item.title || '').trim()),
+    [adverts],
+  );
+
+  const flyer = useMemo(
+    () => items.find((item) => item.showModal !== false && isMediaUrl(item.imageUrl)) ?? null,
+    [items],
+  );
+
+  const [index, setIndex] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
   const [ready, setReady] = useState(false);
+  const [modalAdvert, setModalAdvert] = useState<AdvertItem | null>(null);
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     try {
-      const dismissId = sessionStorage.getItem(DISMISS_KEY);
-      const modalSeen = sessionStorage.getItem(MODAL_SEEN_KEY);
-      const isDismissed = dismissId === advert.id;
-      setDismissed(isDismissed);
-      if (!isDismissed && advert.showModal && advert.imageUrl && modalSeen !== advert.id) {
-        const timer = window.setTimeout(() => setModalOpen(true), 700);
-        setReady(true);
-        return () => window.clearTimeout(timer);
-      }
-      setReady(true);
+      setDismissed(sessionStorage.getItem(DISMISS_KEY) === '1');
     } catch {
       setDismissed(false);
-      setReady(true);
     }
-  }, [advert.id, advert.imageUrl, advert.showModal]);
+    setReady(true);
+
+    // Flyer dialog on every full page load / refresh
+    if (flyer) {
+      const timer = window.setTimeout(() => setModalAdvert(flyer), 600);
+      return () => window.clearTimeout(timer);
+    }
+  }, [flyer]);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [items.map((item) => item.id).join('|')]);
+
+  useEffect(() => {
+    if (items.length <= 1 || paused || dismissed) return;
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % items.length);
+    }, ROTATE_MS);
+    return () => window.clearInterval(timer);
+  }, [items.length, paused, dismissed]);
+
+  if (!ready || items.length === 0) {
+    return null;
+  }
+
+  const advert = items[Math.min(index, items.length - 1)] ?? items[0];
 
   const dismissStrip = () => {
     try {
-      sessionStorage.setItem(DISMISS_KEY, advert.id);
+      sessionStorage.setItem(DISMISS_KEY, '1');
     } catch {
       /* ignore */
     }
     setDismissed(true);
   };
 
-  const closeModal = () => {
-    try {
-      sessionStorage.setItem(MODAL_SEEN_KEY, advert.id);
-    } catch {
-      /* ignore */
-    }
-    setModalOpen(false);
+  const openFlyer = (item: AdvertItem) => {
+    if (!isMediaUrl(item.imageUrl)) return;
+    setModalAdvert(item);
+    const at = items.findIndex((candidate) => candidate.id === item.id);
+    if (at >= 0) setIndex(at);
   };
-
-  if (!ready || dismissed) {
-    return modalOpen ? <FlyerModal advert={advert} onClose={closeModal} /> : null;
-  }
 
   return (
     <>
-      <div
-        className={`sticky z-[35] border-b border-[#eccb7c]/40 bg-[#0d1a4a] text-[#f6f2e8] shadow-[0_8px_30px_rgba(13,26,74,.18)] ${
-          stackOffset ? 'top-[calc(2.5rem+77px)]' : 'top-[77px]'
-        }`}
-        role="region"
-        aria-label="Featured event"
-      >
-        <div className="mx-auto flex max-w-[1220px] flex-col gap-3 px-4 py-3 xs:px-5 sm:flex-row sm:items-center sm:gap-5 lg:px-8">
-          {advert.imageUrl && isMediaUrl(advert.imageUrl) && (
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="group relative h-16 w-12 shrink-0 overflow-hidden border border-[#eccb7c]/50 bg-[#162456] sm:h-[4.5rem] sm:w-14"
-              aria-label="View flyer"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={advert.imageUrl}
-                alt=""
-                className="h-full w-full object-cover transition-transform group-hover:scale-105"
-              />
-            </button>
-          )}
-          <div className="min-w-0 flex-1">
-            {advert.eyebrow && (
-              <p className="font-data text-[10px] uppercase tracking-[.18em] text-[#eccb7c]">{advert.eyebrow}</p>
-            )}
-            <p className="mt-0.5 truncate font-editorial text-lg leading-tight tracking-[-.03em] sm:text-xl">
-              {advert.title}
-            </p>
-            {advert.body && (
-              <p className="mt-1 line-clamp-2 text-sm leading-5 text-[#c9ccda] sm:line-clamp-1">{advert.body}</p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {advert.imageUrl && (
+      {!dismissed && (
+        <div
+          className={`sticky z-[35] border-b border-[#eccb7c]/40 bg-[#0d1a4a] text-[#f6f2e8] shadow-[0_8px_30px_rgba(13,26,74,.18)] ${
+            stackOffset ? 'top-[calc(2.5rem+77px)]' : 'top-[77px]'
+          }`}
+          role="region"
+          aria-label="Featured announcements"
+          aria-live="polite"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocusCapture={() => setPaused(true)}
+          onBlurCapture={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
+          }}
+        >
+          <div className="mx-auto flex max-w-[1220px] flex-col gap-3 px-4 py-3 xs:px-5 sm:flex-row sm:items-center sm:gap-5 lg:px-8">
+            {advert.imageUrl && isMediaUrl(advert.imageUrl) && (
               <button
                 type="button"
-                onClick={() => setModalOpen(true)}
-                className="inline-flex min-h-[40px] items-center border border-[#eccb7c]/60 px-3 text-xs font-bold text-[#eccb7c] hover:bg-[#eccb7c] hover:text-[#0d1a4a]"
+                onClick={() => openFlyer(advert)}
+                className="group relative h-16 w-12 shrink-0 overflow-hidden border border-[#eccb7c]/50 bg-[#162456] sm:h-[4.5rem] sm:w-14"
+                aria-label="View flyer"
               >
-                View flyer
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={advert.id}
+                  src={advert.imageUrl}
+                  alt=""
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
               </button>
             )}
-            {advert.ctaHref && advert.ctaLabel && (
-              <Link
-                href={advert.ctaHref}
-                className="inline-flex min-h-[40px] items-center bg-[#d9711b] px-4 text-xs font-bold text-white hover:bg-[#eccb7c] hover:text-[#0d1a4a]"
+            <div className="min-w-0 flex-1" key={advert.id}>
+              {advert.eyebrow && (
+                <p className="font-data text-[10px] uppercase tracking-[.18em] text-[#eccb7c]">{advert.eyebrow}</p>
+              )}
+              <p className="mt-0.5 truncate font-editorial text-lg leading-tight tracking-[-.03em] sm:text-xl">
+                {advert.title}
+              </p>
+              {advert.body && (
+                <p className="mt-1 line-clamp-2 text-sm leading-5 text-[#c9ccda] sm:line-clamp-1">{advert.body}</p>
+              )}
+              {items.length > 1 && (
+                <div className="mt-2 flex items-center gap-1.5" aria-hidden="true">
+                  {items.map((item, i) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setIndex(i)}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === index ? 'w-5 bg-[#eccb7c]' : 'w-1.5 bg-white/35 hover:bg-white/60'
+                      }`}
+                      aria-label={`Show announcement ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {advert.imageUrl && isMediaUrl(advert.imageUrl) && (
+                <button
+                  type="button"
+                  onClick={() => openFlyer(advert)}
+                  className="inline-flex min-h-[40px] items-center border border-[#eccb7c]/60 px-3 text-xs font-bold text-[#eccb7c] hover:bg-[#eccb7c] hover:text-[#0d1a4a]"
+                >
+                  View flyer
+                </button>
+              )}
+              {advert.ctaHref && advert.ctaLabel && (
+                <Link
+                  href={advert.ctaHref}
+                  className="inline-flex min-h-[40px] items-center bg-[#d9711b] px-4 text-xs font-bold text-white hover:bg-[#eccb7c] hover:text-[#0d1a4a]"
+                >
+                  {advert.ctaLabel}
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={dismissStrip}
+                className="grid h-9 w-9 place-items-center text-[#c9ccda] hover:text-white"
+                aria-label="Dismiss announcement"
               >
-                {advert.ctaLabel}
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={dismissStrip}
-              className="grid h-9 w-9 place-items-center text-[#c9ccda] hover:text-white"
-              aria-label="Dismiss announcement"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-      {modalOpen && <FlyerModal advert={advert} onClose={closeModal} />}
+      )}
+      {modalAdvert && <FlyerModal advert={modalAdvert} onClose={() => setModalAdvert(null)} />}
     </>
   );
 }
