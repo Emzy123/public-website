@@ -1,7 +1,8 @@
 import { headers } from 'next/headers';
 import { isPreviewMode } from '@admin/lib/preview';
 import { getCmsContent } from '@/lib/cms';
-import { getPrimaryAdvert } from '@/lib/adverts/active';
+import { getPrimaryMergedAdvert } from '@/lib/adverts/active';
+import { getOpenRegistrationLinkAdverts } from '@/lib/adverts/from-links';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { PreviewBanner } from './PreviewBanner';
@@ -16,11 +17,12 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
   }
 
   const preview = isPreviewMode();
-  const [settings, adverts] = await Promise.all([
+  const [settings, adverts, linkAdverts] = await Promise.all([
     getCmsContent('site-settings'),
     getCmsContent('adverts'),
+    getOpenRegistrationLinkAdverts(),
   ]);
-  const primaryAdvert = getPrimaryAdvert(adverts);
+  const primaryAdvert = getPrimaryMergedAdvert(adverts, linkAdverts);
 
   return (
     <>

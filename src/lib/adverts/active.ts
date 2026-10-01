@@ -30,3 +30,24 @@ export function getActiveAdverts(content: AdvertsContent | AdvertItem[] | null |
 export function getPrimaryAdvert(content: AdvertsContent | AdvertItem[] | null | undefined, now = Date.now()): AdvertItem | null {
   return getActiveAdverts(content, now)[0] ?? null;
 }
+
+/**
+ * Merge CMS flyers with open registration-link promos.
+ * Registration links sort first (negative sortOrder) so open campaigns stay visible.
+ */
+export function mergeAdvertSources(
+  cms: AdvertsContent | AdvertItem[] | null | undefined,
+  linkAdverts: AdvertItem[],
+  now = Date.now(),
+): AdvertItem[] {
+  const cmsItems = Array.isArray(cms) ? cms : cms?.items ?? [];
+  return getActiveAdverts([...linkAdverts, ...cmsItems], now);
+}
+
+export function getPrimaryMergedAdvert(
+  cms: AdvertsContent | AdvertItem[] | null | undefined,
+  linkAdverts: AdvertItem[],
+  now = Date.now(),
+): AdvertItem | null {
+  return mergeAdvertSources(cms, linkAdverts, now)[0] ?? null;
+}

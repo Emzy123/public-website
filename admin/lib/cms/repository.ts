@@ -3,6 +3,7 @@ import { contentDiffers } from './diff';
 import { getDefaultContent, normalizeAdvertsContent, normalizeGalleryContent, normalizeNewsContent, normalizePartnersContent, normalizeProductsContent, normalizeSiteSettings } from './defaults';
 import { CMS_COLLECTION } from './keys';
 import { getMongoDb } from '@/lib/db/mongodb';
+import { rewriteMediaUrlsDeep } from '@/lib/media/url';
 
 type CmsDocument = {
   key: string;
@@ -15,25 +16,24 @@ type CmsDocument = {
 };
 
 function normalizeContent<K extends CmsKey>(key: K, value: unknown): CmsDataMap[K] {
+  let normalized: CmsDataMap[K];
   if (key === 'site-settings') {
-    return normalizeSiteSettings(value as Partial<CmsDataMap['site-settings']>) as CmsDataMap[K];
+    normalized = normalizeSiteSettings(value as Partial<CmsDataMap['site-settings']>) as CmsDataMap[K];
+  } else if (key === 'gallery') {
+    normalized = normalizeGalleryContent(value as Partial<CmsDataMap['gallery']>) as CmsDataMap[K];
+  } else if (key === 'news') {
+    normalized = normalizeNewsContent(value as Partial<CmsDataMap['news']>) as CmsDataMap[K];
+  } else if (key === 'products-page') {
+    normalized = normalizeProductsContent(value as Partial<CmsDataMap['products-page']>) as CmsDataMap[K];
+  } else if (key === 'partners-page') {
+    normalized = normalizePartnersContent(value as Partial<CmsDataMap['partners-page']>) as CmsDataMap[K];
+  } else if (key === 'adverts') {
+    normalized = normalizeAdvertsContent(value as Partial<CmsDataMap['adverts']>) as CmsDataMap[K];
+  } else {
+    normalized = value as CmsDataMap[K];
   }
-  if (key === 'gallery') {
-    return normalizeGalleryContent(value as Partial<CmsDataMap['gallery']>) as CmsDataMap[K];
-  }
-  if (key === 'news') {
-    return normalizeNewsContent(value as Partial<CmsDataMap['news']>) as CmsDataMap[K];
-  }
-  if (key === 'products-page') {
-    return normalizeProductsContent(value as Partial<CmsDataMap['products-page']>) as CmsDataMap[K];
-  }
-  if (key === 'partners-page') {
-    return normalizePartnersContent(value as Partial<CmsDataMap['partners-page']>) as CmsDataMap[K];
-  }
-  if (key === 'adverts') {
-    return normalizeAdvertsContent(value as Partial<CmsDataMap['adverts']>) as CmsDataMap[K];
-  }
-  return value as CmsDataMap[K];
+  // Strip expired signed-query params from any stored /api/media/... URLs
+  return rewriteMediaUrlsDeep(normalized);
 }
 
 export type CmsAdminMeta = {
@@ -102,12 +102,13 @@ export async function setCmsContent<K extends CmsKey>(
   updatedBy?: string
 ): Promise<void> {
   const db = await getMongoDb();
+  const cleaned = rewriteMediaUrlsDeep(data);
   await db.collection(CMS_COLLECTION).updateOne(
     { key },
     {
       $set: {
         key,
-        data,
+        data: cleaned,
         updatedAt: new Date().toISOString(),
         ...(updatedBy ? { updatedBy } : {}),
       },
@@ -122,12 +123,13 @@ export async function saveCmsDraft<K extends CmsKey>(
   updatedBy?: string
 ): Promise<void> {
   const db = await getMongoDb();
+  const cleaned = rewriteMediaUrlsDeep(data);
   await db.collection(CMS_COLLECTION).updateOne(
     { key },
     {
       $set: {
         key,
-        draft: data,
+        draft: cleaned,
         draftUpdatedAt: new Date().toISOString(),
         ...(updatedBy ? { draftUpdatedBy: updatedBy } : {}),
       },
@@ -148,12 +150,13 @@ export async function publishCmsContent<K extends CmsKey>(
   }
 
   const db = await getMongoDb();
+  const cleaned = rewriteMediaUrlsDeep(toPublish);
   await db.collection(CMS_COLLECTION).updateOne(
     { key },
     {
       $set: {
         key,
-        data: toPublish,
+        data: cleaned,
         updatedAt: new Date().toISOString(),
         ...(updatedBy ? { updatedBy } : {}),
       },

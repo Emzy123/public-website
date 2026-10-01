@@ -52,6 +52,11 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
           every public page. When a flyer image is set and &quot;Show flyer modal&quot; is on, visitors also see a prominent
           dismissible flyer lightbox on first visit — ideal for special events and activities.
         </p>
+        <p className="mt-3 text-sm leading-6 text-[#7b7263]">
+          Open <strong className="text-[#0d1a4a]">registration links</strong> from Link Management also appear here
+          automatically as &quot;Applications open&quot; spotlights with an Apply now button — you do not need to recreate them
+          as flyers unless you want a custom poster.
+        </p>
         <button
           type="button"
           onClick={() => onChange({ items: [...data.items, newAdvert(data.items.length)] })}

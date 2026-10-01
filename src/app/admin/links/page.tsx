@@ -118,7 +118,10 @@ export default function RegistrationLinksPage() {
   };
 
   return (
-    <AdminShell title="Link Management" description="Create and control campaign registration links">
+    <AdminShell
+      title="Link Management"
+      description="Create campaign registration links — open links also appear as public site spotlights"
+    >
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="mb-6 flex justify-end">

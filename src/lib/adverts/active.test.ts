@@ -1,5 +1,7 @@
 import type { AdvertItem } from '@admin/types/content';
-import { getActiveAdverts, getPrimaryAdvert } from './active';
+import { getActiveAdverts, getPrimaryAdvert, getPrimaryMergedAdvert, mergeAdvertSources } from './active';
+import { registrationLinkToAdvert } from './link-advert';
+import type { RegistrationLink } from '@/lib/types/membership';
 
 function advert(partial: Partial<AdvertItem> & Pick<AdvertItem, 'id' | 'title'>): AdvertItem {
   return {
@@ -44,5 +46,28 @@ describe('getActiveAdverts', () => {
       advert({ id: 'a', title: 'A', sortOrder: 0 }),
     ];
     expect(getPrimaryAdvert({ items }, now)?.id).toBe('a');
+  });
+
+  it('prioritises open registration-link adverts over CMS flyers', () => {
+    const cms = [advert({ id: 'flyer', title: 'Event flyer', sortOrder: 0 })];
+    const link: RegistrationLink = {
+      _id: 'link1',
+      name: 'Campus Drive',
+      slug: 'campus-drive',
+      roles: ['volunteer', 'ambassador'],
+      isOpen: true,
+      status: 'open',
+      applicationCount: 0,
+      createdBy: 'admin@sinet.africa',
+      createdAt: '2026-09-01T00:00:00.000Z',
+      updatedAt: '2026-09-01T00:00:00.000Z',
+      url: 'https://sinet.africa/join/campus-drive',
+    };
+    const linkAdverts = [registrationLinkToAdvert(link)];
+    expect(getPrimaryMergedAdvert(cms, linkAdverts, now)?.id).toBe('reg-link-link1');
+    expect(mergeAdvertSources(cms, linkAdverts, now).map((a) => a.id)).toEqual([
+      'reg-link-link1',
+      'flyer',
+    ]);
   });
 });

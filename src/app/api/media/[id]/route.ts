@@ -1,31 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMediaFile } from '@/lib/media/gridfs';
-import { verifyMediaSignature } from '@/lib/media/signed-url';
-import { verifySession } from '@admin/lib/auth';
 
 export const runtime = 'nodejs';
 
-const COOKIE_NAME = 'sinet_admin_session';
-
 type RouteContext = { params: { id: string } };
 
-async function isAdminSession(request: NextRequest): Promise<boolean> {
-  const token = request.cookies.get(COOKIE_NAME)?.value;
-  if (!token) return false;
-  return Boolean(await verifySession(token));
-}
-
-export async function GET(request: NextRequest, { params }: RouteContext) {
+/**
+ * Public CMS media (flyers, gallery, logos). Files live in the cms_media GridFS
+ * bucket and are intended for the marketing site — no signed URL required.
+ * Application documents use a separate admin-only route.
+ */
+export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { id } = params;
-
-  const expires = request.nextUrl.searchParams.get('expires') ?? '';
-  const sig = request.nextUrl.searchParams.get('sig') ?? '';
-  const hasValidSignature = expires && sig && verifyMediaSignature(id, expires, sig);
-  const hasAdminSession = await isAdminSession(request);
-
-  if (!hasValidSignature && !hasAdminSession) {
-    return new NextResponse('Forbidden', { status: 403 });
-  }
 
   try {
     const file = await getMediaFile(id);
@@ -40,7 +26,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
         'Content-Type': file.contentType,
         'Content-Disposition': `inline; filename="${safeFilename}"`,
         'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'private, max-age=3600',
+        // Long-lived public cache — assets are content-addressed by GridFS id
+        'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });
   } catch (error) {
