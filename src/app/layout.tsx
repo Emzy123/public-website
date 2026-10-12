@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
+import { SITE_URL } from '@/lib/site-config';
 
 // Keep the application self-contained at build time. The editorial serif and mono
 // stacks are defined in globals.css; Geist supplies the UI/body fallback locally.
@@ -13,9 +14,9 @@ const geist = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://sinet.africa'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'SINet - Business Ecosystem & Community',
+    default: 'SINet — Business Ecosystem & Community',
     template: '%s | SINet',
   },
   description:
@@ -24,16 +25,16 @@ export const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'SINet - Business Ecosystem & Community',
+    title: 'SINet — Business Ecosystem & Community',
     description:
       'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     type: 'website',
-    url: 'https://sinet.africa',
-    images: [{ url: '/images/og-image.jpg', width: 1200, height: 630, alt: 'SINet' }],
+    url: SITE_URL,
+    images: [{ url: '/images/og-image.jpg', width: 1200, height: 630, alt: 'SINet — Business Ecosystem & Community' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SINet - Business Ecosystem & Community',
+    title: 'SINet — Business Ecosystem & Community',
     description:
       'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     images: ['/images/og-image.jpg'],

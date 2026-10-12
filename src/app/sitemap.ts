@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next';
+import { SITE_URL } from '@/lib/site-config';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://sinet.africa';
-  const now = new Date();
+  const baseUrl = SITE_URL;
+  const now = new Date().toISOString();
 
   return [
     { url: baseUrl, lastModified: now, changeFrequency: 'weekly', priority: 1 },
