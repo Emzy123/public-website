@@ -1,61 +1,148 @@
 # SINet Public Website
 
-Marketing and waitlist website for SINet, built with Next.js 14, TypeScript, Tailwind CSS, Zod, and secure API controls.
+Production web platform and public marketing website for SINet (Student Investment Network / Sustainable Impact Network), built with **Next.js 14 (App Router)**, **TypeScript**, **Tailwind CSS**, **MongoDB**, **Zod**, and robust security controls. Deployed on **Vercel** at [https://www.sinet.africa](https://www.sinet.africa).
 
-## Quick Start
+---
+
+## 1. Prerequisites
+
+- **Node.js**: `v20.x` or higher (verified with Node 20 / 22; `.nvmrc` targets `20`)
+- **Package Manager**: `npm` (uses `package-lock.json`)
+- **Docker & Docker Compose** (Optional): For running local MongoDB (`docker compose up -d`)
+
+---
+
+## 2. Installation
+
+Clone the repository and install dependencies:
 
 ```bash
-npm run setup    # install deps, create .env.local, check config
-npm run dev
+git clone https://github.com/<org>/sinet.git
+cd sinet
+npm install
 ```
 
-Visit [http://localhost:3000](http://localhost:3000).
+> **Note**: If you encounter a `SIGBUS` or `Bus error` during build on Linux x64, ensure `@next/swc-linux-x64-gnu` is not truncated (unpacked binary should be ~131MB). Reinstall with `npm install --force` or fetch the package directly.
 
-For the full development guide (architecture, testing, adding features), see [docs/development.md](docs/development.md).
+---
 
-## Security Features
+## 3. Environment Configuration
 
-- Security headers configured in `next.config.mjs`
-- CSRF validation via `@edge-csrf/nextjs` (tokens issued on form API GET)
-- Rate limiting via Upstash Redis (**required in production**; fail-closed)
-- reCAPTCHA v3 verification on waitlist submissions
-- Origin allowlist validation for public form APIs
-- Zod validation on client and server
-- Honeypot field for bot filtering
-- Admin TOTP MFA (**required in production**)
+1. Copy the template to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+2. By default, `.env.local` is pre-populated with safe local development placeholders (fallback test keys, local MongoDB uri `mongodb://localhost:27017`, and local admin credentials).
+3. Validate your environment tiers anytime:
+   ```bash
+   npm run check:env
+   ```
 
-## Development Commands
+### Fetching Production / Staging Secrets from Vercel
+
+To pull configured environment variables directly from Vercel:
+
+```bash
+# Link project to Vercel
+npx vercel link
+
+# Pull environment variables into .env.local
+npx vercel env pull .env.local
+```
+
+### Essential Environment Variables
+
+| Variable | Purpose | Local Default | Production Impact if Missing |
+|----------|---------|---------------|------------------------------|
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin, sitemap, metadataBase, CSRF validation | `http://localhost:3000` | CSRF origin checks fail |
+| `MONGODB_URI` / `MONGODB_DB` | Primary database for CMS, applications, team, reps | `mongodb://localhost:27017` / `sinet` | Form submissions fail (500); CMS uses static defaults |
+| `ADMIN_EMAIL` | Admin login email for `/admin/login` | `admin@sinet.africa` | Cannot authenticate to `/admin` |
+| `ADMIN_PASSWORD_HASH` | Scrypt hash (`<salt>:<hash>`) for admin login | Safe dev hash (`admin123456`) | Cannot authenticate to `/admin` |
+| `ADMIN_SESSION_SECRET` | 32+ char secret for admin session JWT cookies | `local_dev_admin_session_secret...` | Admin session cookies cannot be signed |
+| `ADMIN_TOTP_SECRET` | Base32 secret for Admin MFA (Authenticator app) | (empty locally) | Admin login blocked in production |
+| `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v3 public site key | Google test key | Waitlist bot check widget fails |
+| `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA v3 private secret key | Google test secret | Waitlist form submission fails (400) |
+| `RESEND_API_KEY` | Transactional email provider API key | Placeholder | Outgoing emails fail |
+| `RESEND_AUDIENCE_ID` | Waitlist audience list ID | Placeholder | Waitlist subscriptions not stored in Resend |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Distributed sliding-window rate limiting | (empty locally) | **Forms fail closed (503)** in production |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 stream ID | (empty) | Analytics disabled |
+
+---
+
+## 4. Database Setup & Seeding
+
+The application connects to MongoDB using the native driver (`src/lib/db/mongodb.ts`).
+
+### Running Local MongoDB
+
+To launch a local MongoDB container:
+
+```bash
+docker compose up -d
+```
+
+### Seeding Initial Data
+
+Run the database and CMS seed scripts:
+
+```bash
+# Seed initial empires, reps, team, and how-it-works content
+npm run seed:db
+
+# Seed CMS page defaults (home, about, sectors, gallery, etc.)
+npm run seed:cms
+```
+
+*Note: In local development, if MongoDB is unreachable, public pages gracefully fall back to built-in default content.*
+
+---
+
+## 5. Development & Testing Commands
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start dev server |
-| `npm test` | Run unit tests |
-| `npm run check:env` | Validate environment setup |
-| `npm run smoke` | Smoke-test API routes (server must be running) |
-| `make help` | List all Makefile shortcuts |
+| `npm run dev` | Start Next.js development server at [http://localhost:3000](http://localhost:3000) |
+| `npm run typecheck` | Run TypeScript type-checking (`tsc --noEmit`) |
+| `npm run lint` | Run ESLint across `src/` and `admin/` |
+| `npm test` | Run Jest unit and security tests |
+| `npm run test:watch` | Run Jest in interactive watch mode |
+| `npm run check:env` | Validate current `.env.local` against required tiers |
+| `npm run smoke` | Run API smoke tests against a running server |
 
-## Required Environment Variables
+---
 
-See `.env.example` for all keys. Run `npm run check:env` to see what's configured.
+## 6. Production Build
 
-Key variables:
+To build and verify the production bundle:
 
-- `MONGODB_URI` / `MONGODB_DB` — contact, academy, CMS, applications
-- `RESEND_API_KEY` / `RESEND_AUDIENCE_ID` — waitlist email
-- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` — waitlist bot protection
-- `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` — rate limiting (optional locally; required in production)
-- `ADMIN_TOTP_SECRET` — admin MFA (required in production)
-- `NEXT_PUBLIC_SITE_URL`
+```bash
+npm run build
+```
 
-## Deployment (Vercel + Namecheap)
+This compiles all routes and automatically triggers `postbuild` (`next-sitemap`), generating:
+- `public/sitemap.xml`
+- `public/sitemap-0.xml`
+- `public/robots.txt`
 
-1. Push to GitHub and import into Vercel
-2. Add all environment variables in Vercel
-3. Deploy and attach `sinet.africa`
-4. Configure Namecheap DNS:
+To test the production build locally:
+
+```bash
+npm run start
+```
+
+---
+
+## 7. Deployment (Vercel + DNS)
+
+1. **Vercel Project Setup**:
+   - Import repository into Vercel.
+   - Configure all environment variables in **Project Settings > Environment Variables**.
+2. **Domain Routing**:
+   - Add `www.sinet.africa` (Primary domain).
+   - Add `sinet.africa` and configure a **301 Permanent Redirect** to `www.sinet.africa`.
+3. **DNS Configuration (Namecheap)**:
    - `A @ -> 76.76.21.21`
    - `CNAME www -> cname.vercel-dns.com`
-5. Enable DNSSEC in Namecheap:
-   - Domain dashboard -> Advanced DNS -> DNSSEC -> Enable
-6. Verify headers:
-   - `curl -I https://sinet.africa`
+   - Enable DNSSEC in domain management.
+4. **Health Verification**:
+   - Verify health check endpoint: `curl https://www.sinet.africa/api/health`
