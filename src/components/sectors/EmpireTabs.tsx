@@ -20,7 +20,7 @@ function EmpireTabsContent({ empires }: { empires: Empire[] }) {
   if (!empires.length || !activeEmpire) {
     return (
       <div className="w-full max-w-7xl mx-auto bg-slate-50 rounded-2xl p-10 border border-slate-200">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">No investment empires available</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">No sectors available</h2>
         <p className="text-slate-600">Please try again later.</p>
       </div>
     );

@@ -120,7 +120,8 @@ export default async function BlueprintPage() {
 
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <SectionHeader badge="The Advantage" title="Why This Model" titleAccent="Works" subtitle="Three principles that separate SINet from traditional investment platforms." />
+          {/* TODO-VERIFY: CEO approval needed for comparison wording */}
+          <SectionHeader badge="The Advantage" title="Why This Model" titleAccent="Works" subtitle="Three principles that separate SINet from traditional business models." />
           <div className="grid md:grid-cols-3 gap-8">
             {whyPoints.map((point) => (
               <div key={point.title} className="text-center p-8 rounded-2xl border border-slate-200 hover:border-[#d9711b]/50 hover:shadow-xl hover:shadow-[#d9711b]/10 transition-all duration-300 group">

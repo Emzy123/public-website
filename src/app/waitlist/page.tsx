@@ -7,7 +7,8 @@ import { buildPageMetadata } from '@/lib/cms/metadata';
 export async function generateMetadata() {
   return buildPageMetadata('waitlist', {
     title: 'Join the Waitlist | SINet',
-    description: 'Apply to join the SINet Pan-African investment platform waitlist.',
+    // TODO-VERIFY: CEO approval needed for ecosystem wording vs investment platform
+    description: 'Apply to join the SINet Pan-African ecosystem waitlist.',
   });
 }
 

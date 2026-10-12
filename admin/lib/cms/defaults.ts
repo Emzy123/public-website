@@ -72,16 +72,17 @@ export const DEFAULT_HOME: HomeContent = {
     subtitle:
       'SINet is building a structured system that translates student potential into real economic value — measured in capital, communities, and production capacity.',
     stats: [
-      { value: '₦11.8M+', label: 'Capital Mobilized', sub: 'Deployed into active trade and agriculture' },
-      { value: 'Multiple', label: 'Campuses', sub: 'Growing network of student investors' },
-      { value: 'Active', label: 'Investment Cycles', sub: 'Agriculture and goods trade operations' },
+      // TODO-VERIFY: Claim of ₦11.8M+ capital/trade mobilized needs CEO verification
+      { value: '₦11.8M+', label: 'Trade Volume', sub: 'Mobilized across active trade and agriculture' },
+      { value: 'Multiple', label: 'Campuses', sub: 'Growing network of students and partners' },
+      { value: 'Active', label: 'Trade Cycles', sub: 'Agriculture and goods distribution operations' },
     ],
     bullets: [
       'Ongoing development of processing and manufacturing systems',
       'Building a scalable model for youth-driven economic participation in Africa',
     ],
     tagline:
-      'SINet is not just creating returns — we are building ownership, production, and long-term economic systems.',
+      'SINet is building ownership, production, and long-term economic systems with people at the centre.',
   },
   whatWeDo: {
     eyebrow: 'Sector Operations',
@@ -200,32 +201,34 @@ export const DEFAULT_ABOUT: AboutContent = {
     sparkEyebrow: 'The Spark',
     sparkTitle: 'How It Began',
     sparkParagraphs: [
-      'In March 2025, Adams Ochekwu asked a single question that changed everything: "What if students didn\'t have to wait until they graduated to start building wealth?"',
-      'The idea was simple — deploy real capital into real goods trade, generate real returns, and use those profits to build real assets. Within three months, SINet had engaged 280+ students across 16 universities and generated over ₦11.8 million in cash flow.',
+      'In March 2025, Adams Ochekwu asked a single question that changed everything: "What if students didn\'t have to wait until they graduated to start building sustainable systems?"',
+      // TODO-VERIFY: Claim of 280+ students across 16 universities and over ₦11.8 million in cash flow needs CEO verification
+      'The idea was simple — organise student enterprise around real goods distribution, build practical market systems, and empower youth through active production and trade. Within three months, SINet had engaged 280+ students across 16 universities and generated over ₦11.8 million in cash flow.',
     ],
   },
   missionVision: {
     visionEmoji: '👁️',
     visionEyebrow: 'Vision',
     visionTitle: 'Ownership, Not Hustle',
-    visionText: 'Raise a generation of system builders and investors who shape industries, influence global markets, and position Africa as a leading force in the world economy — through ownership, not hustle.',
+    visionText: 'Raise a generation of system builders and innovators who shape industries, influence global markets, and position Africa as a leading force in the world economy — through ownership, not hustle.',
     missionEmoji: '🎯',
     missionEyebrow: 'Mission',
     missionTitle: 'Build. Connect. Scale.',
-    missionText: 'Build a dynamic network that funds ideas, executes strategic investments, and connects talent across key sectors — using collaboration, technology, and global opportunities to create wealth and lasting economic systems.',
+    missionText: 'Build a dynamic network that supports ideas, executes strategic commercial initiatives, and connects talent across key sectors — using collaboration, technology, and global opportunities to create sustainable economic systems.',
   },
   philosophy: {
     eyebrow: 'Our Principles',
     title: 'The SINet Philosophy',
     principles: [
       { icon: '🏦', title: 'Ownership, Not Hustle', desc: 'We design for long-term equity and compounding. Not side hustles. Not speculation. Real ownership of real assets that grow over time.' },
-      { icon: '🔨', title: 'Students as Builders', desc: 'Students are not just consumers of the economy — they are its builders. SINet provides the tools, capital, and systems to make this real.' },
-      { icon: '🔄', title: 'Today Funds Tomorrow', desc: 'Every 6-week trade cycle generates returns that fund manufacturing plants, hostels, and empires. The flywheel turns — and compounds.' },
+      { icon: '🔨', title: 'Students as Builders', desc: 'Students are not just consumers of the economy — they are its builders. SINet provides the tools, resources, and systems to make this real.' },
+      // TODO-VERIFY: CEO approval needed for structured trade cycle description
+      { icon: '🔄', title: 'Today Funds Tomorrow', desc: 'Every structured trade cycle powers local distribution and helps fund long-term assets and community facilities. The flywheel turns — and compounds.' },
     ],
     beyondReturns: {
       icon: '🌍',
-      title: 'Beyond Returns: Building Systems',
-      description: 'SINet is not just an investment platform. We are building the economic infrastructure that will define Africa\'s next generation of ownership and production.',
+      title: 'Beyond Trade: Building Systems',
+      description: 'SINet is a business ecosystem offering products, services, partnerships, and community membership. We are building the economic infrastructure that will define Africa\'s next generation of ownership and production.',
       bullets: ['Youth-driven economic infrastructure', 'Job creation through manufacturing', 'Production systems and value chains', 'Student ownership and leadership'],
     },
   },
@@ -235,17 +238,20 @@ export const DEFAULT_ABOUT: AboutContent = {
     title: 'Founder & Chief Executive Officer',
     empires: ['Fashion & Creative', 'Food & Processing', 'Tech & Innovation', 'Social Impact', 'Agriculture'],
     quote: 'We are not just building businesses; we are building systems that will outlive us.',
-    achievement: 'Built and scaled SINet from inception into a multi-campus investment platform engaging over 280 students across 16 universities. Within three months, generated over ₦11.8 million in cash flow through organized goods distribution, market participation, and grassroots capital mobilization.',
+    // TODO-VERIFY: Claim of 280+ students across 16 universities and over ₦11.8 million in cash flow needs CEO verification
+    achievement: 'Built and scaled SINet from inception into a multi-campus business and commerce ecosystem engaging over 280 students across 16 universities. Within three months, generated over ₦11.8 million in cash flow through organized goods distribution, market participation, and grassroots mobilization.',
     bio: [
-      'Adams Ochekwu is the Founder and Chief Executive Officer of the Student Investment Network (SINet), a youth-driven investment platform building systems of wealth creation across Africa.',
-      'He provides strategic leadership and overall direction for the organization\'s vision, growth, and operations, designing and driving SINet\'s long-term mission of empowering students to build sustainable wealth systems.',
-      'In his role, Adams leads the development and execution of investment strategies across multiple sectors, including agriculture, processing, real estate, energy, and digital innovation.',
-      'As CEO, Adams represents SINet in engagements with stakeholders, institutions, and collaborators, positioning the platform as a growing force in youth-driven investment and innovation across Africa.',
+      // TODO-VERIFY: CEO approval needed for organization title description
+      'Adams Ochekwu is the Founder and Chief Executive Officer of SINet, a youth-driven business ecosystem building systems of production, commerce, and community across Africa.',
+      'He provides strategic leadership and overall direction for the organization\'s vision, growth, and operations, designing and driving SINet\'s long-term mission of empowering students and youth through sustainable economic systems.',
+      'In his role, Adams leads the development and execution of commercial strategies across multiple sectors, including agriculture, processing, real estate, energy, and digital innovation.',
+      'As CEO, Adams represents SINet in engagements with stakeholders, institutions, and collaborators, positioning the platform as a growing force in youth-driven commerce and innovation across Africa.',
     ],
     hideContact: true,
   },
   founderStats: [
     { value: '280+', label: 'Students Engaged' },
+    // TODO-VERIFY: Cash flow figure ₦11.8M needs CEO verification
     { value: '₦11.8M', label: 'Cash Flow (3 months)' },
   ],
   teamSection: { eyebrow: 'The Builders', title: 'Leadership Team', subtitle: 'Click any card to read the full profile.' },
@@ -256,7 +262,7 @@ export const DEFAULT_ABOUT: AboutContent = {
     eyebrow: 'Be Part of History',
     title: 'Join the',
     titleAccent: 'Movement',
-    subtitle: 'Whether you want to invest, build, create, or connect — there is a place for you in SINet. Africa is waiting for its builders.',
+    subtitle: 'Whether you want to build, create, partner, or connect — there is a place for you in SINet. Africa is waiting for its builders.',
     buttons: [
       { label: 'Explore membership →', href: '/membership' },
       { label: 'See what we do', href: '/sectors' },
@@ -451,8 +457,9 @@ export const DEFAULT_TRANSPARENCY: TransparencyContent = {
     {
       title: 'ROI & Returns',
       items: [
-        { question: 'How are returns generated within 6 weeks?', answer: 'We cut out middlemen in the supply chain and trade directly in high-demand markets.' },
-        { question: 'Are returns guaranteed?', answer: 'Returns are based on actual trade and agricultural performance. Our track record shows consistent delivery across all completed cycles.' },
+        // TODO-VERIFY: CEO approval needed for trade mechanics FAQ wording
+        { question: 'How is value generated within trade cycles?', answer: 'We streamline distribution in the supply chain and trade directly in high-demand markets.' },
+        { question: 'What factors influence trade outcomes?', answer: 'Outcomes are based on actual trade and agricultural operations, market dynamics, and operational execution.' },
       ],
     },
   ],
@@ -461,9 +468,9 @@ export const DEFAULT_TRANSPARENCY: TransparencyContent = {
 export const DEFAULT_SECTORS_PAGE: SectorsPageContent = {
   hero: {
     badge: '',
-    title: 'Our Investment Empires',
+    title: 'Our Business Sectors',
     subtitle:
-      'Discover scalable, impactful, and thoroughly vetted investment opportunities across Africa’s most critical sectors.',
+      'Discover scalable, impactful, and community-driven initiatives across Africa’s most critical sectors.',
   },
 };
 
@@ -580,17 +587,18 @@ export const DEFAULT_ADVERTS: AdvertsContent = {
 
 export const DEFAULT_CONTACT_PAGE: ContactPageContent = {
   title: 'Get in Touch',
+  // TODO-VERIFY: CEO approval needed for replacing 'our investment empires' with 'our business sectors'
   subtitle:
-    "Have questions about the platform, our investment empires, or partnership opportunities? We're here to help.",
+    "Have questions about the platform, our business sectors, or partnership opportunities? We're here to help.",
   emailLabel: 'Email Us',
   connectLabel: 'Connect',
 };
 
 export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
   home: {
-    title: 'SINet - Pan-African Investment Ecosystem',
+    title: 'SINet - Business Ecosystem & Community',
     description:
-      "SINet connects investors, students, and projects across Africa's most promising sectors. Join the waitlist for Phase 1 launching soon.",
+      "SINet connects entrepreneurs, students, and partners across Africa's key sectors. Join the waitlist for Phase 1 launching soon.",
   },
   about: {
     title: 'About SINet',
@@ -602,20 +610,20 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
     description: 'Learn how SINet turns structured trade cycles into long-term asset ownership across Africa.',
   },
   empires: {
-    title: 'The 5 Empires | SINet',
-    description: 'Explore SINet’s five investment empires — fashion, food processing, tech, real estate, and agriculture.',
+    title: 'The 5 Sectors | SINet',
+    description: 'Explore SINet’s five core sectors — fashion, food processing, tech, real estate, and agriculture.',
   },
   sectors: {
-    title: 'Investment Sectors | SINet',
-    description: "Explore SINet's five investment Empires and their sub-sectors.",
+    title: 'Business Sectors | SINet',
+    description: "Explore SINet's five core business sectors and their sub-sectors.",
   },
   'investor-journey': {
-    title: 'Investor Journey | SINet',
-    description: 'Understand investment tiers, timelines, and how capital compounds through SINet cycles.',
+    title: 'Community Journey | SINet',
+    description: 'Understand participation tiers, timelines, and how community value compounds through SINet cycles.',
   },
   returns: {
-    title: 'Returns & Track Record | SINet',
-    description: 'See SINet’s completed cycle results, mechanics, and performance metrics.',
+    title: 'Track Record & Impact | SINet',
+    description: 'See SINet’s completed cycle results, mechanics, and operational metrics.',
   },
   impact: {
     title: 'Impact & Movement | SINet',
@@ -623,7 +631,7 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
   },
   transparency: {
     title: 'Transparency & FAQ | SINet',
-    description: 'Our commitments, FAQs, and answers about safety, returns, and how SINet operates.',
+    description: 'Our commitments, FAQs, and answers about operations, security, and how SINet operates.',
   },
   academy: {
     title: 'SINet Academy',
@@ -631,7 +639,7 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
   },
   connect: {
     title: 'Connect With SINet',
-    description: 'Get in touch with SINet. Investment inquiries, campus ambassador applications, and general questions.',
+    description: 'Get in touch with SINet. Partnership inquiries, campus ambassador applications, and general questions.',
   },
   contact: {
     title: 'Contact Us | SINet',
@@ -639,7 +647,7 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
   },
   waitlist: {
     title: 'Join the Waitlist | SINet',
-    description: 'Apply to join the SINet Pan-African investment platform waitlist.',
+    description: 'Apply to join the SINet Pan-African ecosystem waitlist.',
   },
 };
 
@@ -661,7 +669,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     facebook: 'https://facebook.com/sinet.africa',
   },
   footer: {
-    brandCopy: "Build Africa's future. Invest in active goods trade with our structured 6-week investment cycles while co-owning Africa's next great institutions.",
+    // TODO-VERIFY: CEO approval needed for original copy: "Invest in active goods trade with our structured 6-week investment cycles while co-owning Africa's next great institutions."
+    brandCopy: "Build Africa's future. A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.",
     columns: [
       {
         title: 'Platform',

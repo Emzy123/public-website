@@ -95,9 +95,11 @@ export const DEFAULT_ABOUT_TEAM: AboutTeamMember[] = [
 ];
 
 export const DEFAULT_ABOUT_TIMELINE = [
-  { date: 'March 2025', emoji: '🌱', title: 'The Beginning', desc: "Adams Ochekwu founded SINet with a simple question: why can't students participate in real wealth creation now? The first cycle began." },
+  { date: 'March 2025', emoji: '🌱', title: 'The Beginning', desc: "Adams Ochekwu founded SINet with a simple question: why can't students participate in real value creation now? The first cycle began." },
+  // TODO-VERIFY: Claim of 280+ students across 16 universities and ₦11.8 million in cash flow needs CEO verification
   { date: '2025 – Active Operations', emoji: '⚡', title: 'Launch & Growth', desc: '280+ students across 16 universities joined. ₦11.8 million in cash flow generated in the first three months of structured goods trade.' },
-  { date: '2026 – Public Launch', emoji: '🌍', title: 'Digital Platform Goes Live', desc: 'sinet.africa launches publicly. Investor portal, full transparency, and the 5 Empires framework revealed to the world.' },
-  { date: '2026–2027 – Building Now', emoji: '🏭', title: 'Manufacturing Begins', desc: '2 manufacturing plants under development. The 5,000-bed hostel estate planned. Trade profits fund real infrastructure.' },
+  { date: '2026 – Public Launch', emoji: '🌍', title: 'Digital Platform Goes Live', desc: 'sinet.africa launches publicly. Community portal, transparency, and the 5 Sectors framework revealed to the world.' },
+  // TODO-VERIFY: CEO approval needed for 2 manufacturing plants and 5,000-bed hostel estate claims
+  { date: '2026–2027 – Building Now', emoji: '🏭', title: 'Manufacturing Begins', desc: '2 manufacturing plants under development. The 5,000-bed hostel estate planned. Structured trade funds real infrastructure.' },
   { date: '2027+ – The 5 Empires', emoji: '👑', title: 'Pan-African Expansion', desc: "Five sectors. 54 nations. Students owning the food supply chains, tech platforms, fashion hubs, real estate, and agriculture networks of tomorrow's Africa." },
 ];

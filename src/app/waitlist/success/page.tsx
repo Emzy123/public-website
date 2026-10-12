@@ -7,8 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function SuccessPage() {
-  const websiteUrl = 'https://sinet.africa';
-  const shareText = "I just joined the waitlist for SINet, the premier Pan-African investment ecosystem! Build Africa's future with me.";
+  const websiteUrl = 'https://www.sinet.africa';
+  // TODO-VERIFY: CEO approval needed for share text wording
+  const shareText = "I just joined the waitlist for SINet, the premier Pan-African business ecosystem! Build Africa's future with me.";
 
   return (
     <div className="pt-32 pb-24 bg-white min-h-screen flex items-center justify-center">

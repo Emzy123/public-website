@@ -33,12 +33,14 @@ export default function TermsPage() {
           </p>
 
           {/* Important disclaimer banner */}
+          {/* Important disclaimer banner */}
           <div className="flex items-start gap-4 bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-12">
             <span className="text-2xl flex-shrink-0">⚠️</span>
             <div>
-              <p className="font-bold text-amber-800 mb-1">Important Disclaimer</p>
+              {/* TODO-VERIFY: CEO approval needed for disclaimer wording */}
+              <p className="font-bold text-amber-800 mb-1">Important Notice</p>
               <p className="text-sm text-amber-700 leading-relaxed">
-                SINet is not a registered investment advisor. The information provided on this website is for educational and informational purposes only. Past returns do not guarantee future results. All investments involve risk — conduct your own research before investing.
+                SINet is a business ecosystem offering products, services, partnerships, and community membership — not primarily an investment platform. Content on this website is for educational and informational purposes. Participation in trade and commercial programs involves operational considerations; members and partners should review all terms carefully.
               </p>
             </div>
           </div>
@@ -46,27 +48,30 @@ export default function TermsPage() {
           <div className="space-y-10">
             {[
               {
+                // TODO-VERIFY: CEO approval needed for removal of 'Student Investment Network / connects investors / returns / investment model'
                 n: '1', title: 'About SINet',
                 body: (
-                  <p className="text-slate-600 leading-relaxed text-sm">SINet (Student Investment Network) is a student-driven investment community that connects investors with opportunities across multiple sectors. Our website provides information about our investment model, returns, and how to participate.</p>
+                  <p className="text-slate-600 leading-relaxed text-sm">SINet is a student-driven business and commerce ecosystem connecting students, entrepreneurs, and partners across agriculture, trade &amp; distribution, and real estate. Our website provides information about our community programs, commercial initiatives, products, and partnership opportunities.</p>
                 ),
               },
               {
-                n: '2', title: 'Not Financial Advice',
+                // TODO-VERIFY: CEO approval needed for legal/advisory scope wording
+                n: '2', title: 'Informational Content',
                 body: (
-                  <p className="text-slate-600 leading-relaxed text-sm">Nothing on this website constitutes financial, investment, or legal advice. All information is provided &ldquo;as is&rdquo; without warranties of any kind. You are solely responsible for evaluating the merits and risks associated with any investment opportunity. We strongly recommend consulting with a qualified financial advisor before making any investment decision.</p>
+                  <p className="text-slate-600 leading-relaxed text-sm">Nothing on this website constitutes financial, investment, or legal advice. All information is provided &ldquo;as is&rdquo; without warranties of any kind. You are solely responsible for evaluating the merits and risks associated with any commercial or community opportunity. We encourage consulting with qualified professionals before making significant business decisions.</p>
                 ),
               },
               {
-                n: '3', title: 'Investment Participation',
+                // TODO-VERIFY: CEO approval needed for 'Community & Program Participation' replacing 'Investment Participation'
+                n: '3', title: 'Program & Community Participation',
                 body: (
                   <>
-                    <p className="text-slate-600 leading-relaxed text-sm mb-3">Investing with SINet involves risk, including the potential loss of principal. By expressing interest in investing:</p>
+                    <p className="text-slate-600 leading-relaxed text-sm mb-3">Participating in SINet programs, trade activities, or community initiatives requires mutual commitment and adherence to guidelines:</p>
                     <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
-                      <li>You acknowledge that you have read and understood our investment model</li>
-                      <li>You accept that returns are not guaranteed</li>
-                      <li>You understand that past performance does not indicate future results</li>
-                      <li>You confirm that you are investing at your own risk</li>
+                      <li>You acknowledge that you have read and understood our ecosystem model</li>
+                      <li>You accept that commercial outcomes depend on real market conditions</li>
+                      <li>You understand that past activity does not guarantee future results</li>
+                      <li>You confirm that you participate willingly and in compliance with applicable laws</li>
                     </ul>
                   </>
                 ),
@@ -75,7 +80,7 @@ export default function TermsPage() {
                 n: '4', title: 'Eligibility',
                 body: (
                   <>
-                    <p className="text-slate-600 leading-relaxed text-sm mb-3">To participate in SINet investment opportunities, you must:</p>
+                    <p className="text-slate-600 leading-relaxed text-sm mb-3">To participate in SINet programs, commercial partnerships, or community initiatives, you must:</p>
                     <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
                       <li>Be at least 18 years of age</li>
                       <li>Have the legal capacity to enter into binding agreements</li>
@@ -92,14 +97,15 @@ export default function TermsPage() {
                 ),
               },
               {
+                // TODO-VERIFY: CEO approval needed for limitation of liability scope update
                 n: '6', title: 'Limitation of Liability',
                 body: (
                   <>
                     <p className="text-slate-600 leading-relaxed text-sm mb-3">To the maximum extent permitted by law, SINet and its founders, officers, employees, and affiliates shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from:</p>
                     <ul className="list-disc pl-6 text-slate-600 space-y-1 text-sm leading-relaxed">
                       <li>Your use of or inability to use the website</li>
-                      <li>Any investment decision made based on information from this website</li>
-                      <li>Any loss of capital or investment returns</li>
+                      <li>Any commercial decision made based on information from this website</li>
+                      <li>Any business interruption or operational loss</li>
                       <li>Any errors or omissions in website content</li>
                     </ul>
                   </>
