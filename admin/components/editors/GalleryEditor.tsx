@@ -206,6 +206,13 @@ export function GalleryEditor({ data, onChange }: { data: GalleryContent; onChan
                       placeholder="Brief description of what this shows"
                     />
                   </AdminField>
+                  <AdminField label="Alt Text (accessibility)">
+                    <AdminInput
+                      value={item.alt || ''}
+                      onChange={(e) => updateItem(item.id, { alt: e.target.value })}
+                      placeholder="Describe what is visible for screen readers"
+                    />
+                  </AdminField>
                   <div className="lg:col-span-2">
                     <ImageUploadField
                       label="Image"

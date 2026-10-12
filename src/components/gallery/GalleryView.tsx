@@ -1,9 +1,43 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PILLAR_LABELS, PILLARS, type Pillar } from '@/lib/types/membership';
 import type { GalleryContent, GalleryItem } from '@admin/types/content';
+
+function isFilenameLike(text?: string): boolean {
+  if (!text) return true;
+  const trimmed = text.trim();
+  return (
+    /^(IMG[-_]|WA\d{4}|PXL[-_]|DSC[-_]|\d{6,})/i.test(trimmed) ||
+    /\.(jpe?g|png|webp|avif|gif)$/i.test(trimmed)
+  );
+}
+
+function getPillarFallbackAlt(pillar: string): string {
+  switch (pillar) {
+    case 'agriculture':
+      return 'SINet agricultural production and agribusiness operations';
+    case 'trade-distribution':
+      return 'SINet trade logistics, goods distribution, and wholesale supply';
+    case 'real-estate':
+      return 'SINet property development and real estate operations';
+    default:
+      return 'SINet enterprise operations and community activity';
+  }
+}
+
+function getItemAlt(item: GalleryItem): string {
+  if (item.alt?.trim()) return item.alt.trim();
+  if (item.caption?.trim() && !isFilenameLike(item.caption)) return item.caption.trim();
+  return getPillarFallbackAlt(item.pillar);
+}
+
+function getItemCaption(item: GalleryItem): string | null {
+  if (!item.caption?.trim()) return null;
+  return isFilenameLike(item.caption) ? null : item.caption.trim();
+}
 
 type Props = {
   content: GalleryContent;
@@ -76,19 +110,24 @@ export function GalleryView({ content }: Props) {
 }
 
 function GalleryFigure({ item, onOpen }: { item: GalleryItem; onOpen: () => void }) {
+  const altText = getItemAlt(item);
+  const caption = getItemCaption(item);
+
   return (
     <figure className="overflow-hidden border border-[#0d1a4a]/20 bg-white">
       <button
         type="button"
         onClick={onOpen}
         className="group relative block w-full aspect-[4/3] bg-[#eee6d0] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9711b] focus-visible:ring-offset-2"
-        aria-label={`View ${item.caption || PILLAR_LABELS[item.pillar as Pillar]}`}
+        aria-label={`View ${caption || altText}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src={item.imageUrl}
-          alt={item.caption || PILLAR_LABELS[item.pillar as Pillar]}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          alt={altText}
+          fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          loading="lazy"
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
         <span className="pointer-events-none absolute inset-0 bg-[#0d1a4a]/0 transition-colors group-hover:bg-[#0d1a4a]/25" />
         <span className="pointer-events-none absolute bottom-3 right-3 rounded bg-[#0d1a4a]/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -97,7 +136,7 @@ function GalleryFigure({ item, onOpen }: { item: GalleryItem; onOpen: () => void
       </button>
       <figcaption className="p-4">
         <p className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">{PILLAR_LABELS[item.pillar as Pillar]}</p>
-        {item.caption && <p className="mt-2 text-sm leading-6 text-[#5b554a]">{item.caption}</p>}
+        {caption && <p className="mt-2 text-sm leading-6 text-[#5b554a]">{caption}</p>}
       </figcaption>
     </figure>
   );
@@ -115,6 +154,8 @@ function GalleryLightbox({
   onClose: () => void;
 }) {
   const item = items[index];
+  const altText = getItemAlt(item);
+  const caption = getItemCaption(item);
   const touchStartX = useRef<number | null>(null);
   const touchDeltaX = useRef(0);
   const [dragX, setDragX] = useState(0);
@@ -185,7 +226,7 @@ function GalleryLightbox({
           </p>
           <p className="mt-1 truncate text-sm text-[#c8ccdb]">
             {index + 1} / {items.length}
-            {item.caption ? ` · ${item.caption}` : ''}
+            {caption ? ` · ${caption}` : ''}
           </p>
         </div>
         <button
@@ -245,7 +286,7 @@ function GalleryLightbox({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.imageUrl}
-              alt={item.caption || PILLAR_LABELS[item.pillar as Pillar]}
+              alt={altText}
               className="max-h-[min(78vh,900px)] w-auto max-w-full object-contain shadow-[0_20px_60px_rgba(0,0,0,.35)]"
               draggable={false}
             />

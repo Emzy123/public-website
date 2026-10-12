@@ -326,6 +326,7 @@ export type GalleryItem = {
   pillar: GalleryPillar;
   imageUrl: string;
   caption: string;
+  alt?: string;
   sortOrder: number;
 };
 
