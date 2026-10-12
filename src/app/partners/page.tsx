@@ -4,7 +4,7 @@ import { catalogPillarLabel } from '@/lib/catalog';
 import type { PartnersPageContent } from '@admin/types/content';
 
 export const metadata = {
-  title: 'Partners | SINet',
+  title: 'Partners',
   description: 'Strategic partnerships across agriculture, trade & goods distribution, and real estate.',
 };
 

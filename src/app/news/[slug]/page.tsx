@@ -20,9 +20,9 @@ async function loadPost(slug: string): Promise<{ content: NewsContent; post: New
 
 export async function generateMetadata({ params }: Props) {
   const loaded = await loadPost(params.slug);
-  if (!loaded) return { title: 'Update | SINet' };
+  if (!loaded) return { title: 'Update' };
   return {
-    title: `${loaded.post.title} | SINet News`,
+    title: loaded.post.title,
     description: loaded.post.excerpt || loaded.content.hero.subtitle,
   };
 }

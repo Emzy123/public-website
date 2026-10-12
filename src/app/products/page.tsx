@@ -4,7 +4,7 @@ import { catalogPillarLabel } from '@/lib/catalog';
 import type { ProductsPageContent } from '@admin/types/content';
 
 export const metadata = {
-  title: 'Products | SINet',
+  title: 'Products',
   description:
     "Agricultural products, distributed goods, and available property opportunities across SINet's three pillars.",
 };

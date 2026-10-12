@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Success | SINet',
+  title: 'Application Received',
 };
 
 export default function SuccessPage() {

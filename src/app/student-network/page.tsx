@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Student Network | SINet',
+  title: 'Student Network',
   description: 'A dedicated SINet pathway for student membership, learning, and community participation.',
 };
 

@@ -3,7 +3,7 @@ import { getCmsContent, getDefaultContent } from '@/lib/cms';
 import type { NewsContent, NewsPost } from '@admin/types/content';
 
 export const metadata = {
-  title: 'News & Updates | SINet',
+  title: 'News & Updates',
   description: 'Project milestones, announcements, and updates from SINet across agriculture, trade, and real estate.',
 };
 

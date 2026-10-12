@@ -601,7 +601,7 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
       "SINet connects entrepreneurs, students, and partners across Africa's key sectors. Join the waitlist for Phase 1 launching soon.",
   },
   about: {
-    title: 'About SINet',
+    title: 'About',
     description:
       'From Student Dreams to Pan-African Movement. Founded in March 2025. Meet the founder, the leadership team, and learn how SINet is building 5 Mega Empires across Africa.',
   },
@@ -610,27 +610,27 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
     description: 'Learn how SINet turns structured trade cycles into long-term asset ownership across Africa.',
   },
   empires: {
-    title: 'The 5 Sectors | SINet',
+    title: 'The 5 Sectors',
     description: 'Explore SINet’s five core sectors — fashion, food processing, tech, real estate, and agriculture.',
   },
   sectors: {
-    title: 'Business Sectors | SINet',
+    title: 'Business Sectors',
     description: "Explore SINet's five core business sectors and their sub-sectors.",
   },
   'investor-journey': {
-    title: 'Community Journey | SINet',
+    title: 'Community Journey',
     description: 'Understand participation tiers, timelines, and how community value compounds through SINet cycles.',
   },
   returns: {
-    title: 'Track Record & Impact | SINet',
+    title: 'Track Record & Impact',
     description: 'See SINet’s completed cycle results, mechanics, and operational metrics.',
   },
   impact: {
-    title: 'Impact & Movement | SINet',
+    title: 'Impact & Movement',
     description: 'How SINet mobilizes students and communities into real economic ownership across Africa.',
   },
   transparency: {
-    title: 'Transparency & FAQ | SINet',
+    title: 'Transparency & FAQ',
     description: 'Our commitments, FAQs, and answers about operations, security, and how SINet operates.',
   },
   academy: {
@@ -642,11 +642,11 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
     description: 'Get in touch with SINet. Partnership inquiries, campus ambassador applications, and general questions.',
   },
   contact: {
-    title: 'Contact Us | SINet',
+    title: 'Contact Us',
     description: 'Get in touch with the SINet team for inquiries, partnerships, or support.',
   },
   waitlist: {
-    title: 'Join the Waitlist | SINet',
+    title: 'Join the Waitlist',
     description: 'Apply to join the SINet Pan-African ecosystem waitlist.',
   },
 };
@@ -657,7 +657,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     whatsappDisplay: '0902 823 9706',
     phone: 'tel:+2349164107049',
     phoneDisplay: '0916 410 7049',
-    email: 'sinetworkinggobal@gmail.com',
+    email: 'hello@sinet.africa',
     address: 'Kogi State, Nigeria',
     businessHours: 'Monday – Friday, 9am – 6pm WAT',
   },
@@ -703,8 +703,9 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     { label: 'Connect', href: '/connect' },
   ],
   seo: {
-    defaultTitle: 'SINet - Pan-African Investment Ecosystem',
-    defaultDescription: "SINet connects investors, students, and projects across Africa's most promising sectors.",
+    // TODO-VERIFY: CEO approval needed for replacing 'Pan-African Investment Ecosystem' with 'Pan-African Business Ecosystem'
+    defaultTitle: 'SINet — Business Ecosystem & Community',
+    defaultDescription: "SINet connects entrepreneurs, students, and partners across Africa's key sectors.",
   },
   pageSeo: DEFAULT_PAGE_SEO,
   logoUrl: '/images/logo-icon.svg',

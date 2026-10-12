@@ -7,7 +7,7 @@ const PILLARS = [
 ];
 
 export const metadata = {
-  title: 'What We Do | SINet',
+  title: 'What We Do',
   description: 'SINet\'s three equal pillars: Agriculture, Trade & Goods Distribution, and Real Estate.',
 };
 

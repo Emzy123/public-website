@@ -6,11 +6,11 @@ export async function generateMetadata() {
   try {
     const content = await getCmsContent('gallery');
     return {
-      title: 'Gallery | SINet',
+      title: 'Gallery',
       description: content.hero.subtitle || "Real activity across SINet's three pillars.",
     };
   } catch {
-    return { title: 'Gallery | SINet' };
+    return { title: 'Gallery' };
   }
 }
 

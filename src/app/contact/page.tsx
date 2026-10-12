@@ -4,7 +4,7 @@ import ContactClient from './ContactClient';
 
 export async function generateMetadata() {
   return buildPageMetadata('contact', {
-    title: 'Contact Us | SINet',
+    title: 'Contact Us',
     description: 'Get in touch with the SINet team for inquiries, partnerships, or support.',
   });
 }
