@@ -39,7 +39,7 @@ const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }>
   admin: {
     label: 'Admin dashboard + CMS',
     vars: ['ADMIN_EMAIL', 'ADMIN_SESSION_SECRET', 'MONGODB_URI', 'MONGODB_DB'],
-    anyOf: [['ADMIN_PASSWORD'], ['ADMIN_PASSWORD_HASH']],
+    anyOf: [['ADMIN_PASSWORD', 'ADMIN_PASSWORD_HASH']],
   },
 };
 

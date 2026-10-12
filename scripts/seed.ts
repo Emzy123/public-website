@@ -1,9 +1,15 @@
 import { MongoClient } from 'mongodb';
 import type { Empire, Rep, TeamMember } from '../src/types/index.ts';
-import 'dotenv/config';
-import { appendFileSync } from 'node:fs';
-import { readdirSync } from 'node:fs';
-import { extname } from 'node:path';
+import { config } from 'dotenv';
+import { appendFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, extname } from 'node:path';
+
+for (const file of ['.env', '.env.local']) {
+  const envPath = resolve(process.cwd(), file);
+  if (existsSync(envPath)) {
+    config({ path: envPath, override: true });
+  }
+}
 import { fileURLToPath } from 'node:url';
 import { Resolver } from 'node:dns';
 

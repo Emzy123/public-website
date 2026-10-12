@@ -1,4 +1,13 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+for (const file of ['.env', '.env.local']) {
+  const envPath = resolve(process.cwd(), file);
+  if (existsSync(envPath)) {
+    config({ path: envPath, override: true });
+  }
+}
 import { seedAllCmsContent } from '../admin/lib/cms/repository';
 
 async function main() {
