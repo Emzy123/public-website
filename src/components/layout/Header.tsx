@@ -5,17 +5,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MobileDrawer } from './MobileDrawer';
 
-const PRIMARY_NAV = [
-  { label: 'About', href: '/about' },
-  { label: 'What We Do', href: '/sectors' },
-  { label: 'Products', href: '/products' },
-  { label: 'Gallery', href: '/gallery' },
-  { label: 'News', href: '/news' },
-  { label: 'Partners', href: '/partners' },
-  { label: 'Membership', href: '/membership' },
-  { label: 'Student Network', href: '/student-network' },
-  { label: 'Contact', href: '/contact' },
-];
+import { getPrimaryNav } from '@/lib/site-config';
+
+const PRIMARY_NAV = getPrimaryNav();
 
 const DEFAULT_LOGO = '/images/logo-icon.svg';
 

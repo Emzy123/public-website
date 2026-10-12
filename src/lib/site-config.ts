@@ -1,0 +1,101 @@
+/**
+ * Central site configuration for SINet.
+ * Defines canonical domain, contact details, social channels, and feature flags.
+ */
+
+export const SITE_URL = 'https://www.sinet.africa';
+
+// Single source of truth for the contact email.
+// Defaults to domain address hello@sinet.africa; overridable via RESEND_CONTACT_TO_EMAIL.
+export const CONTACT_EMAIL =
+  process.env.RESEND_CONTACT_TO_EMAIL?.trim() || 'hello@sinet.africa';
+
+export const CONTACT_PHONE = '+234 916 410 7049';
+export const CONTACT_PHONE_RAW = 'tel:+2349164107049';
+export const CONTACT_WHATSAPP = 'https://wa.me/2349028239706';
+export const CONTACT_WHATSAPP_DISPLAY = '0902 823 9706';
+export const REGISTERED_ADDRESS = 'Kogi State, Nigeria';
+
+/**
+ * Feature flags for sections currently awaiting real verified content.
+ * Flip to true once substantive entries/catalog are published.
+ */
+export const FEATURE_FLAGS = {
+  showNews: false,      // "No public posts yet"
+  showPartners: false,  // Awaiting real institutional partner roster
+  showProducts: false,  // Awaiting verified goods inventory
+} as const;
+
+export type SocialKey = 'x' | 'linkedin' | 'facebook' | 'instagram' | 'whatsapp';
+
+export interface SocialLinkItem {
+  key: SocialKey;
+  label: string;
+  ariaLabel: string;
+  href: string;
+}
+
+export const SOCIAL_LINKS: readonly SocialLinkItem[] = [
+  {
+    key: 'x',
+    label: 'X',
+    ariaLabel: 'Follow SINet on X (formerly Twitter)',
+    href: 'https://twitter.com/SINet_Africa',
+  },
+  {
+    key: 'linkedin',
+    label: 'LinkedIn',
+    ariaLabel: 'Connect with SINet on LinkedIn',
+    href: 'https://linkedin.com/company/sinet-africa',
+  },
+  {
+    key: 'facebook',
+    label: 'Facebook',
+    ariaLabel: 'Follow SINet on Facebook',
+    href: 'https://facebook.com/sinet.africa',
+  },
+  {
+    key: 'instagram',
+    label: 'Instagram',
+    ariaLabel: 'Follow SINet on Instagram',
+    href: 'https://instagram.com/sinet.africa',
+  },
+  {
+    key: 'whatsapp',
+    label: 'WhatsApp',
+    ariaLabel: 'Chat with SINet on WhatsApp',
+    href: 'https://wa.me/2349028239706',
+  },
+] as const;
+
+/**
+ * Dynamically filtered primary navigation based on feature flags.
+ */
+export function getPrimaryNav(): { label: string; href: string }[] {
+  const nav = [
+    { label: 'About', href: '/about' },
+    { label: 'What We Do', href: '/sectors' },
+  ];
+
+  if (FEATURE_FLAGS.showProducts) {
+    nav.push({ label: 'Products', href: '/products' });
+  }
+
+  nav.push({ label: 'Gallery', href: '/gallery' });
+
+  if (FEATURE_FLAGS.showNews) {
+    nav.push({ label: 'News', href: '/news' });
+  }
+
+  if (FEATURE_FLAGS.showPartners) {
+    nav.push({ label: 'Partners', href: '/partners' });
+  }
+
+  nav.push(
+    { label: 'Membership', href: '/membership' },
+    { label: 'Student Network', href: '/student-network' },
+    { label: 'Contact', href: '/contact' }
+  );
+
+  return nav;
+}

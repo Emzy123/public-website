@@ -5,11 +5,8 @@ import { ContactForm } from '@/components/forms/ContactForm';
 import { CmsMarkdown } from '@/components/cms/CmsMarkdown';
 import type { ContactPageContent, SiteSettings } from '@admin/types/content';
 
-const SOCIAL_ICONS = [
-  { key: 'x' as const, label: 'X', hrefKey: 'x' as const },
-  { key: 'linkedin' as const, label: 'In', hrefKey: 'linkedin' as const },
-  { key: 'facebook' as const, label: 'Fb', hrefKey: 'facebook' as const },
-];
+import { SocialLinksBar } from '@/components/common/SocialIcons';
+import { CONTACT_EMAIL } from '@/lib/site-config';
 
 export default function ContactClient({
   content,
@@ -20,6 +17,15 @@ export default function ContactClient({
   contact: SiteSettings['contact'];
   social: SiteSettings['social'];
 }) {
+  const displayEmail = contact?.email || CONTACT_EMAIL;
+  const customSocial = {
+    x: social?.x,
+    linkedin: social?.linkedin,
+    facebook: social?.facebook,
+    instagram: social?.instagram,
+    whatsapp: social?.whatsapp,
+  };
+
   return (
     <div className="pt-32 pb-24 bg-slate-50 min-h-screen">
       <div className="container mx-auto px-4 md:px-6">
@@ -36,10 +42,10 @@ export default function ContactClient({
                   {content.emailLabel}
                 </h3>
                 <a
-                  href={`mailto:${contact.email}`}
-                  className="text-xl font-medium text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                  href={`mailto:${displayEmail}`}
+                  className="text-xl font-medium text-[#0d1a4a] hover:text-[#d9711b] hover:underline transition-colors"
                 >
-                  {contact.email}
+                  {displayEmail}
                 </a>
               </div>
 
@@ -47,19 +53,12 @@ export default function ContactClient({
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
                   {content.connectLabel}
                 </h3>
-                <div className="flex gap-4 mt-3">
-                  {SOCIAL_ICONS.filter((s) => social[s.hrefKey]).map((s) => (
-                    <a
-                      key={s.key}
-                      href={social[s.hrefKey]}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 hover:bg-blue-600 hover:text-white transition-colors"
-                      aria-label={s.label}
-                    >
-                      {s.label}
-                    </a>
-                  ))}
+                <div className="mt-3">
+                  <SocialLinksBar
+                    className="flex flex-wrap gap-3"
+                    linkClassName="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-700 hover:bg-[#0d1a4a] hover:text-[#eccb7c] transition-colors"
+                    customLinks={customSocial}
+                  />
                 </div>
               </div>
             </div>

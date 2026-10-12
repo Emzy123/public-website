@@ -1,36 +1,9 @@
 import Link from 'next/link';
 import type { SiteSettings } from '@admin/types/content';
+import { CONTACT_EMAIL, FEATURE_FLAGS } from '@/lib/site-config';
+import { SocialLinksBar } from '@/components/common/SocialIcons';
 
 type FooterProps = { settings?: SiteSettings };
-
-const COLUMNS = [
-  {
-    title: 'Explore',
-    links: [
-      ['What We Do', '/sectors'],
-      ['Products', '/products'],
-      ['Gallery', '/gallery'],
-      ['News & Updates', '/news'],
-    ],
-  },
-  {
-    title: 'Community',
-    links: [
-      ['About & Leadership', '/about'],
-      ['Membership', '/membership'],
-      ['Student Network', '/student-network'],
-      ['Partners', '/partners'],
-      ['Contact', '/contact'],
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      ['Privacy Policy', '/privacy'],
-      ['Terms of Service', '/terms'],
-    ],
-  },
-];
 
 export function Footer({ settings }: FooterProps) {
   const contact = settings?.contact;
@@ -39,14 +12,42 @@ export function Footer({ settings }: FooterProps) {
     settings?.footer?.brandCopy?.trim() ||
     'A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.';
   const footerLogo = settings?.footerLogoUrl?.trim() || '/images/sinet-logo.svg';
+  const displayEmail = contact?.email || CONTACT_EMAIL;
 
-  const socialLinks = [
-    social?.instagram && { label: 'Instagram', href: social.instagram },
-    social?.linkedin && { label: 'LinkedIn', href: social.linkedin },
-    social?.x && { label: 'X', href: social.x },
-    social?.facebook && { label: 'Facebook', href: social.facebook },
-    social?.whatsapp && { label: 'WhatsApp', href: social.whatsapp },
-  ].filter(Boolean) as { label: string; href: string }[];
+  const exploreLinks = [
+    ['What We Do', '/sectors'],
+    ...(FEATURE_FLAGS.showProducts ? [['Products', '/products']] : []),
+    ['Gallery', '/gallery'],
+    ...(FEATURE_FLAGS.showNews ? [['News & Updates', '/news']] : []),
+  ];
+
+  const communityLinks = [
+    ['About & Leadership', '/about'],
+    ['Membership', '/membership'],
+    ['Student Network', '/student-network'],
+    ...(FEATURE_FLAGS.showPartners ? [['Partners', '/partners']] : []),
+    ['Contact', '/contact'],
+  ];
+
+  const columns = [
+    { title: 'Explore', links: exploreLinks },
+    { title: 'Community', links: communityLinks },
+    {
+      title: 'Legal',
+      links: [
+        ['Privacy Policy', '/privacy'],
+        ['Terms of Service', '/terms'],
+      ],
+    },
+  ];
+
+  const customSocial = {
+    x: social?.x,
+    linkedin: social?.linkedin,
+    facebook: social?.facebook,
+    instagram: social?.instagram,
+    whatsapp: social?.whatsapp,
+  };
 
   return (
     <footer className="bg-[#0d1a4a] text-[#f6f2e8]">
@@ -71,28 +72,18 @@ export function Footer({ settings }: FooterProps) {
           {contact?.address && (
             <p className="mt-5 font-data text-[11px] uppercase tracking-[.12em] text-[#eccb7c]">{contact.address}</p>
           )}
-          {contact?.email && (
-            <a href={`mailto:${contact.email}`} className="mt-3 block text-sm text-[#eccb7c] hover:underline">
-              {contact.email}
-            </a>
-          )}
-          {socialLinks.length > 0 && (
-            <div className="mt-5 flex flex-wrap gap-3">
-              {socialLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-data text-[11px] uppercase tracking-[.12em] text-[#a9aec5] hover:text-[#eccb7c]"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </div>
-          )}
+          <a href={`mailto:${displayEmail}`} className="mt-3 block text-sm text-[#eccb7c] hover:underline">
+            {displayEmail}
+          </a>
+          <div className="mt-5">
+            <SocialLinksBar
+              className="flex flex-wrap gap-2.5"
+              linkClassName="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[#d8d9df] hover:bg-[#eccb7c] hover:text-[#0d1a4a] transition-colors"
+              customLinks={customSocial}
+            />
+          </div>
         </div>
-        {COLUMNS.map((column) => (
+        {columns.map((column) => (
           <div key={column.title}>
             <h2 className="mb-4 font-data text-[11px] uppercase tracking-[.14em] text-[#eccb7c]">{column.title}</h2>
             <ul className="space-y-1 text-sm text-[#d8d9df]">

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { FEATURE_FLAGS } from '@/lib/site-config';
 
 const PILLARS = [
   {
@@ -40,7 +41,11 @@ export function InstitutionalHero() {
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
           <Link href="/membership" className="bg-[#0d1a4a] px-7 py-4 text-center text-sm font-bold text-white transition-colors hover:bg-[#d9711b]">Join SINet</Link>
           <Link href="/contact" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Partner With Us</Link>
-          <Link href="/products" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">View Products</Link>
+          {FEATURE_FLAGS.showProducts ? (
+            <Link href="/products" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">View Products</Link>
+          ) : (
+            <Link href="/sectors" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Explore Sectors</Link>
+          )}
         </div>
       </div>
     </section>
@@ -81,26 +86,30 @@ export function InstitutionalHome() {
       </section>
 
       {/* Products & Services */}
-      <section className="border-y border-[#0d1a4a]/20 bg-[#0d1a4a] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
-        <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
-          <div>
-            <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#eccb7c]">Products &amp; services</p>
-            <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">What we offer across our pillars.</h2>
+      {FEATURE_FLAGS.showProducts && (
+        <section className="border-y border-[#0d1a4a]/20 bg-[#0d1a4a] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
+          <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
+            <div>
+              <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#eccb7c]">Products &amp; services</p>
+              <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">What we offer across our pillars.</h2>
+            </div>
+            <div className="self-end">
+              <p className="text-[17px] leading-7 text-[#c8ccdb]">Agricultural products, distributed goods, and available property opportunities — curated and verified before publication.</p>
+              <Link href="/products" className="mt-7 inline-flex border border-[#eccb7c] px-6 py-3 text-sm font-bold text-[#eccb7c] hover:bg-[#eccb7c] hover:text-[#0d1a4a]">View Products →</Link>
+            </div>
           </div>
-          <div className="self-end">
-            <p className="text-[17px] leading-7 text-[#c8ccdb]">Agricultural products, distributed goods, and available property opportunities — curated and verified before publication.</p>
-            <Link href="/products" className="mt-7 inline-flex border border-[#eccb7c] px-6 py-3 text-sm font-bold text-[#eccb7c] hover:bg-[#eccb7c] hover:text-[#0d1a4a]">View Products →</Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Featured Projects */}
-      <section className="mx-auto max-w-[1180px] px-4 py-16 xs:px-5 md:py-24 lg:px-8">
-        <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Featured projects</p>
-        <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Progress you can review.</h2>
-        <p className="mt-4 max-w-xl text-sm leading-7 text-[#5b554a]">Updates published as work is verified — we do not fabricate proof points.</p>
-        <Link href="/news" className="mt-6 inline-flex text-sm font-bold text-[#d9711b] hover:underline">News &amp; Updates →</Link>
-      </section>
+      {FEATURE_FLAGS.showNews && (
+        <section className="mx-auto max-w-[1180px] px-4 py-16 xs:px-5 md:py-24 lg:px-8">
+          <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Featured projects</p>
+          <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Progress you can review.</h2>
+          <p className="mt-4 max-w-xl text-sm leading-7 text-[#5b554a]">Updates published as work is verified — we do not fabricate proof points.</p>
+          <Link href="/news" className="mt-6 inline-flex text-sm font-bold text-[#d9711b] hover:underline">News &amp; Updates →</Link>
+        </section>
+      )}
 
       {/* Gallery */}
       <section className="border-y border-[#0d1a4a]/20 bg-[#24399f] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
@@ -129,13 +138,15 @@ export function InstitutionalHome() {
       </section>
 
       {/* Partners */}
-      <section className="border-t border-[#0d1a4a]/20 bg-[#eee6d0] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
-        <div className="mx-auto max-w-[1180px] text-center">
-          <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Partners</p>
-          <h2 className="mt-5 font-editorial text-4xl">Strategic partnerships across our pillars.</h2>
-          <Link href="/partners" className="mt-8 inline-flex text-sm font-bold text-[#0d1a4a] hover:text-[#d9711b]">Meet our partners →</Link>
-        </div>
-      </section>
+      {FEATURE_FLAGS.showPartners && (
+        <section className="border-t border-[#0d1a4a]/20 bg-[#eee6d0] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
+          <div className="mx-auto max-w-[1180px] text-center">
+            <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Partners</p>
+            <h2 className="mt-5 font-editorial text-4xl">Strategic partnerships across our pillars.</h2>
+            <Link href="/partners" className="mt-8 inline-flex text-sm font-bold text-[#0d1a4a] hover:text-[#d9711b]">Meet our partners →</Link>
+          </div>
+        </section>
+      )}
 
       {/* Contact CTA */}
       <section className="orange-grid bg-[#d9711b] px-4 py-14 text-[#f6f2e8] xs:px-5 md:py-20 lg:px-8">
