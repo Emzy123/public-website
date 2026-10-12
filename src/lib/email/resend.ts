@@ -1,10 +1,10 @@
 import { Resend } from 'resend';
 import { EmailServiceAdapter, WaitlistPayload } from './index';
 import { escapeHtml, firstName } from './html';
+import { SITE_URL, CONTACT_EMAIL, CONTACT_WHATSAPP } from '@/lib/site-config';
 
-const LOGO_URL = 'https://sinet.africa/images/sinet-logo.svg';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
-const WHATSAPP_URL = 'https://wa.me/2349028239706';
+const LOGO_URL = `${SITE_URL}/images/sinet-logo.svg`;
+const WHATSAPP_URL = CONTACT_WHATSAPP;
 
 function buildWaitlistWelcomeEmailHtml(data: {
   fullName: string;
@@ -89,7 +89,7 @@ function buildWaitlistWelcomeEmailHtml(data: {
                 <img src="${LOGO_URL}" alt="SINet" width="100" height="auto" style="display:block;margin:0 auto 12px;max-height:36px;object-fit:contain;opacity:0.9;" />
               </a>
               <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;">
-                <a href="mailto:sinetworkinggobal@gmail.com" style="color:#94a3b8;text-decoration:none;">sinetworkinggobal@gmail.com</a>
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#94a3b8;text-decoration:none;">${CONTACT_EMAIL}</a>
               </p>
               <p style="margin:0;font-size:11px;color:#4b5563;">© ${new Date().getFullYear()} SINet. Building Africa's next generation of owners.</p>
             </td>

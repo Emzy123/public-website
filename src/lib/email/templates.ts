@@ -1,9 +1,8 @@
 import { escapeHtml, firstName } from './html';
+import { SITE_URL, CONTACT_EMAIL } from '@/lib/site-config';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
 const LOGO_URL = `${SITE_URL}/images/sinet-logo.svg`;
 const YEAR = new Date().getFullYear();
-const CONTACT_EMAIL = process.env.RESEND_CONTACT_TO_EMAIL || 'sinetworkinggobal@gmail.com';
 
 const NAVY = '#0d1a4a';
 const TERRACOTTA = '#d9711b';

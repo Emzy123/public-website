@@ -1,9 +1,9 @@
 import { Resend } from 'resend';
 import { escapeHtml, firstName } from './html';
+import { SITE_URL, CONTACT_EMAIL, CONTACT_WHATSAPP, CONTACT_WHATSAPP_DISPLAY } from '@/lib/site-config';
 
-const LOGO_URL = 'https://sinet.africa/images/sinet-logo.svg';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
-const WHATSAPP_URL = 'https://wa.me/2349028239706';
+const LOGO_URL = `${SITE_URL}/images/sinet-logo.svg`;
+const WHATSAPP_URL = CONTACT_WHATSAPP;
 
 function buildContactEmailHtml(data: {
   name: string;
@@ -90,9 +90,9 @@ function buildContactEmailHtml(data: {
                 <img src="${LOGO_URL}" alt="SINet" width="100" height="auto" style="display:block;margin:0 auto 12px;max-height:36px;object-fit:contain;opacity:0.9;" />
               </a>
               <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;">
-                <a href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer" style="color:#D4AF37;text-decoration:none;">WhatsApp: 0902 823 9706</a>
+                <a href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer" style="color:#D4AF37;text-decoration:none;">WhatsApp: ${CONTACT_WHATSAPP_DISPLAY}</a>
                 &nbsp;·&nbsp;
-                <a href="mailto:sinetworkinggobal@gmail.com" style="color:#94a3b8;text-decoration:none;">sinetworkinggobal@gmail.com</a>
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#94a3b8;text-decoration:none;">${CONTACT_EMAIL}</a>
               </p>
               <p style="margin:0;font-size:11px;color:#4b5563;">© ${new Date().getFullYear()} SINet. Building Africa's next generation of owners.</p>
             </td>
@@ -127,7 +127,7 @@ function buildAutoReplyHtml(name: string): string {
               <a href="${SITE_URL}" target="_blank" rel="noopener noreferrer">
                 <img src="${LOGO_URL}" alt="SINet" width="160" height="auto" style="display:block;margin:0 auto 16px;max-height:56px;object-fit:contain;" />
               </a>
-              <p style="margin:0;font-size:12px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;">Pan-African Investment Ecosystem</p>
+              <p style="margin:0;font-size:12px;color:#D4AF37;font-weight:700;text-transform:uppercase;letter-spacing:0.2em;">Pan-African Business Ecosystem</p>
             </td>
           </tr>
 
@@ -192,9 +192,9 @@ function buildAutoReplyHtml(name: string): string {
                 <img src="${LOGO_URL}" alt="SINet" width="100" height="auto" style="display:block;margin:0 auto 12px;max-height:36px;object-fit:contain;opacity:0.9;" />
               </a>
               <p style="margin:0 0 8px;font-size:12px;color:#94a3b8;">
-                <a href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer" style="color:#D4AF37;text-decoration:none;">WhatsApp: 0902 823 9706</a>
+                <a href="${WHATSAPP_URL}" target="_blank" rel="noopener noreferrer" style="color:#D4AF37;text-decoration:none;">WhatsApp: ${CONTACT_WHATSAPP_DISPLAY}</a>
                 &nbsp;·&nbsp;
-                <a href="mailto:sinetworkinggobal@gmail.com" style="color:#94a3b8;text-decoration:none;">sinetworkinggobal@gmail.com</a>
+                <a href="mailto:${CONTACT_EMAIL}" style="color:#94a3b8;text-decoration:none;">${CONTACT_EMAIL}</a>
               </p>
               <p style="margin:0;font-size:11px;color:#4b5563;">© ${new Date().getFullYear()} SINet. Building Africa's next generation of owners.</p>
             </td>
@@ -216,7 +216,7 @@ export async function sendContactNotification(data: {
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
-  const to = process.env.RESEND_CONTACT_TO_EMAIL || 'sinetworkinggobal@gmail.com';
+  const to = CONTACT_EMAIL;
 
   if (!apiKey || !from) return;
 

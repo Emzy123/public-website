@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { CONTACT_EMAIL } from '@/lib/site-config';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'Learn how SINet collects, uses, and protects your personal information. Your privacy matters to us.',
   openGraph: {
-    title: 'Privacy Policy | SINet',
+    title: 'Privacy Policy',
     description: 'Learn how SINet collects, uses, and protects your personal information.',
   },
 };
@@ -76,7 +77,7 @@ const sections = [
           <li>Withdraw consent at any time</li>
           <li>Opt out of marketing communications</li>
         </ul>
-        <p className="text-slate-600 text-sm">To exercise these rights, contact us at <a href="mailto:sinetworkinggobal@gmail.com" className="text-[#d9711b] hover:underline font-medium">sinetworkinggobal@gmail.com</a>.</p>
+        <p className="text-slate-600 text-sm">To exercise these rights, contact us at <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#d9711b] hover:underline font-medium">{CONTACT_EMAIL}</a>.</p>
       </>
     ),
   },
@@ -157,7 +158,7 @@ export default function PrivacyPage() {
                 <div className="bg-[#f6f2e8] rounded-2xl p-6 space-y-3">
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-[#d9711b]">✉️</span>
-                    <a href="mailto:sinetworkinggobal@gmail.com" className="text-[#0d1a4a] font-medium hover:text-[#d9711b] transition-colors">sinetworkinggobal@gmail.com</a>
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-[#0d1a4a] font-medium hover:text-[#d9711b] transition-colors">{CONTACT_EMAIL}</a>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-[#d9711b]">💬</span>
