@@ -10,6 +10,8 @@ import { z } from 'zod';
 import { getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
 
+import { sendApplicationStatusEmail } from '@/lib/email/application-mail';
+
 const reviewDecisionSchema = z.object({
   decision: z.enum(['approve', 'reject'], {
     message: "Decision must be either 'approve' or 'reject'",
@@ -66,7 +68,11 @@ export async function POST(
           );
 
           // If applicant has record in members collection, sync their status
-          const applicantEmail = (mongoApp.data as Record<string, unknown>)?.email || mongoApp.email;
+          const appData = (mongoApp.data as Record<string, unknown>) || {};
+          const applicantEmail = (appData.email as string) || (mongoApp.email as string);
+          const applicantName = (appData.fullName as string) || (mongoApp.fullName as string) || 'Applicant';
+          const applicantRole = String(mongoApp.role || mongoApp.pathway || 'Member');
+
           if (applicantEmail && typeof applicantEmail === 'string') {
             await mongo.collection('members').updateOne(
               { email: applicantEmail.toLowerCase() },
@@ -77,6 +83,16 @@ export async function POST(
                 },
               }
             );
+
+            // Send decision notification email
+            sendApplicationStatusEmail({
+              email: applicantEmail,
+              name: applicantName,
+              pathway: applicantRole,
+              status: newStatus,
+              role: applicantRole,
+              reviewNote: parsed.data.remarks,
+            }).catch((err) => console.warn('[Review] Status email send failed:', err));
           }
 
           return NextResponse.json({
@@ -114,6 +130,18 @@ export async function POST(
       remarks: parsed.data.remarks,
       ipAddress: getClientIp(request),
     });
+
+    const newStatus = parsed.data.decision === 'approve' ? 'approved' : 'rejected';
+    if (result.application?.email) {
+      sendApplicationStatusEmail({
+        email: result.application.email,
+        name: result.application.fullName,
+        pathway: result.application.division,
+        status: newStatus,
+        role: result.application.division,
+        reviewNote: parsed.data.remarks,
+      }).catch((err) => console.warn('[Review] Status email send failed:', err));
+    }
 
     return NextResponse.json({
       success: true,

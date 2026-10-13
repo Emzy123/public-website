@@ -34,6 +34,9 @@ export interface UnifiedApplication {
   reviewRemarks: string | null;
   createdAt: string;
   source: 'mongo' | 'postgres';
+  documents?: { key: string; label: string; id: string; downloadUrl: string }[];
+  documentCount?: number;
+  rawData?: Record<string, unknown>;
 }
 
 export async function GET(request: NextRequest) {
@@ -146,6 +149,19 @@ export async function GET(request: NextRequest) {
           if (!match) continue;
         }
 
+        const documents: { key: string; label: string; id: string; downloadUrl: string }[] = [];
+        const docsMap = (data.documents || {}) as Record<string, unknown>;
+        for (const [key, val] of Object.entries(docsMap)) {
+          if (typeof val === 'string' && val) {
+            documents.push({
+              key,
+              label: key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' '),
+              id: val,
+              downloadUrl: `/api/admin/application-docs/${val}`,
+            });
+          }
+        }
+
         allApps.push({
           id: String(doc._id),
           campaignId: doc.sourceLinkId ? String(doc.sourceLinkId) : null,
@@ -172,6 +188,9 @@ export async function GET(request: NextRequest) {
             ? new Date(doc.createdAt as string | Date).toISOString()
             : new Date().toISOString(),
           source: 'mongo',
+          documents,
+          documentCount: documents.length,
+          rawData: data,
         });
       }
     } catch (mongoErr) {
@@ -203,6 +222,15 @@ export async function GET(request: NextRequest) {
             if (!match) continue;
           }
 
+          const pgDocs = app.photoUrl ? [
+            {
+              key: 'photo',
+              label: 'Passport Photo',
+              id: 'photo',
+              downloadUrl: app.photoUrl,
+            }
+          ] : [];
+
           allApps.push({
             ...app,
             createdAt:
@@ -215,6 +243,8 @@ export async function GET(request: NextRequest) {
                 : String(app.reviewedAt)
               : null,
             source: 'postgres',
+            documents: pgDocs,
+            documentCount: pgDocs.length,
           });
         }
       } catch (pgErr) {

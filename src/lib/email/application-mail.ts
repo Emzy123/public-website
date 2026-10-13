@@ -23,9 +23,7 @@ export async function sendApplicationStatusEmail(data: {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
 
-  if (!apiKey || !data.email) return;
-
-  const resend = new Resend(apiKey);
+  if (!data.email) return;
 
   let subject: string;
   let html: string;
@@ -43,6 +41,7 @@ export async function sendApplicationStatusEmail(data: {
       text = applicationApprovedText(data);
       break;
     case 'declined':
+    case 'rejected':
       subject = 'Update on your SINet application';
       html = applicationDeclinedHtml(data);
       text = applicationDeclinedText(data);
@@ -51,8 +50,18 @@ export async function sendApplicationStatusEmail(data: {
       return;
   }
 
-  const { error } = await resend.emails.send({ from, to: [data.email], subject, html, text });
-  if (error) throw new Error(error.message);
+  if (!apiKey || apiKey.includes('placeholder')) {
+    console.log(`[DEV EMAIL MOCK] To: ${data.email} | Subject: "${subject}" | Status: ${data.status} | Note: "${data.reviewNote || 'none'}"`);
+    return;
+  }
+
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({ from, to: [data.email], subject, html, text });
+    if (error) console.error('Resend status email error:', error.message);
+  } catch (err) {
+    console.error('Failed to send status email:', err);
+  }
 }
 
 export async function sendApplicationReceivedEmail(data: {
@@ -63,19 +72,24 @@ export async function sendApplicationReceivedEmail(data: {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
 
-  if (!apiKey || !data.email) return;
+  if (!data.email) return;
 
-  const resend = new Resend(apiKey);
+  const subject = 'Your SINet application has been received';
+  const html = applicationReceivedHtml(data);
+  const text = applicationReceivedText(data);
 
-  const { error } = await resend.emails.send({
-    from,
-    to: [data.email],
-    subject: 'Your SINet application has been received',
-    html: applicationReceivedHtml(data),
-    text: applicationReceivedText(data),
-  });
+  if (!apiKey || apiKey.includes('placeholder')) {
+    console.log(`[DEV EMAIL MOCK] To: ${data.email} | Subject: "${subject}" | Role: ${data.role || 'Member'}`);
+    return;
+  }
 
-  if (error) throw new Error(error.message);
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({ from, to: [data.email], subject, html, text });
+    if (error) console.error('Resend application received email error:', error.message);
+  } catch (err) {
+    console.error('Failed to send application received email:', err);
+  }
 }
 
 export async function sendCustomApplicantEmail(data: {

@@ -224,6 +224,40 @@ function SidebarContent({
             </div>
           </div>
         ))}
+
+        {/* Mini Performance Widget (Matching Reference Design) */}
+        <div className="mt-4 rounded-xl bg-slate-900/80 p-3 border border-slate-800/80">
+          <div className="flex items-center justify-between text-[11px] font-bold text-slate-300">
+            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] text-slate-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 inline-block" />
+              Admissions Pace
+            </span>
+            <span className="text-amber-400 text-[10px]">Active</span>
+          </div>
+          <div className="mt-2 space-y-2">
+            <div>
+              <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                <span>Review Queue</span>
+                <span className="text-slate-300 font-semibold">{pendingApps} pending</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, Math.max(20, 100 - pendingApps * 4))}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between text-[10px] text-slate-400 mb-0.5">
+                <span>Campus Scopes</span>
+                <span className="text-emerald-400 font-semibold">6 chapters</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full w-5/6" />
+              </div>
+            </div>
+          </div>
+        </div>
       </nav>
 
       {/* Footer / Profile Card */}
@@ -379,6 +413,20 @@ export function AdminShell({
               <span>Live Site</span>
               <span>↗</span>
             </Link>
+
+            {/* User Greeting Pill (Matching Reference Design: "Hello, Brad") */}
+            <div className="hidden md:flex items-center gap-2.5 pl-2.5 border-l border-slate-200">
+              <div className="relative">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D1A4A] text-amber-400 font-bold text-xs shadow-sm ring-2 ring-amber-400/20">
+                  AD
+                </div>
+                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-white" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-medium text-slate-400 leading-none">Hello,</p>
+                <p className="text-xs font-bold text-slate-900 leading-tight">Admin</p>
+              </div>
+            </div>
           </div>
         </header>
 

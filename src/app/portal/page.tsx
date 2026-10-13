@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
-import { db } from '@/lib/db';
+import { isPostgresConfigured, db } from '@/lib/db';
+import { getMongoDb } from '@/lib/db/mongodb';
+import { ObjectId } from 'mongodb';
 import { memberProfiles, memberIds, chapters, universities, userBadges, badges } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import {
@@ -23,39 +25,99 @@ export default async function PortalPage() {
     redirect('/sign-in');
   }
 
-  // Fetch full profile
-  const [profile] = await db
-    .select()
-    .from(memberProfiles)
-    .where(eq(memberProfiles.userId, session.userId))
-    .limit(1);
+  // 1. Fetch profile from PostgreSQL if configured
+  let profile: any = null;
+  let memberIdRecord: any = null;
+  let chapter: any = null;
+  let university: any = null;
 
-  // Fetch Member ID record
-  const [memberIdRecord] = await db
-    .select()
-    .from(memberIds)
-    .where(eq(memberIds.userId, session.userId))
-    .limit(1);
-
-  // Fetch chapter and university
-  let chapter = null;
-  let university = null;
-  if (profile?.chapterId) {
-    const [ch] = await db
-      .select()
-      .from(chapters)
-      .where(eq(chapters.id, profile.chapterId))
-      .limit(1);
-    chapter = ch || null;
-
-    if (chapter?.universityId) {
-      const [uni] = await db
+  if (isPostgresConfigured()) {
+    try {
+      const [p] = await db
         .select()
-        .from(universities)
-        .where(eq(universities.id, chapter.universityId))
+        .from(memberProfiles)
+        .where(eq(memberProfiles.userId, session.userId))
         .limit(1);
-      university = uni || null;
+      profile = p || null;
+
+      const [mId] = await db
+        .select()
+        .from(memberIds)
+        .where(eq(memberIds.userId, session.userId))
+        .limit(1);
+      memberIdRecord = mId || null;
+
+      if (profile?.chapterId) {
+        const [ch] = await db
+          .select()
+          .from(chapters)
+          .where(eq(chapters.id, profile.chapterId))
+          .limit(1);
+        chapter = ch || null;
+
+        if (chapter?.universityId) {
+          const [uni] = await db
+            .select()
+            .from(universities)
+            .where(eq(universities.id, chapter.universityId))
+            .limit(1);
+          university = uni || null;
+        }
+      }
+    } catch (pgErr) {
+      console.warn('[Portal] PostgreSQL queries skipped/offline:', pgErr);
     }
+  }
+
+  // 2. Fall back to MongoDB if profile not found in Postgres
+  if (!profile) {
+    try {
+      const mongo = await getMongoDb();
+      if (mongo) {
+        const mongoQuery: Record<string, unknown> = {
+          $or: [{ email: session.email }],
+        };
+        if (ObjectId.isValid(session.userId)) {
+          (mongoQuery.$or as Array<Record<string, unknown>>).push({ _id: new ObjectId(session.userId) });
+        }
+
+        const mDoc = await mongo.collection('members').findOne(mongoQuery);
+        if (mDoc) {
+          profile = {
+            id: String(mDoc._id),
+            userId: session.userId,
+            fullName: (mDoc.fullName as string) || session.email.split('@')[0],
+            avatarUrl: (mDoc.avatarUrl as string) || null,
+            bio: (mDoc.bio as string) || 'Student member of SINet higher education network.',
+            programme: (mDoc.course as string) || (mDoc.programme as string) || 'Undergraduate Member',
+            level: (mDoc.level as string) || 'Active',
+            division: (mDoc.pathway as any) || 'student_finance',
+            status: 'active' as const,
+            referralCode: `SIN${String(mDoc._id).slice(-6).toUpperCase()}`,
+            profileCompletenessPct: 85,
+          };
+        }
+      }
+    } catch (mongoErr) {
+      console.warn('[Portal] MongoDB member fallback warning:', mongoErr);
+    }
+  }
+
+  // 3. Fallback default profile if new user
+  if (!profile) {
+    profile = {
+      id: session.userId,
+      userId: session.userId,
+      fullName: session.email.split('@')[0],
+      avatarUrl: null,
+      bio: 'Verified student member of SINet higher education network.',
+      programme: 'Student Enterprise & Finance',
+      level: 'Undergraduate',
+      division: 'student_finance' as const,
+      status: 'active' as const,
+      referralCode: `SIN${session.userId.slice(-6).toUpperCase()}`,
+      profileCompletenessPct: 80,
+    };
   }
 
   // Fetch gamified badge showcase and weekly pulse feed
@@ -64,33 +126,33 @@ export default async function PortalPage() {
     getWeeklyPulseFeed(chapter?.id),
   ]);
 
-  // Build digital card if member ID is minted
+  // Build digital card
   let memberCard = null;
-  if (memberIdRecord) {
-    const signature = createMemberVerificationSignature(
-      memberIdRecord.memberId,
-      session.userId,
-      memberIdRecord.issuedAt
-    );
-    const verificationUrl = `${SITE_URL}/verify/${memberIdRecord.memberId}?sig=${signature}`;
-    const qrDataUrl = await generateMemberQrDataUrl(verificationUrl);
+  const effectiveMemberId = memberIdRecord?.memberId || (profile?.referralCode ? `SIN-${profile.referralCode}` : `SIN-MBR-${String(session.userId).slice(-6).toUpperCase()}`);
+  const issuedDate = memberIdRecord?.issuedAt || new Date();
+  const signature = createMemberVerificationSignature(
+    effectiveMemberId,
+    session.userId,
+    issuedDate
+  );
+  const verificationUrl = `${SITE_URL}/verify/${effectiveMemberId}?sig=${signature}`;
+  const qrDataUrl = await generateMemberQrDataUrl(verificationUrl);
 
-    memberCard = {
-      fullName: profile?.fullName || session.email.split('@')[0],
-      avatarUrl: profile?.avatarUrl || null,
-      memberId: memberIdRecord.memberId,
-      campusCode: memberIdRecord.campusCode,
-      chapterName: chapter?.name || null,
-      universityName: university?.name || null,
-      division: profile?.division || null,
-      programme: profile?.programme || null,
-      level: profile?.level || null,
-      issuedAt: memberIdRecord.issuedAt.toISOString(),
-      verificationUrl,
-      qrDataUrl,
-      signature,
-    };
-  }
+  memberCard = {
+    fullName: profile?.fullName || session.email.split('@')[0],
+    avatarUrl: profile?.avatarUrl || null,
+    memberId: effectiveMemberId,
+    campusCode: memberIdRecord?.campusCode || 'KOGI',
+    chapterName: chapter?.name || 'Kogi State Student Chapter',
+    universityName: university?.name || 'Federal University Lokoja (FULOKOJA)',
+    division: profile?.division || 'student_finance',
+    programme: profile?.programme || 'Undergraduate Member',
+    level: profile?.level || 'Active',
+    issuedAt: issuedDate.toISOString(),
+    verificationUrl,
+    qrDataUrl,
+    signature,
+  };
 
   const userData = {
     id: session.userId,

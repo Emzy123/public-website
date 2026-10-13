@@ -79,6 +79,14 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
       try {
         const result = await submitCampaignApplication(params.slug, parsed.data);
+
+        // Send submission confirmation email
+        sendApplicationReceivedEmail({
+          email: parsed.data.email,
+          name: parsed.data.fullName,
+          role: parsed.data.division.replace('_', ' '),
+        }).catch((err) => console.warn('[Apply] Received email failed:', err));
+
         return NextResponse.json(
           {
             success: true,

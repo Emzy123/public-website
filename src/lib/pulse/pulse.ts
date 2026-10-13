@@ -56,34 +56,39 @@ const DEFAULT_WEEKLY_PULSE_TASKS: PulseTask[] = [
  * Returns this week's active pulse announcements and learning tasks.
  */
 export async function getWeeklyPulseFeed(chapterId?: string | null) {
-  const dbAnnouncements = await db
-    .select({
-      id: announcements.id,
-      title: announcements.title,
-      body: announcements.body,
-      imageUrl: announcements.imageUrl,
-      createdAt: announcements.createdAt,
-      chapterId: announcements.chapterId,
-    })
-    .from(announcements)
-    .where(
-      and(
-        eq(announcements.isApproved, true),
-        chapterId ? or(eq(announcements.chapterId, chapterId), isNull(announcements.chapterId)) : isNull(announcements.chapterId)
+  let customTasks: PulseTask[] = [];
+  try {
+    const dbAnnouncements = await db
+      .select({
+        id: announcements.id,
+        title: announcements.title,
+        body: announcements.body,
+        imageUrl: announcements.imageUrl,
+        createdAt: announcements.createdAt,
+        chapterId: announcements.chapterId,
+      })
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.isApproved, true),
+          chapterId ? or(eq(announcements.chapterId, chapterId), isNull(announcements.chapterId)) : isNull(announcements.chapterId)
+        )
       )
-    )
-    .orderBy(desc(announcements.createdAt))
-    .limit(5);
+      .orderBy(desc(announcements.createdAt))
+      .limit(5);
 
-  const customTasks = dbAnnouncements.map((a) => ({
-    id: a.id,
-    category: 'chapter_sync' as const,
-    title: a.title,
-    divisionTarget: 'all' as const,
-    summary: a.body,
-    actionText: 'Read Update',
-    actionHref: '/portal',
-  }));
+    customTasks = dbAnnouncements.map((a) => ({
+      id: a.id,
+      category: 'chapter_sync' as const,
+      title: a.title,
+      divisionTarget: 'all' as const,
+      summary: a.body,
+      actionText: 'Read Update',
+      actionHref: '/portal',
+    }));
+  } catch (err) {
+    console.warn('[Pulse] Announcements fetch skipped or database offline:', err);
+  }
 
   return {
     weekNumber: getIsoWeekNumber(new Date()),
