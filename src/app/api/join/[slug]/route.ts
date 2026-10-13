@@ -13,31 +13,35 @@ import { csrfProtect } from '@/lib/csrf';
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {
     // 1. Check PostgreSQL campaigns first (Phase 1 source of truth)
-    const campaignInfo = await getCampaignBySlug(params.slug);
-    if (campaignInfo) {
-      const { campaign, isAccepting, statusReason, seatsRemaining } = campaignInfo;
-      const response = NextResponse.json({
-        campaign: {
-          id: campaign.id,
-          name: campaign.name,
-          slug: campaign.slug,
-          description: campaign.description,
-          targetRole: campaign.targetRole,
-          isAccepting,
-          statusReason,
-          seatsRemaining,
-          applicationCount: campaign.applicationCount,
-        },
-        link: {
-          name: campaign.name,
-          slug: campaign.slug,
-          roles: [campaign.targetRole],
-          accepting: isAccepting,
-          status: campaign.status,
-        },
-      });
-      await csrfProtect(request, response);
-      return response;
+    try {
+      const campaignInfo = await getCampaignBySlug(params.slug);
+      if (campaignInfo) {
+        const { campaign, isAccepting, statusReason, seatsRemaining } = campaignInfo;
+        const response = NextResponse.json({
+          campaign: {
+            id: campaign.id,
+            name: campaign.name,
+            slug: campaign.slug,
+            description: campaign.description,
+            targetRole: campaign.targetRole,
+            isAccepting,
+            statusReason,
+            seatsRemaining,
+            applicationCount: campaign.applicationCount,
+          },
+          link: {
+            name: campaign.name,
+            slug: campaign.slug,
+            roles: [campaign.targetRole],
+            accepting: isAccepting,
+            status: campaign.status,
+          },
+        });
+        await csrfProtect(request, response);
+        return response;
+      }
+    } catch (pgErr) {
+      console.warn('[API/Join] Postgres campaign lookup failed, attempting MongoDB fallback:', pgErr);
     }
 
     // 2. Fall back to legacy MongoDB registration links if present
@@ -61,8 +65,8 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
         await csrfProtect(request, response);
         return response;
       }
-    } catch {
-      // Mongo optional fallback failed; proceed to 404
+    } catch (mongoErr) {
+      console.warn('[API/Join] Mongo lookup error:', mongoErr);
     }
 
     return NextResponse.json({ error: 'Registration campaign not found' }, { status: 404 });

@@ -24,6 +24,10 @@ export function Footer({ settings }: FooterProps) {
   const communityLinks = [
     ['About & Leadership', '/about'],
     ['Membership', '/membership'],
+    ['Join SINet', '/join'],
+    ['Campus Chapters', '/chapters'],
+    ['Student Member Portal', '/portal'],
+    ['Verify Credential', '/verify'],
     ['Student Network', '/student-network'],
     ...(FEATURE_FLAGS.showPartners ? [['Partners', '/partners']] : []),
     ['Contact', '/contact'],

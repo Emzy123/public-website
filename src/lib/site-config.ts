@@ -92,8 +92,9 @@ export function getPrimaryNav(): { label: string; href: string }[] {
   }
 
   nav.push(
-    { label: 'Membership', href: '/membership' },
+    { label: 'Campus Chapters', href: '/chapters' },
     { label: 'Student Network', href: '/student-network' },
+    { label: 'Membership', href: '/membership' },
     { label: 'Contact', href: '/contact' }
   );
 

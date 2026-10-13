@@ -28,10 +28,17 @@ export type CampaignStatusInfo = {
 };
 
 export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInfo | null> {
-  const [campaign] = await db
-    .select()
-    .from(campaigns)
-    .where(eq(campaigns.slug, slug.trim().toLowerCase()));
+  let campaign: Campaign | undefined;
+  try {
+    const [result] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.slug, slug.trim().toLowerCase()));
+    campaign = result;
+  } catch (err) {
+    console.warn('[Campaigns] Database lookup failed for slug:', slug, err);
+    return null;
+  }
 
   if (!campaign) {
     return null;

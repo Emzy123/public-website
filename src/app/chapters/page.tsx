@@ -1,17 +1,39 @@
 import { Metadata } from 'next';
-import { listChapters, getChaptersDirectoryStats } from '@/lib/chapters/chapters';
+import {
+  listChapters,
+  getChaptersDirectoryStats,
+  FALLBACK_KOGI_CHAPTERS,
+} from '@/lib/chapters/chapters';
 import { ChaptersDirectoryClient } from '@/components/chapters/ChaptersDirectoryClient';
 
 export const metadata: Metadata = {
   title: 'Campus Chapters Directory — Student Investment Network',
-  description: 'Explore tertiary institution chapters of the Student Investment Network across Kogi State, Nigeria.',
+  description:
+    'Explore tertiary institution chapters of the Student Investment Network across Kogi State, Nigeria.',
 };
 
-export default async function ChaptersDirectoryPage() {
-  const [chaptersList, stats] = await Promise.all([
-    listChapters(),
-    getChaptersDirectoryStats(),
-  ]);
+export const dynamic = 'force-dynamic';
 
-  return <ChaptersDirectoryClient initialChapters={chaptersList} stats={stats} />;
+export default async function ChaptersDirectoryPage() {
+  try {
+    const [chaptersList, stats] = await Promise.all([
+      listChapters(),
+      getChaptersDirectoryStats(),
+    ]);
+
+    return <ChaptersDirectoryClient initialChapters={chaptersList} stats={stats} />;
+  } catch (error) {
+    console.warn('[Chapters Directory Page] Rendering fallback chapters list:', error);
+    return (
+      <ChaptersDirectoryClient
+        initialChapters={FALLBACK_KOGI_CHAPTERS}
+        stats={{
+          chapterCount: FALLBACK_KOGI_CHAPTERS.length,
+          universityCount: FALLBACK_KOGI_CHAPTERS.length,
+          totalMembers: 0,
+          state: 'Kogi',
+        }}
+      />
+    );
+  }
 }

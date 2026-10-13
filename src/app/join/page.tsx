@@ -1,10 +1,21 @@
 import { redirect } from 'next/navigation';
+import { getActiveMembershipApplication } from '@/lib/applications/active-link';
+import { RegistrationClosedView } from '@/components/applications/RegistrationClosedView';
 
 export const metadata = {
-  title: 'Join Student Investment Network — SINet Africa',
-  description: 'Apply to join the Student Investment Network across Nigerian university campus chapters.',
+  title: 'Join SINet | Admissions & Membership',
+  description:
+    'Apply to join the Student Investment Network or get notified when the next cohort opens.',
 };
 
-export default function JoinIndexPage() {
-  redirect('/join/student-network');
+export const dynamic = 'force-dynamic';
+
+export default async function JoinIndexPage() {
+  const target = await getActiveMembershipApplication();
+
+  if (target.status === 'open') {
+    redirect(target.url);
+  }
+
+  return <RegistrationClosedView />;
 }

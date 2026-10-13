@@ -82,10 +82,16 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
               );
             })}
           </nav>
-          <div className="hidden xl:block">
+          <div className="hidden items-center gap-2.5 xl:flex">
             <Link
-              href="/membership"
-              className="inline-flex bg-[#0d1a4a] px-5 py-3 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]"
+              href="/portal"
+              className="inline-flex items-center gap-1.5 border border-[#0d1a4a]/25 bg-transparent px-3.5 py-2.5 text-xs font-semibold text-[#0d1a4a] transition-colors hover:border-[#0d1a4a] hover:bg-[#0d1a4a]/5"
+            >
+              Member Portal
+            </Link>
+            <Link
+              href="/join"
+              className="inline-flex bg-[#0d1a4a] px-5 py-2.5 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]"
             >
               Join SINet
             </Link>

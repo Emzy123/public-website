@@ -1,20 +1,84 @@
 import Link from 'next/link';
+import { getActiveMembershipApplication } from '@/lib/applications/active-link';
 
 export const metadata = {
   title: 'Join SINet | Membership',
-  description: 'Learn how to join SINet as a volunteer, community member, ambassador, staff member, or partnership contact.',
+  description:
+    'Learn how to join SINet as a volunteer, community member, ambassador, staff member, or partnership contact.',
 };
 
-export default function MembershipPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function MembershipPage() {
+  const activeTarget = await getActiveMembershipApplication();
+
   return (
     <div className="bg-[#f6f2e8] text-[#0d1a4a]">
-      <section className="border-b border-[#0d1a4a]/20 px-4 py-14 xs:px-5 md:py-20 lg:px-8 lg:py-28">
+      {/* Live Application Status Banner */}
+      <div
+        className={`border-b px-4 py-3 text-center text-xs font-semibold sm:px-6 ${
+          activeTarget.status === 'open'
+            ? 'border-emerald-600/30 bg-emerald-50 text-emerald-950'
+            : 'border-amber-600/30 bg-amber-50 text-amber-950'
+        }`}
+      >
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-center gap-2 sm:flex-row sm:justify-between">
+          <div className="flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                activeTarget.status === 'open' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+              }`}
+            />
+            <span>
+              {activeTarget.status === 'open' ? (
+                <>
+                  <strong>Admissions Open:</strong> {activeTarget.name} is currently accepting applications.
+                </>
+              ) : (
+                <>
+                  <strong>Admissions Notice:</strong> Registration is currently closed at the moment.
+                </>
+              )}
+            </span>
+          </div>
+
+          <Link
+            href={activeTarget.status === 'open' ? activeTarget.url : '/join'}
+            className={`rounded-lg px-3.5 py-1 text-xs font-bold transition shadow-sm ${
+              activeTarget.status === 'open'
+                ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+                : 'bg-[#0d1a4a] text-white hover:bg-[#d9711b]'
+            }`}
+          >
+            {activeTarget.status === 'open' ? 'Apply Now →' : 'Join Waitlist →'}
+          </Link>
+        </div>
+      </div>
+
+      <section className="border-b border-[#0d1a4a]/20 px-4 py-14 xs:px-5 md:py-20 lg:px-8 lg:py-24">
         <div className="mx-auto max-w-[1180px]">
           <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Membership</p>
-          <h1 className="mt-6 max-w-3xl font-editorial text-[clamp(2.75rem,8vw,5.5rem)] leading-[.9] tracking-[-.06em]">Join SINet</h1>
-          <p className="mt-9 max-w-2xl text-lg leading-8 text-[#554e43]">
-            SINet membership opens through admin-controlled application periods — each scoped to specific roles and shared via a unique link. There is no always-open general registration form.
+          <h1 className="mt-6 max-w-3xl font-editorial text-[clamp(2.75rem,8vw,5.5rem)] leading-[.9] tracking-[-.06em]">
+            Join SINet
+          </h1>
+          <p className="mt-8 max-w-2xl text-lg leading-8 text-[#554e43]">
+            SINet membership opens through admin-controlled application periods — each scoped to specific roles and shared via a unique link. When an application period is active, our Admissions Portal opens for submissions.
           </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href={activeTarget.status === 'open' ? activeTarget.url : '/join'}
+              className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white transition hover:bg-[#d9711b]"
+            >
+              {activeTarget.status === 'open' ? 'Start Application Process →' : 'Check Application Status / Waitlist →'}
+            </Link>
+            <Link
+              href="/chapters"
+              className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold text-[#0d1a4a] transition hover:border-[#d9711b] hover:text-[#d9711b]"
+            >
+              Explore Campus Chapters
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -22,11 +86,11 @@ export default function MembershipPage() {
         <h2 className="font-editorial text-3xl tracking-[-.04em]">Ways to join</h2>
         <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[
-            ['Volunteer', 'Support outreach, events, and community programs.'],
-            ['Community Member', 'Join the network, events, and updates.'],
-            ['Ambassador', 'Represent SINet in your campus or region.'],
-            ['Staff', 'Apply for an internal role with SINet.'],
-            ['Partnership & Investment Interest', 'Express business or partnership interest — our team follows up directly. No amounts or tiers.'],
+            ['Volunteer', 'Support outreach, campus events, and student community programs.'],
+            ['Community Member', 'Join the network, local events, and student updates.'],
+            ['Campus Ambassador', 'Represent SINet on your university campus and drive student engagement.'],
+            ['Staff', 'Apply for an internal operational role within SINETWORK Global or Student Network.'],
+            ['Partnership & Enterprise', 'Express student enterprise, venture sprint, or corporate partnership interest.'],
           ].map(([title, body]) => (
             <div key={title} className="border border-[#0d1a4a]/20 bg-white p-6">
               <h3 className="font-editorial text-2xl">{title}</h3>
@@ -35,11 +99,21 @@ export default function MembershipPage() {
           ))}
         </div>
         <p className="mt-10 max-w-2xl text-sm leading-7 text-[#5b554a]">
-          When an application period is open, you will receive a link from SINet. If the period has closed, you can leave your email on the closed-link page to be notified next time.
+          When an application period is open, the &ldquo;Join SINet&rdquo; button takes you directly to the active registration wizard. If all application rounds are closed, you can leave your email to receive priority notification when the next window opens.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link href="/student-network" className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b]">Student Network (evergreen)</Link>
-          <Link href="/contact" className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold hover:border-[#d9711b] hover:text-[#d9711b]">Contact Us</Link>
+          <Link
+            href="/student-network"
+            className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b]"
+          >
+            Student Network (3 Divisions)
+          </Link>
+          <Link
+            href="/contact"
+            className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold hover:border-[#d9711b] hover:text-[#d9711b]"
+          >
+            Contact Admissions Team
+          </Link>
         </div>
       </section>
     </div>
