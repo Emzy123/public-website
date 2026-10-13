@@ -1,8 +1,8 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Student Network',
-  description: 'A dedicated SINet pathway for student membership, learning, and community participation.',
+  title: 'Student Network | SINet',
+  description: 'A dedicated SINet pathway for student membership, 3 core divisions, and campus participation.',
 };
 
 const STEPS = [
@@ -22,6 +22,7 @@ export default function StudentNetworkPage() {
             <h1 className="mt-6 font-editorial text-[clamp(2.75rem,8vw,6rem)] leading-[.86] tracking-[-.06em]">
               Start with community.
             </h1>
+            {/* TODO [OWNER APPROVAL]: Verify student network purpose and timeline claims */}
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#fff2df] md:mt-8">
               The Student Network is a dedicated SINet space for university members who want to learn, contribute, and
               build responsible ownership before they graduate.
@@ -33,17 +34,51 @@ export default function StudentNetworkPage() {
         </div>
       </section>
 
+      {/* The 3 Student Divisions: Student Finance, Student Enterprise, Governance & Records */}
       <section className="mx-auto max-w-[1180px] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
-        <div className="grid gap-8 md:gap-10 lg:grid-cols-[.8fr_1.2fr]">
+        <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Network Structure</p>
+        <h2 className="mt-4 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">
+          Three Student Divisions
+        </h2>
+        <p className="mt-4 max-w-2xl text-base text-[#5b554a]">
+          Every student member aligns with one of our three core divisions, driving practical peer initiatives and campus execution.
+        </p>
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="border border-[#0d1a4a]/20 bg-white p-6 xs:p-8">
+            <span className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">Division 01</span>
+            <h3 className="mt-2 font-editorial text-2xl text-[#0d1a4a]">Student Finance</h3>
+            <p className="mt-3 text-sm leading-6 text-[#5b554a]">
+              Financial literacy, capital markets, investment research, and personal wealth mastery across campus communities.
+            </p>
+          </div>
+          <div className="border border-[#0d1a4a]/20 bg-white p-6 xs:p-8">
+            <span className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">Division 02</span>
+            <h3 className="mt-2 font-editorial text-2xl text-[#0d1a4a]">Student Enterprise</h3>
+            <p className="mt-3 text-sm leading-6 text-[#5b554a]">
+              Campus venture creation, entrepreneurship sprints, pitch showcases, and SME growth for student-led businesses.
+            </p>
+          </div>
+          <div className="border border-[#0d1a4a]/20 bg-white p-6 xs:p-8">
+            <span className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">Division 03</span>
+            <h3 className="mt-2 font-editorial text-2xl text-[#0d1a4a]">Governance &amp; Records</h3>
+            <p className="mt-3 text-sm leading-6 text-[#5b554a]">
+              Chapter operations, student advocacy, treasury oversight, and institutional record-keeping across university chapters.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[#0d1a4a]/15 bg-[#eee6d0] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
+        <div className="mx-auto max-w-[1180px] grid gap-8 md:gap-10 lg:grid-cols-[.8fr_1.2fr]">
           <div>
             <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">The pathway</p>
             <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.9] tracking-[-.05em]">
               Membership designed for students.
             </h2>
           </div>
-          <div className="grid gap-px border border-[#0d1a4a]/20 xs:grid-cols-2">
+          <div className="grid gap-px border border-[#0d1a4a]/20 bg-[#0d1a4a]/10 xs:grid-cols-2">
             {STEPS.map(([number, title, body]) => (
-              <div key={number} className="border-[#0d1a4a]/20 p-5 xs:p-6 odd:border-b xs:odd:border-r xs:even:border-b">
+              <div key={number} className="bg-white p-5 xs:p-6">
                 <p className="font-data text-xs text-[#d9711b]">{number}</p>
                 <h3 className="mt-5 font-editorial text-xl xs:mt-7 xs:text-2xl">{title}</h3>
                 <p className="mt-3 text-sm leading-6 text-[#5b554a]">{body}</p>
@@ -60,6 +95,7 @@ export default function StudentNetworkPage() {
             <h2 className="mt-4 font-editorial text-[clamp(2rem,4vw,3rem)] leading-[.95] tracking-[-.04em]">
               While the student portal is in build, join through SINet membership routes.
             </h2>
+            {/* TODO [OWNER APPROVAL]: Verify student campaign intake routes and ambassador requirements */}
             <p className="mt-5 max-w-xl text-sm leading-7 text-[#5b554a]">
               Open campaign links accept student ambassadors and community members. If you do not have a link yet,
               contact SINet and ask to be notified for the next student intake.
@@ -94,6 +130,7 @@ export default function StudentNetworkPage() {
           <h2 className="mt-5 max-w-2xl font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.9] tracking-[-.05em]">
             A secure student membership portal.
           </h2>
+          {/* TODO [OWNER APPROVAL]: Confirm planned student portal technical specifications */}
           <p className="mt-7 max-w-2xl leading-7 text-[#c9ccda]">
             The student-specific onboarding portal will include email verification, academic profile review, secure
             document storage, approval remarks, and a unique Member ID. It is being designed as a distinct system and is

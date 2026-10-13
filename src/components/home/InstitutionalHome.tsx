@@ -35,12 +35,13 @@ export function InstitutionalHero() {
         <p className="mt-10 max-w-[520px] text-[17px] leading-7 text-[#464238]">
           Agriculture, Trade &amp; Goods Distribution, and Real Estate work together to create sustainable businesses and long-term impact.
         </p>
+        {/* TODO [OWNER APPROVAL]: Verify foundational brand quote with executive leadership */}
         <p className="mt-6 max-w-[520px] text-sm italic leading-7 text-[#5b554a]">
           &ldquo;Investment is one of our tools — not our identity. Our identity is community.&rdquo;
         </p>
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
           <Link href="/membership" className="bg-[#0d1a4a] px-7 py-4 text-center text-sm font-bold text-white transition-colors hover:bg-[#d9711b]">Join SINet</Link>
-          <Link href="/contact" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Partner With Us</Link>
+          <Link href="/contact?topic=partnership" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">Partner With Us</Link>
           {FEATURE_FLAGS.showProducts ? (
             <Link href="/products" className="border border-[#0d1a4a] px-7 py-4 text-center text-sm font-bold transition-colors hover:border-[#d9711b] hover:text-[#d9711b]">View Products</Link>
           ) : (
@@ -64,6 +65,7 @@ export function InstitutionalHome() {
             <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">About SINet</p>
             <h2 className="mt-5 font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">A company built on three equal pillars.</h2>
           </div>
+          {/* TODO [OWNER APPROVAL]: Confirm business ecosystem framing and commercial offerings */}
           <p className="self-end text-lg leading-8 text-[#524d43]">
             SINet is a business ecosystem offering products, services, partnerships, and community membership — not primarily an investment platform. We build through agriculture, trade &amp; distribution, and real estate, with people at the centre.
           </p>
@@ -116,6 +118,7 @@ export function InstitutionalHome() {
         <div className="mx-auto max-w-[1180px] lg:grid lg:grid-cols-2 lg:gap-12">
           <h2 className="font-editorial text-[clamp(2.25rem,5vw,3.5rem)] leading-[.92] tracking-[-.05em]">Real activity. Three pillars.</h2>
           <div className="self-end">
+            {/* TODO [OWNER APPROVAL]: Verify operational coverage across farms, warehouses, and properties */}
             <p className="leading-7 text-[#c9ccda]">Authentic photos and video from farms, warehouses, deliveries, markets, and properties — filterable by pillar.</p>
             <Link href="/gallery" className="mt-7 inline-flex bg-[#f6f2e8] px-6 py-3 text-sm font-bold text-[#24399f] hover:bg-[#eccb7c]">View Gallery →</Link>
           </div>
@@ -128,6 +131,7 @@ export function InstitutionalHome() {
           <div>
             <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Membership</p>
             <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Join when applications are open.</h2>
+            {/* TODO [OWNER APPROVAL]: Confirm application round lifecycle and student pathway terms */}
             <p className="mt-6 leading-7 text-[#5b554a]">Registration is admin-controlled — apply through a campaign link when SINet opens a period for your role. The Student Network remains a separate, always-open pathway.</p>
           </div>
           <div className="flex flex-col justify-center gap-3">
