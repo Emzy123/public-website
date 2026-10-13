@@ -18,6 +18,7 @@ import { eq, and, sql, desc, count } from 'drizzle-orm';
 import { MemberApplicationInput } from '@/lib/schemas/member-application.schema';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
+import { mintMemberId } from '@/lib/members/member-id';
 
 export type CampaignStatusInfo = {
   campaign: Campaign;
@@ -393,6 +394,20 @@ export async function reviewApplicationDecision(opts: {
         await db.insert(userBadges).values({
           userId: app.userId,
           badgeId: 'verified_member',
+        });
+      }
+
+      // Mint unique Member ID
+      const [uni] = await db
+        .select({ campusCode: universities.campusCode })
+        .from(universities)
+        .where(eq(universities.id, app.universityId));
+
+      if (uni) {
+        await mintMemberId({
+          userId: app.userId,
+          campusCode: uni.campusCode,
+          issuedById: opts.reviewerId,
         });
       }
 
