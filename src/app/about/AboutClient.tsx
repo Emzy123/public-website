@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { AboutContent, AboutTeamMember } from '@admin/types/content';
+import { mapLeadershipTags } from '@/lib/pillars';
 
 function TeamModal({
   member,
@@ -40,7 +41,18 @@ function TeamModal({
             <div>
               <h2 className="text-xl font-extrabold text-white">{member.name}</h2>
               <p className="text-[#d9711b] font-semibold text-sm">{member.title}</p>
-              <p className="text-slate-300 text-xs mt-1">{member.empireEmoji} {member.empire}</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {mapLeadershipTags(member.empire).map(({ label, isPillar }) => (
+                  <span
+                    key={label}
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                      isPillar ? 'bg-[#d9711b]/20 text-[#eccb7c] border border-[#d9711b]/40 font-semibold' : 'bg-white/10 text-slate-300'
+                    }`}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -212,8 +224,17 @@ export default function AboutClient({
               <h3 className="text-2xl font-extrabold text-[#0d1a4a]">{founder.name}</h3>
               <p className="text-[#d9711b] font-semibold text-sm mb-3">{founder.title}</p>
               <div className="flex flex-wrap gap-1.5 justify-center">
-                {founder.empires.map((e) => (
-                  <span key={e} className="text-xs px-2 py-0.5 rounded-full bg-[#0d1a4a]/10 text-[#0d1a4a] font-medium">{e}</span>
+                {mapLeadershipTags(founder.empires).map(({ label, isPillar }) => (
+                  <span
+                    key={label}
+                    className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                      isPillar
+                        ? 'bg-[#d9711b]/15 text-[#0d1a4a] border border-[#d9711b]/40 font-semibold'
+                        : 'bg-[#0d1a4a]/10 text-[#0d1a4a]'
+                    }`}
+                  >
+                    {label}
+                  </span>
                 ))}
               </div>
             </div>
@@ -287,6 +308,18 @@ export default function AboutClient({
                 <div className="p-5">
                   <h3 className="font-extrabold text-[#0d1a4a] text-base group-hover:text-[#d9711b] transition-colors">{member.name}</h3>
                   <p className="text-slate-500 text-xs mt-0.5">{member.title}</p>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {mapLeadershipTags(member.empire).map(({ label, isPillar }) => (
+                      <span
+                        key={label}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                          isPillar ? 'bg-[#d9711b]/15 text-[#0d1a4a] font-semibold' : 'bg-slate-200/80 text-slate-700'
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                   <p className="text-slate-400 text-xs mt-2 line-clamp-2 italic">&ldquo;{member.quote}&rdquo;</p>
                 </div>
               </button>

@@ -39,6 +39,25 @@ function getItemCaption(item: GalleryItem): string | null {
   return isFilenameLike(item.caption) ? null : item.caption.trim();
 }
 
+export function normalizeGalleryPillar(raw?: string): Pillar | 'other' {
+  if (!raw) return 'other';
+  const val = raw.toLowerCase().trim();
+  if (val.includes('agri')) return 'agriculture';
+  if (
+    val.includes('trade') ||
+    val.includes('distribut') ||
+    val.includes('food') ||
+    val.includes('fashion') ||
+    val.includes('creative')
+  ) {
+    return 'trade-distribution';
+  }
+  if (val.includes('estate') || val.includes('property') || val.includes('housing')) {
+    return 'real-estate';
+  }
+  return 'other';
+}
+
 type Props = {
   content: GalleryContent;
 };
@@ -52,7 +71,7 @@ export function GalleryView({ content }: Props) {
       .filter((item) => item.imageUrl.trim())
       .sort((a, b) => a.sortOrder - b.sortOrder);
     if (filter === 'all') return sorted;
-    return sorted.filter((item) => item.pillar === filter);
+    return sorted.filter((item) => item.pillar === filter || normalizeGalleryPillar(item.pillar) === filter);
   }, [content.items, filter]);
 
   // Close lightbox if filter changes and current item is gone
@@ -135,7 +154,11 @@ function GalleryFigure({ item, onOpen }: { item: GalleryItem; onOpen: () => void
         </span>
       </button>
       <figcaption className="p-4">
-        <p className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">{PILLAR_LABELS[item.pillar as Pillar]}</p>
+        {(() => {
+          const pk = normalizeGalleryPillar(item.pillar);
+          const label = pk !== 'other' ? PILLAR_LABELS[pk] : (PILLAR_LABELS[item.pillar as Pillar] || item.pillar);
+          return <p className="font-data text-[10px] uppercase tracking-wider text-[#d9711b]">{label}</p>;
+        })()}
         {caption && <p className="mt-2 text-sm leading-6 text-[#5b554a]">{caption}</p>}
       </figcaption>
     </figure>
