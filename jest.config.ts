@@ -9,10 +9,13 @@ const config: Config = {
     '^@admin/(.*)$': '<rootDir>/admin/$1',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
+    '^.+\\.(ts|tsx|js|mjs)$': ['ts-jest', {
       tsconfig: 'tsconfig.jest.json',
     }],
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(jose)/)',
+  ],
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',
     '!src/lib/**/*.test.{ts,tsx}',
