@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { SiteSettings } from '@admin/types/content';
-import { CONTACT_EMAIL, FEATURE_FLAGS } from '@/lib/site-config';
+import { CONTACT_EMAIL, FEATURE_FLAGS, OFFICIAL_LEGAL_NAME } from '@/lib/site-config';
 import { SocialLinksBar } from '@/components/common/SocialIcons';
 
 type FooterProps = { settings?: SiteSettings };
@@ -105,7 +105,7 @@ export function Footer({ settings }: FooterProps) {
       </div>
       <div className="border-t border-white/15 px-4 py-5 text-xs text-[#a9aec5] xs:px-5 lg:px-8">
         <div className="mx-auto flex max-w-[1380px] flex-col justify-between gap-3 sm:flex-row">
-          <p>© {new Date().getFullYear()} ______ (SINet). All rights reserved.</p>
+          <p>© {new Date().getFullYear()} {OFFICIAL_LEGAL_NAME} (SINet). All rights reserved.</p>
           <p>Kogi State, Nigeria</p>
         </div>
       </div>

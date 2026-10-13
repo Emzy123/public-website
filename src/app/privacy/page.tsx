@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CONTACT_EMAIL } from '@/lib/site-config';
+import { CONTACT_EMAIL, OFFICIAL_LEGAL_NAME } from '@/lib/site-config';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
@@ -131,7 +131,7 @@ export default function PrivacyPage() {
         <div className="max-w-4xl mx-auto px-4 md:px-6">
           {/* Lead */}
           <p className="text-lg text-slate-700 leading-relaxed mb-12 pb-8 border-b border-slate-100">
-            At ______ (operating publicly as SINet), we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.
+            At {OFFICIAL_LEGAL_NAME} (operating publicly as SINet), we are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website.
           </p>
 
           {/* Sections */}

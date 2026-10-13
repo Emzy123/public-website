@@ -4,7 +4,7 @@
  */
 
 export const SITE_NAME = 'SINet';
-export const OFFICIAL_LEGAL_NAME = '______';
+export const OFFICIAL_LEGAL_NAME = 'Sinetwork Global Ltd.';
 export const SITE_URL = 'https://www.sinet.africa';
 
 // Single source of truth for the contact email.

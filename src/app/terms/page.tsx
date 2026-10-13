@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CONTACT_EMAIL } from '@/lib/site-config';
+import { CONTACT_EMAIL, OFFICIAL_LEGAL_NAME } from '@/lib/site-config';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -52,7 +52,7 @@ export default function TermsPage() {
                 // TODO-VERIFY: CEO approval needed for removal of 'Student Investment Network / connects investors / returns / investment model'
                 n: '1', title: 'About SINet',
                 body: (
-                  <p className="text-slate-600 leading-relaxed text-sm">______ (operating publicly as SINet) is a business and commerce ecosystem connecting students, entrepreneurs, and partners across agriculture, trade &amp; distribution, and real estate. Our website provides information about our community programs, commercial initiatives, products, and partnership opportunities.</p>
+                  <p className="text-slate-600 leading-relaxed text-sm">{OFFICIAL_LEGAL_NAME} (operating publicly as SINet) is a business and commerce ecosystem connecting students, entrepreneurs, and partners across agriculture, trade &amp; distribution, and real estate. Our website provides information about our community programs, commercial initiatives, products, and partnership opportunities.</p>
                 ),
               },
               {
