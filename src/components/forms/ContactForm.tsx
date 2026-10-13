@@ -45,7 +45,7 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, website: '' }),
+        body: JSON.stringify(data),
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {

@@ -10,6 +10,7 @@ interface ApplyNotifyModalProps {
 export function ApplyNotifyModal({ isOpen, onClose }: ApplyNotifyModalProps) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [website, setWebsite] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export function ApplyNotifyModal({ isOpen, onClose }: ApplyNotifyModalProps) {
     if (!isOpen) {
       setSubmitted(false);
       setError(null);
+      setWebsite('');
       return;
     }
     const onKey = (e: KeyboardEvent) => {
@@ -44,6 +46,7 @@ export function ApplyNotifyModal({ isOpen, onClose }: ApplyNotifyModalProps) {
           fullName: fullName.trim() || undefined,
           email: email.trim(),
           source: 'apply-notify',
+          website: website || undefined,
         }),
       });
 
@@ -116,6 +119,15 @@ export function ApplyNotifyModal({ isOpen, onClose }: ApplyNotifyModalProps) {
             </p>
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <input
+                type="text"
+                name="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                className="hidden"
+              />
               <div>
                 <label htmlFor="notify-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   Full Name (Optional)

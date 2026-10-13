@@ -32,6 +32,23 @@ describe('Admin 2FA TOTP Engine', () => {
     expect(verifyTotpCode(secret, '123456')).toBe(false);
   });
 
+  it('validates codes generated with legacy issuer (SINet Africa) without enrollment breaking', () => {
+    // Generate a fixed base32 secret simulating an enrollment before Phase 2:
+    const legacySecret = 'JBSWY3DPEHPK3PXP'; // Base32 encoded secret
+    const legacyTotp = new OTPAuth.TOTP({
+      issuer: 'SINet Africa', // Old issuer
+      label: 'admin@sinet.africa',
+      algorithm: 'SHA1',
+      digits: 6,
+      period: 30,
+      secret: OTPAuth.Secret.fromBase32(legacySecret),
+    });
+
+    const tokenFromOldEnrollment = legacyTotp.generate();
+    // Verify using our current verifyTotpCode (which uses issuer: 'SINet')
+    expect(verifyTotpCode(legacySecret, tokenFromOldEnrollment)).toBe(true);
+  });
+
   it('handles invalid or empty secrets gracefully', () => {
     expect(verifyTotpCode('', '123456')).toBe(false);
     expect(verifyTotpCode('invalid-base32-!', '123456')).toBe(false);

@@ -16,6 +16,29 @@ export async function GET(request: NextRequest) {
   return issueCsrfToken(request);
 }
 
+import crypto from 'crypto';
+
+async function generateUniqueReferenceId(db: any): Promise<string> {
+  const collection = db.collection('contactMessages');
+  try {
+    await collection.createIndex({ referenceId: 1 }, { unique: true, sparse: true });
+  } catch {
+    // Index creation safe fallback
+  }
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+    const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
+    const candidate = `SNT-${timestamp}${randomHex}`;
+    const existing = await collection.findOne({ referenceId: candidate });
+    if (!existing) {
+      return candidate;
+    }
+  }
+
+  return `SNT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+}
+
 export async function POST(request: NextRequest) {
   const blocked = await enforcePublicFormGuards(request, {
     routeKey: 'contact',
@@ -45,7 +68,10 @@ export async function POST(request: NextRequest) {
       validated.email.toLowerCase().endsWith('@example.com') ||
       validated.message.toLowerCase().includes('production smoke test');
 
-    const result = await db.collection('contactMessages').insertOne({
+    const referenceId = await generateUniqueReferenceId(db);
+
+    await db.collection('contactMessages').insertOne({
+      referenceId,
       name: validated.name,
       email: validated.email,
       topic: validated.topic || 'General',
@@ -54,8 +80,6 @@ export async function POST(request: NextRequest) {
       isTest,
       createdAt: new Date(),
     });
-
-    const referenceId = `SNT-${String(result.insertedId).slice(-6).toUpperCase()}`;
 
     try {
       await sendContactNotification({
