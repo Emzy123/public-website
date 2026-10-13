@@ -19,8 +19,8 @@ export const ROLE_LABELS: Record<ApplicationRole, string> = {
   volunteer: 'Volunteer',
   staff: 'Staff',
   'community-member': 'Community Member',
-  ambassador: 'Ambassador',
-  'partnership-interest': 'Partnership & Investment Interest',
+  ambassador: 'Campus Ambassador',
+  'partnership-interest': 'Partnership & Enterprise',
 };
 
 export const PILLARS = ['agriculture', 'trade-distribution', 'real-estate'] as const;

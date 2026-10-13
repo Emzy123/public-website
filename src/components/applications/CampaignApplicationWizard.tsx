@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole } from '@/lib/types/membership';
 import {
   ROLE_DEFINITIONS,
@@ -133,21 +134,35 @@ function emptyRoleFields(role: ApplicationRole): Record<string, string | string[
   return out;
 }
 
+function normalizeRoleSlug(raw?: string | null): ApplicationRole | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim();
+  if (lower === 'volunteer') return 'volunteer';
+  if (lower === 'staff') return 'staff';
+  if (lower.includes('ambassador')) return 'ambassador';
+  if (lower.includes('community') || lower === 'member') return 'community-member';
+  if (lower.includes('partner') || lower.includes('enterprise')) return 'partnership-interest';
+  return null;
+}
+
 export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string; allowedRoles: ApplicationRole[] }) {
+  const searchParams = useSearchParams();
   const roles = APPLICATION_ROLES.filter((r) => allowedRoles.includes(r));
   const defaultRole = roles[0] || 'volunteer';
+  const queryRole = normalizeRoleSlug(searchParams?.get('role'));
+  const effectiveRole = queryRole && roles.includes(queryRole) ? queryRole : defaultRole;
   const steps = [...WIZARD_STEP_LABELS];
 
   const [form, setForm] = useState<FormState>(() => ({
-    role: defaultRole,
+    role: effectiveRole,
     fullName: '',
     email: '',
     phone: '',
     website: '',
     codeOfConductAccepted: false,
-    documents: emptyDocuments(defaultRole),
+    documents: emptyDocuments(effectiveRole),
     documentNames: {},
-    ...emptyRoleFields(defaultRole),
+    ...emptyRoleFields(effectiveRole),
   }));
   const [step, setStep] = useState(0);
   const [csrfToken, setCsrfToken] = useState('');

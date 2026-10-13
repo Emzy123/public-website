@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getActiveMembershipApplication } from '@/lib/applications/active-link';
+import { MembershipRolesGrid } from '@/components/membership/MembershipRolesGrid';
 
 export const metadata = {
   title: 'Join SINet | Membership',
@@ -84,20 +85,7 @@ export default async function MembershipPage() {
 
       <section className="mx-auto max-w-[1180px] px-4 py-14 xs:px-5 md:py-20 lg:px-8">
         <h2 className="font-editorial text-3xl tracking-[-.04em]">Ways to join</h2>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[
-            ['Volunteer', 'Support outreach, campus events, and student community programs.'],
-            ['Community Member', 'Join the network, local events, and student updates.'],
-            ['Campus Ambassador', 'Represent SINet on your university campus and drive student engagement.'],
-            ['Staff', 'Apply for an internal operational role within SINETWORK Global or Student Network.'],
-            ['Partnership & Enterprise', 'Express student enterprise, venture sprint, or corporate partnership interest.'],
-          ].map(([title, body]) => (
-            <div key={title} className="border border-[#0d1a4a]/20 bg-white p-6">
-              <h3 className="font-editorial text-2xl">{title}</h3>
-              <p className="mt-3 text-sm leading-6 text-[#5b554a]">{body}</p>
-            </div>
-          ))}
-        </div>
+        <MembershipRolesGrid isOpen={activeTarget.status === 'open'} />
         <p className="mt-10 max-w-2xl text-sm leading-7 text-[#5b554a]">
           When an application period is open, the &ldquo;Join SINet&rdquo; button takes you directly to the active registration wizard. If all application rounds are closed, you can leave your email to receive priority notification when the next window opens.
         </p>
