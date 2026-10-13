@@ -7,6 +7,8 @@ import {
   createMemberVerificationSignature,
   generateMemberQrDataUrl,
 } from '@/lib/members/member-id';
+import { getMemberBadgesShowcase } from '@/lib/members/gamification';
+import { getWeeklyPulseFeed } from '@/lib/pulse/pulse';
 import { SITE_URL } from '@/lib/site-config';
 import { PortalClient } from './PortalClient';
 
@@ -56,18 +58,11 @@ export default async function PortalPage() {
     }
   }
 
-  // Fetch badges
-  const earnedBadges = await db
-    .select({
-      id: badges.id,
-      name: badges.name,
-      description: badges.description,
-      iconName: badges.iconName,
-      awardedAt: userBadges.awardedAt,
-    })
-    .from(userBadges)
-    .innerJoin(badges, eq(userBadges.badgeId, badges.id))
-    .where(eq(userBadges.userId, session.userId));
+  // Fetch gamified badge showcase and weekly pulse feed
+  const [badgesShowcase, pulseFeed] = await Promise.all([
+    getMemberBadgesShowcase(session.userId),
+    getWeeklyPulseFeed(chapter?.id),
+  ]);
 
   // Build digital card if member ID is minted
   let memberCard = null;
@@ -115,11 +110,15 @@ export default async function PortalPage() {
           universityShortName: university?.shortName,
         }
       : null,
-    badges: earnedBadges.map((b) => ({
-      ...b,
-      awardedAt: b.awardedAt.toISOString(),
+    badges: badgesShowcase.map((b) => ({
+      id: b.badge.id,
+      name: b.badge.name,
+      description: b.badge.description,
+      iconName: b.badge.iconName,
+      isUnlocked: b.isUnlocked,
+      awardedAt: b.awardedAt ? b.awardedAt.toISOString() : null,
     })),
   };
 
-  return <PortalClient user={userData} />;
+  return <PortalClient user={userData} pulseFeed={pulseFeed} />;
 }

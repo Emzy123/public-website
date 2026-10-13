@@ -78,6 +78,18 @@ const INITIAL_BADGES = [
     description: 'Appointed leader or ambassador representing SINet on campus.',
     iconName: 'star',
   },
+  {
+    id: 'finance_analyst',
+    name: 'Finance Research Fellow',
+    description: 'Completed student finance market modeling or equity brief.',
+    iconName: 'trending-up',
+  },
+  {
+    id: 'venture_creator',
+    name: 'Enterprise Innovator',
+    description: 'Participated in campus enterprise incubation or venture pitch.',
+    iconName: 'lightbulb',
+  },
 ];
 
 export async function seedMembersDatabase() {

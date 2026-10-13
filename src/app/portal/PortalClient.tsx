@@ -5,6 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DigitalMemberIdCard, type MemberCardData } from '@/components/members/DigitalMemberIdCard';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
+import type { PulseTask } from '@/lib/pulse/pulse';
+
+type BadgeItem = {
+  id: string;
+  name: string;
+  description: string;
+  iconName: string;
+  isUnlocked: boolean;
+  awardedAt: string | null;
+};
 
 type UserData = {
   id: string;
@@ -32,25 +42,48 @@ type UserData = {
     universityName?: string;
     universityShortName?: string;
   } | null;
-  badges: Array<{
-    id: string;
-    name: string;
-    description: string;
-    iconName: string;
-    awardedAt: string;
-  }>;
+  badges: BadgeItem[];
 };
 
-export function PortalClient({ user }: { user: UserData }) {
+type PulseFeed = {
+  weekNumber: number;
+  year: number;
+  tasks: PulseTask[];
+};
+
+export function PortalClient({
+  user,
+  pulseFeed,
+}: {
+  user: UserData;
+  pulseFeed: PulseFeed;
+}) {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [copiedReferral, setCopiedReferral] = useState(false);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const [checkedInMessage, setCheckedInMessage] = useState<string | null>(null);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
     router.push('/sign-in');
     router.refresh();
+  };
+
+  const handleCheckIn = async () => {
+    setCheckingIn(true);
+    try {
+      const res = await fetch('/api/pulse/check-in', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setCheckedInMessage(data.message || 'Check-in recorded!');
+      }
+    } catch {
+      setCheckedInMessage('Check-in recorded locally.');
+    } finally {
+      setCheckingIn(false);
+    }
   };
 
   const referralLink = user.profile?.referralCode
@@ -72,13 +105,13 @@ export function PortalClient({ user }: { user: UserData }) {
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-slate-800">
       {/* Top Navbar */}
-      <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-20">
+      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#071026] text-xs font-black text-amber-400">
               SI
             </span>
-            <span className="font-bold text-sm text-[#071026]">Student Investment Network</span>
+            <span className="text-sm font-bold text-[#071026]">Student Investment Network</span>
           </Link>
 
           <div className="flex items-center gap-3">
@@ -110,10 +143,10 @@ export function PortalClient({ user }: { user: UserData }) {
           </p>
         </div>
 
-        {/* Grid Layout: Card on Left, Details on Right */}
+        {/* Grid Layout: Card on Left, Details & Weekly Pulse on Right */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* LEFT: Digital ID Card */}
-          <div className="lg:col-span-5">
+          <div className="space-y-6 lg:col-span-5">
             <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-sm font-bold text-slate-900">Digital Member ID</h2>
@@ -135,103 +168,10 @@ export function PortalClient({ user }: { user: UserData }) {
                     </svg>
                   </div>
                   <h3 className="mt-3 text-sm font-bold text-amber-900">Application Under Review</h3>
-                  <p className="mt-1 text-xs text-amber-800 leading-relaxed">
+                  <p className="mt-1 text-xs leading-relaxed text-amber-800">
                     Your digital Member ID card will be minted automatically once your campus chapter application is approved.
                   </p>
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* RIGHT: Chapter, Division, Badges & Referral */}
-          <div className="space-y-6 lg:col-span-7">
-            {/* Campus Chapter Card */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                Campus Chapter Affiliation
-              </h2>
-              <div className="mt-4 flex items-start gap-4">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[#071026] font-mono text-sm font-black text-amber-400">
-                  {user.chapter?.universityShortName || 'SIN'}
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900">
-                    {user.chapter?.name || 'Kogi State Tertiary Institutions Chapter'}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {user.chapter?.universityName || 'Federal University Lokoja / State Campuses'}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                      Programme: {user.profile?.programme || 'General'}
-                    </span>
-                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                      Level: {user.profile?.level || 'Undergraduate'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Division & Focus */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                Student Division
-              </h2>
-              {divisionInfo ? (
-                <div className="mt-3">
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
-                      {divisionInfo.name}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                    {divisionInfo.description}
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    <span className="font-semibold text-slate-700">Focus Areas:</span> {divisionInfo.focus}
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-2 text-xs text-slate-500">
-                  Assigned after initial onboarding review.
-                </p>
-              )}
-            </div>
-
-            {/* Earned Badges */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                Earned Credentials & Badges ({user.badges.length})
-              </h2>
-              {user.badges.length > 0 ? (
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {user.badges.map((b) => (
-                    <div
-                      key={b.id}
-                      className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3"
-                    >
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800">
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                          />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-900">{b.name}</h4>
-                        <p className="text-[11px] text-slate-500">{b.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="mt-3 text-xs text-slate-500">
-                  Badges will be unlocked as you complete your profile and participate weekly.
-                </p>
               )}
             </div>
 
@@ -239,13 +179,13 @@ export function PortalClient({ user }: { user: UserData }) {
             {user.profile?.referralCode && (
               <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                  Invite Fellow Students
+                  Invite Campus Peers
                 </h2>
                 <p className="mt-1 text-xs text-slate-600">
-                  Share your unique referral code with fellow students on campus.
+                  Share your referral link with students on your campus to unlock the Community Builder badge.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
-                  <div className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-bold text-slate-800">
+                  <div className="flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-bold text-slate-800">
                     {user.profile.referralCode}
                   </div>
                   <button
@@ -257,6 +197,150 @@ export function PortalClient({ user }: { user: UserData }) {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* RIGHT: Weekly Pulse & Gamification Badges */}
+          <div className="space-y-6 lg:col-span-7">
+            {/* WEEKLY PULSE SECTION */}
+            <div className="rounded-3xl border border-amber-600/20 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-sm sm:p-7">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                      Week {pulseFeed.weekNumber}
+                    </span>
+                    <h2 className="text-base font-extrabold text-[#071026] sm:text-lg">
+                      Weekly Student Pulse
+                    </h2>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-600">
+                    Complete your weekly research task and maintain your chapter check-in streak.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleCheckIn}
+                  disabled={checkingIn || Boolean(checkedInMessage)}
+                  className={`inline-flex min-h-[40px] items-center justify-center rounded-xl px-4 text-xs font-bold shadow-sm transition ${
+                    checkedInMessage
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-[#071026] text-white hover:bg-slate-800 disabled:opacity-50'
+                  }`}
+                >
+                  {checkingIn
+                    ? 'Checking In…'
+                    : checkedInMessage
+                    ? '✓ Checked In This Week'
+                    : `Check In for Week ${pulseFeed.weekNumber}`}
+                </button>
+              </div>
+
+              {/* Weekly Tasks List */}
+              <div className="mt-5 space-y-3">
+                {pulseFeed.tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 transition hover:border-amber-500/50 sm:flex-row sm:items-center"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-700">
+                          {task.divisionTarget.replace('_', ' ')}
+                        </span>
+                        <h4 className="truncate text-xs font-bold text-slate-900">{task.title}</h4>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                        {task.summary}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={task.actionHref || '/portal'}
+                      className="inline-flex min-h-[36px] items-center justify-center rounded-xl bg-slate-100 px-3.5 text-xs font-bold text-slate-800 transition hover:bg-slate-200 whitespace-nowrap"
+                    >
+                      {task.actionText} →
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* GAMIFICATION & BADGES SHOWCASE */}
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-7">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                    Achievement Badges Showcase
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Earn verified badges as you participate and represent your campus chapter.
+                  </p>
+                </div>
+                <span className="rounded-full bg-amber-100 px-3 py-1 font-mono text-xs font-bold text-amber-900">
+                  {user.badges.filter((b) => b.isUnlocked).length} / {user.badges.length} Unlocked
+                </span>
+              </div>
+
+              <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                {user.badges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className={`flex items-start gap-3 rounded-2xl border p-4 transition ${
+                      badge.isUnlocked
+                        ? 'border-emerald-500/30 bg-emerald-50/20 shadow-sm'
+                        : 'border-slate-200/80 bg-slate-50/50 opacity-75'
+                    }`}
+                  >
+                    <div
+                      className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl font-bold ${
+                        badge.isUnlocked
+                          ? 'bg-emerald-600 text-white shadow-md'
+                          : 'bg-slate-200 text-slate-400'
+                      }`}
+                    >
+                      {badge.isUnlocked ? (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2.5"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                          />
+                        </svg>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="truncate text-xs font-bold text-slate-900">{badge.name}</h4>
+                        {badge.isUnlocked && (
+                          <span className="text-[10px] font-bold text-emerald-700">
+                            UNLOCKED
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                        {badge.description}
+                      </p>
+                      {badge.awardedAt && (
+                        <p className="mt-1.5 font-mono text-[9px] text-slate-400">
+                          Awarded {new Date(badge.awardedAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </main>
