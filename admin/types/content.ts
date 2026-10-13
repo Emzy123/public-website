@@ -401,6 +401,11 @@ export type AdvertItem = {
   enabled: boolean;
   /** Open the flyer modal for first-time visitors while this advert is active */
   showModal: boolean;
+  /**
+   * How many days to suppress the flyer modal after a visitor dismisses it.
+   * Stored in localStorage. Default: 7. Set to 0 to re-show on every visit.
+   */
+  dismissalDays?: number;
   startsAt: string;
   endsAt: string;
   sortOrder: number;

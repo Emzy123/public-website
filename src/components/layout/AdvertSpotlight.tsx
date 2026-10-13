@@ -1,14 +1,39 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { AdvertItem } from '@admin/types/content';
 
-const DISMISS_KEY = 'sinet-advert-strip-dismissed';
+const STRIP_DISMISS_KEY = 'sinet-advert-strip-dismissed';
+const MODAL_DISMISS_KEY = 'sinet-flyer-modal-dismissed';
 const ROTATE_MS = 4000;
+const DEFAULT_TTL_DAYS = 7;
+
+/** Paths on which we never auto-open the flyer modal */
+const MODAL_EXCLUDED_PREFIXES = ['/join', '/sign-in', '/portal', '/admin'];
 
 function isMediaUrl(url: string): boolean {
   return Boolean(url) && (url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://'));
+}
+
+function isModalDismissed(ttlDays: number): boolean {
+  try {
+    const raw = localStorage.getItem(MODAL_DISMISS_KEY);
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw) as { ts: number };
+    return Date.now() - ts < ttlDays * 24 * 60 * 60 * 1000;
+  } catch {
+    return false;
+  }
+}
+
+function setModalDismissed(): void {
+  try {
+    localStorage.setItem(MODAL_DISMISS_KEY, JSON.stringify({ ts: Date.now() }));
+  } catch {
+    /* storage blocked */
+  }
 }
 
 type Props = {
@@ -17,6 +42,8 @@ type Props = {
 };
 
 export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
+  const pathname = usePathname() || '/';
+
   const items = useMemo(
     () => adverts.filter((item) => item && item.enabled && String(item.title || '').trim()),
     [adverts],
@@ -28,37 +55,43 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
   );
 
   const [index, setIndex] = useState(0);
-  const [dismissed, setDismissed] = useState(false);
+  const [stripDismissed, setStripDismissed] = useState(false);
   const [ready, setReady] = useState(false);
   const [modalAdvert, setModalAdvert] = useState<AdvertItem | null>(null);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
+    // Strip uses sessionStorage (per-session strip dismiss is intentional)
     try {
-      setDismissed(sessionStorage.getItem(DISMISS_KEY) === '1');
+      setStripDismissed(sessionStorage.getItem(STRIP_DISMISS_KEY) === '1');
     } catch {
-      setDismissed(false);
+      setStripDismissed(false);
     }
     setReady(true);
 
-    // Flyer dialog on every full page load / refresh
+    // Flyer modal — only on first visit within the TTL window, and never on excluded paths
     if (flyer) {
-      const timer = window.setTimeout(() => setModalAdvert(flyer), 600);
-      return () => window.clearTimeout(timer);
+      const ttl = (flyer as AdvertItem & { dismissalDays?: number }).dismissalDays ?? DEFAULT_TTL_DAYS;
+      const excluded = MODAL_EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+      if (!excluded && !isModalDismissed(ttl)) {
+        const timer = window.setTimeout(() => setModalAdvert(flyer), 600);
+        return () => window.clearTimeout(timer);
+      }
     }
-  }, [flyer]);
+  }, [flyer, pathname]);
 
   useEffect(() => {
     setIndex(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.map((item) => item.id).join('|')]);
 
   useEffect(() => {
-    if (items.length <= 1 || paused || dismissed) return;
+    if (items.length <= 1 || paused || stripDismissed) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % items.length);
     }, ROTATE_MS);
     return () => window.clearInterval(timer);
-  }, [items.length, paused, dismissed]);
+  }, [items.length, paused, stripDismissed]);
 
   if (!ready || items.length === 0) {
     return null;
@@ -68,11 +101,19 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
 
   const dismissStrip = () => {
     try {
-      sessionStorage.setItem(DISMISS_KEY, '1');
+      sessionStorage.setItem(STRIP_DISMISS_KEY, '1');
     } catch {
       /* ignore */
     }
-    setDismissed(true);
+    setStripDismissed(true);
+  };
+
+  const closeModal = () => {
+    if (flyer) {
+      const ttl = (flyer as AdvertItem & { dismissalDays?: number }).dismissalDays ?? DEFAULT_TTL_DAYS;
+      if (ttl > 0) setModalDismissed();
+    }
+    setModalAdvert(null);
   };
 
   const openFlyer = (item: AdvertItem) => {
@@ -84,7 +125,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
 
   return (
     <>
-      {!dismissed && (
+      {!stripDismissed && (
         <div
           className={`sticky z-[35] border-b border-[#eccb7c]/40 bg-[#0d1a4a] text-[#f6f2e8] shadow-[0_8px_30px_rgba(13,26,74,.18)] ${
             stackOffset ? 'top-[calc(2.5rem+77px)]' : 'top-[77px]'
@@ -174,29 +215,91 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
           </div>
         </div>
       )}
-      {modalAdvert && <FlyerModal advert={modalAdvert} onClose={() => setModalAdvert(null)} />}
+      {modalAdvert && <FlyerModal advert={modalAdvert} onClose={closeModal} />}
     </>
   );
 }
 
 function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      // Focus trap
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (!first) return;
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last?.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first?.focus();
+          }
+        }
+      }
     };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // Move focus into the modal on open
+    const timer = window.setTimeout(() => {
+      const closeBtn = dialogRef.current?.querySelector<HTMLElement>('[data-modal-close]');
+      closeBtn?.focus();
+    }, 50);
+
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      window.clearTimeout(timer);
     };
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-8" role="dialog" aria-modal="true" aria-label={advert.title}>
-      <button type="button" className="absolute inset-0 bg-[#0d1a4a]/75 backdrop-blur-sm" aria-label="Close flyer" onClick={onClose} />
-      <div className="relative z-10 grid max-h-[92vh] w-full max-w-4xl overflow-hidden border border-[#eccb7c]/30 bg-[#f6f2e8] shadow-2xl md:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]">
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="flyer-modal-title"
+    >
+      {/* Backdrop — click to close */}
+      <button
+        type="button"
+        className="absolute inset-0 bg-[#0d1a4a]/75 backdrop-blur-sm"
+        aria-label="Close flyer"
+        onClick={onClose}
+        tabIndex={-1}
+      />
+      <div
+        ref={dialogRef}
+        className="relative z-10 grid max-h-[92vh] w-full max-w-4xl overflow-hidden border border-[#eccb7c]/30 bg-[#f6f2e8] shadow-2xl md:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]"
+      >
+        {/* Visible close button — top-right corner */}
+        <button
+          type="button"
+          data-modal-close
+          onClick={onClose}
+          aria-label="Close flyer"
+          className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-[#0d1a4a]/80 text-white transition hover:bg-[#d9711b] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9711b]"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
         <div className="relative flex min-h-[280px] items-center justify-center bg-[#0d1a4a] p-3 sm:p-5 md:min-h-[520px]">
           {advert.imageUrl && isMediaUrl(advert.imageUrl) ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -214,7 +317,10 @@ function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => vo
             {advert.eyebrow && (
               <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">{advert.eyebrow}</p>
             )}
-            <h2 className="mt-3 font-editorial text-[clamp(1.75rem,4vw,2.75rem)] leading-[.95] tracking-[-.04em] text-[#0d1a4a]">
+            <h2
+              id="flyer-modal-title"
+              className="mt-3 font-editorial text-[clamp(1.75rem,4vw,2.75rem)] leading-[.95] tracking-[-.04em] text-[#0d1a4a]"
+            >
               {advert.title}
             </h2>
             {advert.body && <p className="mt-5 text-base leading-7 text-[#554e43]">{advert.body}</p>}
@@ -224,7 +330,7 @@ function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => vo
               <Link
                 href={advert.ctaHref}
                 onClick={onClose}
-                className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b]"
+                className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9711b]"
               >
                 {advert.ctaLabel}
               </Link>
@@ -232,7 +338,7 @@ function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => vo
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a]/25 px-6 text-sm font-bold text-[#0d1a4a] hover:border-[#d9711b] hover:text-[#d9711b]"
+              className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a]/25 px-6 text-sm font-bold text-[#0d1a4a] hover:border-[#d9711b] hover:text-[#d9711b] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d9711b]"
             >
               Continue browsing
             </button>

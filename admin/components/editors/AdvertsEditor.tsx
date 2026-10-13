@@ -16,6 +16,7 @@ function newAdvert(sortOrder: number): AdvertItem {
     ctaHref: '/contact',
     enabled: false,
     showModal: true,
+    dismissalDays: 7,
     startsAt: '',
     endsAt: '',
     sortOrder,
@@ -92,6 +93,28 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                 <input type="checkbox" checked={item.showModal} onChange={(e) => update(item.id, { showModal: e.target.checked })} />
                 Show flyer modal
               </label>
+            </div>
+            {item.showModal && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <strong>⚠ Financial promotions notice:</strong> If this flyer contains investment-related claims or
+                financial offers, it must be reviewed and approved by legal before enabling. Showing unapproved
+                financial promotions may be unlawful.
+              </div>
+            )}
+            <div className="mb-4 flex items-center gap-3">
+              <label className="text-sm text-[#0d1a4a]" htmlFor={`dismissal-${item.id}`}>
+                Dismissal period (days):
+              </label>
+              <input
+                id={`dismissal-${item.id}`}
+                type="number"
+                min={0}
+                max={365}
+                value={item.dismissalDays ?? 7}
+                onChange={(e) => update(item.id, { dismissalDays: Math.max(0, Number(e.target.value)) })}
+                className="w-20 rounded border border-[#d9d1bf] px-2 py-1 text-sm text-[#0d1a4a]"
+              />
+              <span className="text-xs text-[#7b7263]">Set to 0 to re-show on every visit.</span>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <AdminField label="Eyebrow">
