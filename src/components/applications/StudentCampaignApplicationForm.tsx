@@ -73,7 +73,18 @@ export function StudentCampaignApplicationForm({
       .then((data) => {
         if (data.universities) {
           setUniversities(data.universities);
-          if (data.universities.length > 0) {
+          const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const campusParam = params?.get('campus')?.trim().toUpperCase();
+          const matched = campusParam
+            ? data.universities.find(
+                (u: UniversityOption) =>
+                  u.campusCode === campusParam || u.shortName.toUpperCase() === campusParam
+              )
+            : null;
+
+          if (matched) {
+            setUniversityId(matched.id);
+          } else if (data.universities.length > 0) {
             setUniversityId(data.universities[0].id);
           }
         }
