@@ -145,13 +145,15 @@ export default function AdminTeamPage() {
   } = useCmsEditor('about');
 
   const about = data as AboutContent | null;
-  const team = about?.team ?? [];
+  const team = useMemo(() => about?.team ?? [], [about?.team]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mode, setMode] = useState<'list' | 'view' | 'edit' | 'create'>('list');
   const [draft, setDraft] = useState<AboutTeamMember | null>(null);
   const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
   const [formError, setFormError] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetInput, setResetInput] = useState('');
 
   const selected = useMemo(
     () => team.find((m) => m.id === selectedId) ?? null,
@@ -223,10 +225,9 @@ export default function AdminTeamPage() {
 
   const loadDefaults = () => {
     if (!about) return;
-    if (team.length > 0 && !window.confirm('Replace the current team list with the built-in defaults?')) {
-      return;
-    }
     updateTeam(DEFAULT_ABOUT_TEAM.map((m) => ({ ...m })));
+    setShowResetModal(false);
+    setResetInput('');
     backToList();
   };
 
@@ -299,7 +300,7 @@ export default function AdminTeamPage() {
         </div>
       ) : mode === 'list' ? (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
               onClick={openCreate}
@@ -309,8 +310,15 @@ export default function AdminTeamPage() {
             </button>
             <button
               type="button"
-              onClick={loadDefaults}
-              className="rounded-lg border border-[#d9d1bf] bg-white px-4 py-2.5 text-sm font-medium text-[#0d1a4a] hover:bg-[#f6f2e8]"
+              onClick={() => {
+                if (team.length === 0) {
+                  loadDefaults();
+                } else {
+                  setResetInput('');
+                  setShowResetModal(true);
+                }
+              }}
+              className="ml-auto rounded-lg border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 hover:border-red-300 transition-colors"
             >
               {team.length === 0 ? 'Load default team' : 'Reset to defaults'}
             </button>
@@ -521,6 +529,61 @@ export default function AdminTeamPage() {
           ) : draft ? (
             <MemberForm member={draft} onChange={setDraft} />
           ) : null}
+        </div>
+      )}
+
+      {showResetModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => {
+            setShowResetModal(false);
+            setResetInput('');
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-red-200 bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-red-600">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 text-lg font-bold">⚠️</span>
+              <h3 className="text-lg font-bold text-[#0d1a4a]">Reset team to defaults</h3>
+            </div>
+            <p className="mt-3 text-sm text-[#5e574b]">
+              This will replace all <strong className="text-[#0d1a4a]">{team.length}</strong> team profiles with the defaults. Type <span className="font-mono font-semibold text-red-600">RESET</span> to confirm.
+            </p>
+            <div className="mt-4">
+              <input
+                type="text"
+                value={resetInput}
+                onChange={(e) => setResetInput(e.target.value)}
+                placeholder="RESET"
+                autoFocus
+                className="w-full rounded-lg border border-[#d9d1bf] px-3.5 py-2 text-sm text-[#0d1a4a] placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+              />
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetInput('');
+                }}
+                className="rounded-lg border border-[#d9d1bf] bg-white px-4 py-2 text-sm font-medium text-[#5e574b] hover:bg-[#f6f2e8]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={resetInput !== 'RESET'}
+                onClick={loadDefaults}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-40 disabled:cursor-not-allowed hover:bg-red-700"
+              >
+                Confirm reset
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AdminShell>
