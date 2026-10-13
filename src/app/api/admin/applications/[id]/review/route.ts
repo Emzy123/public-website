@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireChapterLead, AuthError, ForbiddenError } from '@/lib/auth/guards';
+import { ObjectId } from 'mongodb';
+import { requireRole, requireChapterLead, AuthError, ForbiddenError } from '@/lib/auth/guards';
 import { reviewApplicationDecision } from '@/lib/applications/campaigns';
+import { getMongoDb } from '@/lib/db/mongodb';
 import { db } from '@/lib/db';
 import { applications, chapters } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getClientIp } from '@/lib/security/rate-limit-unified';
-
 import { validateOrigin } from '@/lib/security/origin';
 
 const reviewDecisionSchema = z.object({
@@ -25,7 +26,71 @@ export async function POST(
   }
 
   try {
-    // 1. Fetch the application to identify its target chapter
+    const body = await request.json().catch(() => ({}));
+    const parsed = reviewDecisionSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid review payload', issues: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    // 1. Check MongoDB applications first (Admin campaign links)
+    if (ObjectId.isValid(params.id)) {
+      try {
+        const mongo = await getMongoDb();
+        const mongoApp = await mongo
+          .collection('applications')
+          .findOne({ _id: new ObjectId(params.id) });
+
+        if (mongoApp) {
+          const session = await requireRole(
+            ['super_admin', 'admin', 'chapter_lead'],
+            request
+          );
+
+          const newStatus = parsed.data.decision === 'approve' ? 'approved' : 'rejected';
+          const reviewedAt = new Date();
+
+          await mongo.collection('applications').updateOne(
+            { _id: mongoApp._id },
+            {
+              $set: {
+                status: newStatus,
+                reviewedBy: session.email,
+                reviewedAt,
+                reviewRemarks: parsed.data.remarks || null,
+                updatedAt: reviewedAt,
+              },
+            }
+          );
+
+          // If applicant has record in members collection, sync their status
+          const applicantEmail = (mongoApp.data as Record<string, unknown>)?.email || mongoApp.email;
+          if (applicantEmail && typeof applicantEmail === 'string') {
+            await mongo.collection('members').updateOne(
+              { email: applicantEmail.toLowerCase() },
+              {
+                $set: {
+                  status: newStatus === 'approved' ? 'active' : 'rejected',
+                  updatedAt: reviewedAt,
+                },
+              }
+            );
+          }
+
+          return NextResponse.json({
+            success: true,
+            decision: parsed.data.decision,
+            message: `Application ${parsed.data.decision}d successfully.`,
+          });
+        }
+      } catch (mongoErr) {
+        console.warn('[Review] MongoDB lookup check failed:', mongoErr);
+      }
+    }
+
+    // 2. Fall back to PostgreSQL applications
     const [app] = await db
       .select({ id: applications.id, universityId: applications.universityId })
       .from(applications)
@@ -40,20 +105,8 @@ export async function POST(
       .from(chapters)
       .where(eq(chapters.universityId, app.universityId));
 
-    // 2. Enforce authorization: Global Admin OR Chapter Lead for this specific chapter
     const session = await requireChapterLead(chapter?.id || '', request);
 
-    // 3. Parse and validate decision payload
-    const body = await request.json().catch(() => ({}));
-    const parsed = reviewDecisionSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid review payload', issues: parsed.error.flatten() },
-        { status: 400 }
-      );
-    }
-
-    // 4. Execute review decision state transition & audit log
     const result = await reviewApplicationDecision({
       applicationId: params.id,
       reviewerId: session.userId,

@@ -14,7 +14,16 @@ type NavItem = {
 };
 
 const Icon = ({ d, size = 16 }: { d: string; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <path d={d} />
   </svg>
 );
@@ -32,62 +41,83 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: 'Applications',
+    label: 'Admissions & Funnels',
     items: [
-      {
-        href: '/admin/links',
-        label: 'Link Management',
-        icon: <Icon d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71 M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />,
-      },
       {
         href: '/admin/applications',
-        label: 'All Applications',
-        icon: <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />,
+        label: 'Review Applications',
+        icon: (
+          <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        ),
       },
-    ],
-  },
-  {
-    label: 'Members',
-    items: [
+      {
+        href: '/admin/links',
+        label: 'Campaign Links',
+        icon: (
+          <Icon d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71 M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+        ),
+      },
       {
         href: '/admin/submissions',
-        label: 'Form Submissions',
-        icon: <Icon d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />,
+        label: 'Form Inquiries',
+        icon: (
+          <Icon d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        ),
       },
     ],
   },
   {
-    label: 'Content',
+    label: 'Publishing & Media',
     items: [
       {
-        href: '/admin/team',
-        label: 'Leadership Team',
-        icon: <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75" />,
-      },
-      {
-        href: '/admin/content/gallery',
-        label: 'Gallery',
-        icon: <Icon d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />,
-      },
-      {
         href: '/admin/content/adverts',
-        label: 'Events & Flyers',
-        icon: <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />,
+        label: 'Spotlight & Flyers',
+        icon: (
+          <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        ),
       },
       {
         href: '/admin/content/news',
-        label: 'News',
-        icon: <Icon d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z" />,
+        label: 'News & Updates',
+        icon: (
+          <Icon d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z" />
+        ),
+      },
+      {
+        href: '/admin/content/gallery',
+        label: 'Media Gallery',
+        icon: (
+          <Icon d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        ),
+      },
+      {
+        href: '/admin/team',
+        label: 'Leadership Team',
+        icon: (
+          <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75" />
+        ),
       },
       {
         href: '/admin/content',
-        label: 'All Pages',
+        label: 'All Pages CMS',
         icon: <Icon d="M4 6h16M4 12h16M4 18h10" />,
+      },
+    ],
+  },
+  {
+    label: 'Governance & Config',
+    items: [
+      {
+        href: '/admin/audit',
+        label: 'Security Audit Log',
+        icon: <Icon d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />,
       },
       {
         href: '/admin/content/site-settings',
-        label: 'Settings',
-        icon: <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />,
+        label: 'System Settings',
+        icon: (
+          <Icon d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        ),
       },
     ],
   },
@@ -96,11 +126,13 @@ const navGroups: { label: string; items: NavItem[] }[] = [
 function SidebarContent({
   pathname,
   unread,
+  pendingApps,
   onClose,
   logout,
 }: {
   pathname: string;
   unread: number;
+  pendingApps: number;
   onClose?: () => void;
   logout: () => void;
 }) {
@@ -111,75 +143,110 @@ function SidebarContent({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="flex h-8 w-8 items-center justify-center rounded bg-[#d9a23c]">
-          <span className="font-bold text-[#0d1a4a] text-sm">S</span>
-        </div>
-        <div>
-          <Link href="/admin" onClick={onClose} className="block font-semibold text-white leading-none text-[15px]">
-            SINet Admin
-          </Link>
-          <p className="text-[10px] text-[#d9a23c] uppercase tracking-widest mt-0.5">Staff console</p>
-        </div>
+    <div className="flex h-full flex-col bg-[#0b1222] text-slate-200">
+      {/* Brand Header */}
+      <div className="flex items-center justify-between border-b border-slate-800/80 px-5 py-4">
+        <Link href="/admin" onClick={onClose} className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shadow-amber-500/20 font-black text-sm text-[#071026]">
+            S
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold tracking-tight text-white text-sm">SINet</span>
+              <span className="rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-400 ring-1 ring-blue-500/30">
+                PROD
+              </span>
+            </div>
+            <p className="text-[10px] font-medium text-slate-400">Executive Console</p>
+          </div>
+        </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3">
+      {/* Nav Items */}
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3.5 py-5 scrollbar-thin">
         {navGroups.map((group) => (
-          <div key={group.label} className="mb-5">
-            <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[.12em] text-[#d9a23c]">
+          <div key={group.label}>
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
               {group.label}
             </p>
-            {group.items.map((item) => {
-              const active = isActive(item);
-              const showBadge = item.href === '/admin/submissions' && unread > 0;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all mb-0.5 ${
-                    active
-                      ? 'bg-[#d9a23c]/15 text-[#d9a23c] font-medium'
-                      : 'text-white hover:bg-white/[.06] hover:text-[#d9a23c]'
-                  }`}
-                >
-                  <span className={`shrink-0 ${active ? 'text-[#d9a23c]' : 'text-white/70'}`}>
-                    {item.icon}
-                  </span>
-                  <span className="flex-1 truncate">{item.label}</span>
-                  {showBadge && (
-                    <span className="shrink-0 rounded-full bg-[#d9a23c] px-2 py-0.5 font-mono text-[10px] font-bold text-[#0d1a4a]">
-                      {unread}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+            <div className="space-y-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item);
+                const isSubmissions = item.href === '/admin/submissions';
+                const isApplications = item.href === '/admin/applications';
+                const badgeCount = isSubmissions ? unread : isApplications ? pendingApps : 0;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onClose}
+                    className={`group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                      active
+                        ? 'bg-blue-600/15 text-blue-400 font-semibold shadow-sm'
+                        : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className={`transition-colors ${
+                          active
+                            ? 'text-blue-400'
+                            : 'text-slate-400 group-hover:text-slate-200'
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </div>
+
+                    {badgeCount > 0 && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          isApplications
+                            ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40'
+                            : 'bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/40'
+                        }`}
+                      >
+                        {badgeCount}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         ))}
       </nav>
 
-      {/* User */}
-      <div className="border-t border-white/10 px-5 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#d9a23c] font-bold text-xs text-[#0d1a4a]">
-            FB
+      {/* Footer / Profile Card */}
+      <div className="border-t border-slate-800/80 p-3.5 bg-slate-950/40">
+        <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-900/60 p-2.5 border border-slate-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-blue-300 font-bold text-xs ring-1 ring-blue-500/30">
+              AD
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-white">Administrator</p>
+              <p className="truncate text-[10px] text-emerald-400 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                Active Session
+              </p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-white">Favour Benjamin</p>
-            <p className="truncate text-xs text-white/40">Community Operations</p>
-          </div>
+
+          <button
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition"
+          >
+            <Icon
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              size={15}
+            />
+          </button>
         </div>
-        <button
-          onClick={logout}
-          className="mt-3 flex items-center gap-2 text-xs text-[#d9a23c] hover:text-white transition-colors"
-        >
-          <Icon d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" size={13} />
-          Sign out
-        </button>
       </div>
     </div>
   );
@@ -200,9 +267,11 @@ export function AdminShell({
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [pendingApps, setPendingApps] = useState(0);
   const [csrfToken, setCsrfToken] = useState('');
 
   useEffect(() => {
+    // 1. Fetch form submission counts
     fetch('/api/admin/submissions?limit=1')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -210,6 +279,16 @@ export function AdminShell({
         if (c) setUnread(c.contacts.unread + c.academy.unread);
       })
       .catch(() => setUnread(0));
+
+    // 2. Fetch pending applications count
+    fetch('/api/admin/applications?status=submitted&limit=1')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (typeof d?.counts?.pending === 'number') {
+          setPendingApps(d.counts.pending);
+        }
+      })
+      .catch(() => setPendingApps(0));
   }, [pathname]);
 
   useEffect(() => {
@@ -228,10 +307,15 @@ export function AdminShell({
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f2e8] text-[#0d1a4a] lg:flex">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 lg:flex font-sans">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex lg:w-60 lg:shrink-0 lg:flex-col lg:fixed lg:inset-y-0 bg-[#0d1a4a]">
-        <SidebarContent pathname={pathname} unread={unread} logout={logout} />
+      <aside className="hidden lg:flex lg:w-64 lg:shrink-0 lg:flex-col lg:fixed lg:inset-y-0 z-40 border-r border-slate-800/80">
+        <SidebarContent
+          pathname={pathname}
+          unread={unread}
+          pendingApps={pendingApps}
+          logout={logout}
+        />
       </aside>
 
       {/* Mobile drawer */}
@@ -240,12 +324,13 @@ export function AdminShell({
           <button
             aria-label="Close menu"
             onClick={() => setDrawerOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
           />
-          <aside className="relative flex w-64 flex-col bg-[#0d1a4a] shadow-2xl">
+          <aside className="relative flex w-72 flex-col shadow-2xl z-50">
             <SidebarContent
               pathname={pathname}
               unread={unread}
+              pendingApps={pendingApps}
               onClose={() => setDrawerOpen(false)}
               logout={logout}
             />
@@ -253,35 +338,45 @@ export function AdminShell({
         </div>
       )}
 
-      {/* Main */}
-      <div className="flex min-w-0 flex-1 flex-col lg:pl-60">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex min-h-[60px] items-center justify-between gap-4 border-b border-[#e4dcc9] bg-white/90 px-5 backdrop-blur md:px-8">
+      {/* Main Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
+        {/* Modern Top Header */}
+        <header className="sticky top-0 z-30 flex min-h-[64px] items-center justify-between gap-4 border-b border-slate-200/90 bg-white/90 px-4 backdrop-blur-md md:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDrawerOpen(true)}
-              className="grid h-9 w-9 place-items-center rounded-lg text-[#0d1a4a] hover:bg-[#f0e9d9] lg:hidden"
-              aria-label="Open menu"
+              className="grid h-9 w-9 place-items-center rounded-xl text-slate-700 hover:bg-slate-100 lg:hidden border border-slate-200"
+              aria-label="Open navigation menu"
             >
               <Icon d="M4 6h16M4 12h16M4 18h16" size={18} />
             </button>
+
             <div>
-              <h1 className="text-lg font-semibold leading-none text-[#0d1a4a]">{title}</h1>
-              {description && <p className="mt-0.5 text-xs text-[#7b7263]">{description}</p>}
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-[11px] font-semibold text-slate-400">Admin</span>
+                <span className="hidden sm:inline text-[11px] text-slate-300">/</span>
+                <h1 className="text-base font-bold text-slate-900 leading-tight">{title}</h1>
+              </div>
+              {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2.5">
             {actions}
-            <div className="hidden items-center gap-2 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#d9a23c] font-bold text-xs text-[#0d1a4a]">
-                FB
-              </div>
-            </div>
+            <Link
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <span>Live Site</span>
+              <span>↗</span>
+            </Link>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="mx-auto w-full max-w-[1280px] flex-1 px-5 py-7 md:px-8 md:py-8">
+        {/* Page Canvas */}
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 md:px-8 md:py-8">
           {children}
         </main>
       </div>
@@ -289,7 +384,7 @@ export function AdminShell({
   );
 }
 
-/* ── Shared action buttons ── */
+/* ── Modern Action Buttons ── */
 export function SaveButton({
   onClick,
   saving,
@@ -305,7 +400,7 @@ export function SaveButton({
     <button
       onClick={onClick}
       disabled={saving}
-      className="inline-flex items-center gap-2 rounded-lg border border-[#d9a23c] bg-[#d9a23c] px-4 py-2 text-sm font-semibold text-[#0d1a4a] transition-opacity disabled:opacity-50 hover:bg-[#c8921e]"
+      className="inline-flex items-center gap-2 rounded-xl border border-amber-600 bg-amber-500 px-4 py-2 text-xs font-bold text-slate-950 transition-all shadow-sm hover:bg-amber-400 disabled:opacity-50"
     >
       {saving ? 'Saving…' : saved ? '✓ Saved' : label}
     </button>
@@ -327,7 +422,7 @@ export function PublishButton({
     <button
       onClick={onClick}
       disabled={publishing || disabled}
-      className="inline-flex items-center gap-2 rounded-lg border border-[#0d1a4a] bg-[#0d1a4a] px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-50 hover:bg-[#1a2d66]"
+      className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition-all shadow-sm hover:bg-slate-800 disabled:opacity-50"
     >
       {publishing ? 'Publishing…' : published ? '✓ Published' : 'Publish'}
     </button>
@@ -347,7 +442,7 @@ export function PreviewButton({
     <button
       onClick={onClick}
       disabled={previewing || disabled}
-      className="inline-flex items-center gap-2 rounded-lg border border-[#d9d1bf] bg-white px-4 py-2 text-sm font-semibold text-[#0d1a4a] transition-colors disabled:opacity-50 hover:border-[#0d1a4a]"
+      className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors shadow-sm hover:bg-slate-50 disabled:opacity-50"
     >
       {previewing ? 'Opening…' : 'Preview'}
     </button>
@@ -366,10 +461,14 @@ export function AdminCard({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className={`rounded-xl border border-[#e4dcc9] bg-white p-6 ${className}`}>
+    <div className={`rounded-2xl border border-slate-200/90 bg-white p-5 md:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)] ${className}`}>
       {(title || actions) && (
-        <div className="mb-4 flex items-start justify-between gap-3">
-          {title ? <h2 className="text-base font-semibold text-[#0d1a4a]">{title}</h2> : <span />}
+        <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          {title ? (
+            <h2 className="text-sm font-bold tracking-tight text-slate-900">{title}</h2>
+          ) : (
+            <span />
+          )}
           {actions}
         </div>
       )}

@@ -22,10 +22,31 @@ export class ForbiddenError extends Error {
   }
 }
 
+import { getSession as getAdminSession } from '@admin/lib/auth';
+
 /**
- * Ensures user is authenticated via cookie session.
+ * Ensures user is authenticated via admin session or cookie session.
  */
 export async function requireAuth(req?: NextRequest): Promise<AuthSession> {
+  // 1. Check admin console session (sinet_admin_session)
+  try {
+    const adminSession = await getAdminSession();
+    if (adminSession?.email) {
+      return {
+        userId: 'admin-' + adminSession.email,
+        email: adminSession.email,
+        phone: null,
+        roles: ['super_admin', 'admin'],
+        chapterIds: [],
+        is2faAuthenticated: true,
+        lastActive: Math.floor(Date.now() / 1000),
+      };
+    }
+  } catch {
+    /* Fall back to member session */
+  }
+
+  // 2. Check member session (sinet_member_session)
   const session = await getSession();
   if (!session) {
     throw new AuthError('Authentication required. Please sign in.', 401);
