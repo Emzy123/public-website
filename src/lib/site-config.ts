@@ -24,6 +24,15 @@ export const FEATURE_FLAGS = {
   showNews: true,       // Active pilot updates & field notes
   showPartners: false,  // Awaiting real institutional partner roster
   showProducts: false,  // Awaiting verified goods inventory
+  /**
+   * Controls whether per-chapter member counts and the "Active Members"
+   * aggregate stat are shown on the /chapters directory.
+   * Set to false until memberCount is incremented by the application-approval
+   * workflow. Hardcoded 0 values are misleading.
+   * TODO [OWNER APPROVAL]: Verify the "280+ students across 16 universities"
+   * claim in About page copy before re-enabling.
+   */
+  showMemberCounts: false,
 } as const;
 
 export type SocialKey = 'x' | 'linkedin' | 'facebook' | 'instagram' | 'whatsapp';

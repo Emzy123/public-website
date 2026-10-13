@@ -5,6 +5,7 @@ import {
   FALLBACK_KOGI_CHAPTERS,
 } from '@/lib/chapters/chapters';
 import { ChaptersDirectoryClient } from '@/components/chapters/ChaptersDirectoryClient';
+import { FEATURE_FLAGS } from '@/lib/site-config';
 
 export const metadata: Metadata = {
   title: 'Campus Chapters Directory — Student Investment Network',
@@ -21,7 +22,7 @@ export default async function ChaptersDirectoryPage() {
       getChaptersDirectoryStats(),
     ]);
 
-    return <ChaptersDirectoryClient initialChapters={chaptersList} stats={stats} />;
+    return <ChaptersDirectoryClient initialChapters={chaptersList} stats={stats} showMemberCounts={FEATURE_FLAGS.showMemberCounts} />;
   } catch (error) {
     console.warn('[Chapters Directory Page] Rendering fallback chapters list:', error);
     return (
@@ -33,6 +34,7 @@ export default async function ChaptersDirectoryPage() {
           totalMembers: 0,
           state: 'Kogi',
         }}
+        showMemberCounts={FEATURE_FLAGS.showMemberCounts}
       />
     );
   }

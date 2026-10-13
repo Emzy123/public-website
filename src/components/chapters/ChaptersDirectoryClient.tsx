@@ -7,6 +7,7 @@ import type { ChapterListItem } from '@/lib/chapters/chapters';
 export function ChaptersDirectoryClient({
   initialChapters,
   stats,
+  showMemberCounts = false,
 }: {
   initialChapters: ChapterListItem[];
   stats: {
@@ -15,6 +16,7 @@ export function ChaptersDirectoryClient({
     totalMembers: number;
     state: string;
   };
+  showMemberCounts?: boolean;
 }) {
   const [search, setSearch] = useState('');
 
@@ -75,12 +77,21 @@ export function ChaptersDirectoryClient({
               <p className="mt-1 text-2xl font-black text-[#071026]">{stats.universityCount}</p>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Active Members
-              </p>
-              <p className="mt-1 text-2xl font-black text-amber-700">{stats.totalMembers}</p>
-            </div>
+            {showMemberCounts ? (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Active Members
+                </p>
+                <p className="mt-1 text-2xl font-black text-amber-700">{stats.totalMembers}</p>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Members
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-400">Coming soon</p>
+              </div>
+            )}
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -173,9 +184,13 @@ export function ChaptersDirectoryClient({
 
               {/* Bottom Actions */}
               <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <div className="text-xs font-semibold text-slate-600">
-                  <span className="font-bold text-slate-900">{chapter.memberCount}</span> members
-                </div>
+                {showMemberCounts ? (
+                  <div className="text-xs font-semibold text-slate-600">
+                    <span className="font-bold text-slate-900">{chapter.memberCount}</span> members
+                  </div>
+                ) : (
+                  <div />
+                )}
 
                 <div className="flex items-center gap-2">
                   <Link
