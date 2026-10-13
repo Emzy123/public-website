@@ -4,10 +4,19 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminField, AdminInput } from '@admin/components/ui/AdminField';
 
+function sanitizeRedirect(target: string | null, fallback: string = '/admin'): string {
+  if (!target) return fallback;
+  // Ensure the target is a relative local path and not protocol-relative or scheme-relative
+  if (target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\')) {
+    return target;
+  }
+  return fallback;
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/admin';
+  const next = sanitizeRedirect(searchParams.get('next'), '/admin');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

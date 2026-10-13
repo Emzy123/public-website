@@ -2,12 +2,26 @@ type Bucket = { count: number; resetAt: number };
 
 const buckets = new Map<string, Bucket>();
 
+function pruneExpiredBuckets(now: number) {
+  buckets.forEach((bucket, key) => {
+    if (now > bucket.resetAt) {
+      buckets.delete(key);
+    }
+  });
+}
+
 export function checkRateLimit(
   key: string,
   max: number,
   windowMs: number
 ): { ok: true } | { ok: false; retryAfterSec: number } {
   const now = Date.now();
+
+  // Protect against unbounded memory growth under high traffic
+  if (buckets.size > 1000) {
+    pruneExpiredBuckets(now);
+  }
+
   const existing = buckets.get(key);
 
   if (!existing || now > existing.resetAt) {
@@ -25,9 +39,18 @@ export function checkRateLimit(
 }
 
 export function getClientKey(req: Request): string {
+  const vercelIp = req.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim();
+  if (vercelIp) return vercelIp;
+
+  const cfIp = req.headers.get('cf-connecting-ip')?.trim();
+  if (cfIp) return cfIp;
+
+  const realIp = req.headers.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+
   const forwarded = req.headers.get('x-forwarded-for');
   const first = forwarded?.split(',')[0]?.trim();
-  return first || req.headers.get('x-real-ip') || 'unknown';
+  return first || 'unknown';
 }
 
 export function getRateLimitHeaders(result: { ok: true } | { ok: false; retryAfterSec: number }): Record<string, string> {

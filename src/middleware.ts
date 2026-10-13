@@ -66,7 +66,11 @@ function applySecurityHeaders(response: NextResponse, pathname: string, csp: str
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   response.headers.set('X-Frame-Options', 'SAMEORIGIN');
-  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+  if (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/api/auth')
+  ) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
     response.headers.set('Cache-Control', 'no-store, max-age=0');
   }

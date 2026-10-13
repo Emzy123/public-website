@@ -10,8 +10,11 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const actionFilter = searchParams.get('action');
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)));
-    const offset = Math.max(0, parseInt(searchParams.get('offset') || '0', 10));
+    const parsedLimit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Number.isFinite(parsedLimit) ? Math.min(100, Math.max(1, parsedLimit)) : 50;
+
+    const parsedOffset = parseInt(searchParams.get('offset') || '0', 10);
+    const offset = Number.isFinite(parsedOffset) ? Math.max(0, parsedOffset) : 0;
 
     let query = db
       .select()

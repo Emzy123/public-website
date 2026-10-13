@@ -7,6 +7,8 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getClientIp } from '@/lib/security/rate-limit-unified';
 
+import { validateOrigin } from '@/lib/security/origin';
+
 const reviewDecisionSchema = z.object({
   decision: z.enum(['approve', 'reject'], {
     message: "Decision must be either 'approve' or 'reject'",
@@ -18,6 +20,10 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  if (!validateOrigin(request)) {
+    return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
+  }
+
   try {
     // 1. Fetch the application to identify its target chapter
     const [app] = await db

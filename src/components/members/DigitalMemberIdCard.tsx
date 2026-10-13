@@ -53,13 +53,27 @@ export function DigitalMemberIdCard({ card }: { card: MemberCardData }) {
     }
   };
 
+function escapeHtml(value?: string | null): string {
+  if (!value) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
   const handleSaveOfflinePass = () => {
+    const safeQrSrc = card.qrDataUrl.startsWith('data:image/')
+      ? card.qrDataUrl
+      : '';
+
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SINet Digital Pass — ${card.memberId}</title>
+  <title>SINet Digital Pass — ${escapeHtml(card.memberId)}</title>
   <style>
     body { margin: 0; padding: 24px 16px; background: #071026; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
     .card { width: 100%; max-width: 380px; border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.35); background: linear-gradient(135deg, #071026, #0d1a4a, #14235e); padding: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); box-sizing: border-box; }
@@ -86,24 +100,24 @@ export function DigitalMemberIdCard({ card }: { card: MemberCardData }) {
       <div class="badge">OFFLINE PASS</div>
     </div>
     <div class="profile">
-      <div class="avatar">${card.fullName.slice(0, 2).toUpperCase()}</div>
+      <div class="avatar">${escapeHtml(card.fullName.slice(0, 2).toUpperCase())}</div>
       <div class="info">
-        <h2>${card.fullName}</h2>
-        <p>${card.programme || 'Undergraduate'} • ${card.campusCode}</p>
-        <div class="tag">${divisionInfo?.name || 'Student Network'}</div>
+        <h2>${escapeHtml(card.fullName)}</h2>
+        <p>${escapeHtml(card.programme || 'Undergraduate')} • ${escapeHtml(card.campusCode)}</p>
+        <div class="tag">${escapeHtml(divisionInfo?.name || 'Student Network')}</div>
       </div>
     </div>
     <div class="qr-box">
-      <img src="${card.qrDataUrl}" alt="Verification QR Code">
+      <img src="${safeQrSrc}" alt="Verification QR Code">
     </div>
     <div class="footer">
       <div>
         <p class="label">MEMBER ID</p>
-        <p class="val">${card.memberId}</p>
+        <p class="val">${escapeHtml(card.memberId)}</p>
       </div>
       <div style="text-align: right;">
         <p class="label">ISSUED</p>
-        <p class="val" style="color: #cbd5e1; font-size: 10px;">${formattedDate}</p>
+        <p class="val" style="color: #cbd5e1; font-size: 10px;">${escapeHtml(formattedDate)}</p>
       </div>
     </div>
     <div class="seal">Official Offline Credential • Cryptographically Verified</div>
