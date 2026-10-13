@@ -138,7 +138,7 @@ export function PortalClient({
             Welcome, {user.profile?.fullName || user.email.split('@')[0]}
           </h1>
           <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-            {user.chapter?.universityName || 'Student Network Member'} •{' '}
+            {user.chapter?.universityName || 'Community Network Member'} •{' '}
             {divisionInfo?.name || 'General Division'}
           </p>
         </div>
@@ -186,10 +186,10 @@ export function PortalClient({
             {user.profile?.referralCode && (
               <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                  Invite Campus Peers
+                  Invite Peers &amp; Members
                 </h2>
                 <p className="mt-1 text-xs text-slate-600">
-                  Share your referral link with students on your campus to unlock the Community Builder badge.
+                  Share your referral link with peers and fellow members to unlock the Community Builder badge.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <div className="flex-1 truncate rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 font-mono text-xs font-bold text-slate-800">
@@ -217,11 +217,11 @@ export function PortalClient({
                       Week {pulseFeed.weekNumber}
                     </span>
                     <h2 className="text-base font-extrabold text-[#071026] sm:text-lg">
-                      Weekly Student Pulse
+                      Weekly Network Pulse
                     </h2>
                   </div>
                   <p className="mt-1 text-xs text-slate-600">
-                    Complete your weekly research task and maintain your chapter check-in streak.
+                    Complete your weekly initiative task and maintain your chapter check-in streak.
                   </p>
                 </div>
 
@@ -280,7 +280,7 @@ export function PortalClient({
                     Achievement Badges Showcase
                   </h2>
                   <p className="text-xs text-slate-500">
-                    Earn verified badges as you participate and represent your campus chapter.
+                    Earn verified badges as you participate and represent your chapter or community.
                   </p>
                 </div>
                 <span className="rounded-full bg-amber-100 px-3 py-1 font-mono text-xs font-bold text-amber-900">

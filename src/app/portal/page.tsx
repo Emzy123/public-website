@@ -16,7 +16,7 @@ import { PortalClient } from './PortalClient';
 
 export const metadata = {
   title: 'Member Portal — SINet',
-  description: 'Manage your membership, view your digital Member ID Card, and explore campus chapter activities.',
+  description: 'Manage your membership, view your digital Member ID Card, and explore community chapter activities.',
 };
 
 export default async function PortalPage() {
@@ -88,8 +88,8 @@ export default async function PortalPage() {
             userId: session.userId,
             fullName: (mDoc.fullName as string) || session.email.split('@')[0],
             avatarUrl: (mDoc.avatarUrl as string) || null,
-            bio: (mDoc.bio as string) || 'Student member of SINet higher education network.',
-            programme: (mDoc.course as string) || (mDoc.programme as string) || 'Undergraduate Member',
+            bio: (mDoc.bio as string) || 'Member of the SINetwork Global community network.',
+            programme: (mDoc.course as string) || (mDoc.programme as string) || 'General Member',
             level: (mDoc.level as string) || 'Active',
             division: (mDoc.pathway as any) || 'student_finance',
             status: 'active' as const,
