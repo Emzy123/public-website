@@ -3,197 +3,354 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AdminShell } from '@admin/components/AdminShell';
-import { ROLE_LABELS, type ApplicationRole } from '@/lib/types/membership';
-import type { RegistrationLink } from '@/lib/types/membership';
 
-type Application = {
-  _id: string;
-  pathway: string;
-  pathwayLabel?: string;
-  status: string;
-  submittedAt?: string;
-  reviewNote?: string;
-  sourceLinkName?: string;
-  sourceLinkSlug?: string;
-  data: Record<string, unknown>;
+type ApplicationItem = {
+  id: string;
+  campaignId: string | null;
+  campaignName: string | null;
+  userId: string | null;
+  universityId: string;
+  universityName: string;
+  universityShortName: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  programme: string;
+  level: string;
+  division: 'student_finance' | 'student_enterprise' | 'governance_records';
+  contributionPitch: string;
+  photoUrl: string;
+  status: 'submitted' | 'under_review' | 'approved' | 'rejected';
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewRemarks: string | null;
+  createdAt: string;
 };
 
-const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
-  pending: { label: 'Pending', classes: 'bg-amber-50 text-amber-700 border-amber-200' },
-  under_review: { label: 'Under Review', classes: 'bg-blue-50 text-blue-700 border-blue-200' },
-  approved: { label: 'Approved', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  declined: { label: 'Declined', classes: 'bg-red-50 text-red-700 border-red-200' },
-  active: { label: 'Active', classes: 'bg-green-50 text-green-700 border-green-200' },
+type ModeratorScope = {
+  id: string;
+  email: string;
+  roles: string[];
+  isGlobal: boolean;
+  scopedChapterIds: string[];
 };
-
-function maskEmail(email: string): string {
-  if (!email || !email.includes('@')) return email;
-  const [local, domain] = email.split('@');
-  if (local.length <= 2) return `${local[0]}***@${domain}`;
-  return `${local[0]}${local[1]}${'*'.repeat(Math.min(local.length - 2, 6))}@${domain}`;
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, classes: 'bg-[#f6f2e8] text-[#7b7263] border-[#e4dcc9]' };
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${cfg.classes}`}>
-      {cfg.label}
-    </span>
-  );
-}
-
-function pathwayDisplay(app: Application): string {
-  if (app.pathwayLabel) return app.pathwayLabel;
-  if (app.pathway in ROLE_LABELS) return ROLE_LABELS[app.pathway as ApplicationRole];
-  return app.pathway.replace(/-/g, ' ');
-}
-
-function detailsDisplay(app: Application): string {
-  const d = app.data;
-  if (app.pathway === 'investment') {
-    return `${String(d.tier || '—')} · ₦${Number(d.amount || 0).toLocaleString()}`;
-  }
-  if (app.pathway === 'partnership-interest' || d.role === 'partnership-interest') {
-    return String(d.organization || d.interestDescription || '—').slice(0, 60);
-  }
-  return `${String(d.role || app.pathway || '—')} · ${String(d.location || '—')}`;
-}
 
 export default function ApplicationsPageInner() {
   const searchParams = useSearchParams();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [links, setLinks] = useState<RegistrationLink[]>([]);
-  const [pathwayFilter, setPathwayFilter] = useState('all');
-  const [linkFilter, setLinkFilter] = useState(searchParams.get('linkId') || 'all');
+  const [applications, setApplications] = useState<ApplicationItem[]>([]);
+  const [moderator, setModerator] = useState<ModeratorScope | null>(null);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [divisionFilter, setDivisionFilter] = useState<string>('all');
+  const [universityFilter, setUniversityFilter] = useState<string>('all');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams();
-      if (pathwayFilter !== 'all') params.set('pathway', pathwayFilter);
-      if (linkFilter !== 'all') params.set('linkId', linkFilter);
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (divisionFilter !== 'all') params.set('division', divisionFilter);
+      if (universityFilter !== 'all') params.set('universityId', universityFilter);
+
       const qs = params.toString();
-      const response = await fetch(`/api/admin/applications${qs ? `?${qs}` : ''}`);
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to load applications');
+      const res = await fetch(`/api/admin/applications${qs ? `?${qs}` : ''}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to load applications');
+      }
+
       setApplications(data.applications || []);
-      setLinks(data.links || []);
+      setModerator(data.moderator || null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load applications');
+      setError(err instanceof Error ? err.message : 'Unable to load applications queue');
     } finally {
       setLoading(false);
     }
-  }, [pathwayFilter, linkFilter]);
+  }, [statusFilter, divisionFilter, universityFilter]);
 
   useEffect(() => {
-    void load();
+    load();
   }, [load]);
 
-  const pending = applications.filter((a) => a.status === 'pending').length;
+  const handleDecision = async (
+    applicationId: string,
+    decision: 'approve' | 'reject'
+  ) => {
+    let remarks: string | undefined;
+    if (decision === 'reject') {
+      const input = prompt('Enter rejection feedback or remarks for the applicant:');
+      if (input === null) return; // user cancelled
+      remarks = input.trim() || undefined;
+    }
+
+    setActionInProgress(applicationId);
+    try {
+      const res = await fetch(`/api/admin/applications/${applicationId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision, remarks }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Review action failed.');
+        return;
+      }
+
+      // Reload list
+      load();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Network error during review action.');
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return (
+          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
+            ✓ Approved & Active
+          </span>
+        );
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-800">
+            ✕ Rejected
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+            ● Pending Review
+          </span>
+        );
+    }
+  };
+
+  const getDivisionBadge = (division: string) => {
+    switch (division) {
+      case 'student_finance':
+        return (
+          <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+            Finance Division
+          </span>
+        );
+      case 'student_enterprise':
+        return (
+          <span className="rounded-md bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800">
+            Enterprise Division
+          </span>
+        );
+      default:
+        return (
+          <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+            Governance & Records
+          </span>
+        );
+    }
+  };
 
   return (
-    <AdminShell title="Applications" description="Review campaign-link applications">
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-[#e4dcc9] bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[#7b7263]">Total</p>
-          <p className="mt-2 text-3xl font-semibold text-[#0d1a4a]">{applications.length}</p>
-        </div>
-        <div className="rounded-xl border border-[#e4dcc9] bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[#7b7263]">Pending Review</p>
-          <p className={`mt-2 text-3xl font-semibold ${pending > 0 ? 'text-[#d9711b]' : 'text-[#0d1a4a]'}`}>{pending}</p>
-        </div>
-        <div className="rounded-xl border border-[#e4dcc9] bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wider text-[#7b7263]">Active Links</p>
-          <p className="mt-2 text-3xl font-semibold text-[#0d1a4a]">{links.filter((l) => l.status === 'open').length}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#f7f5f0] text-slate-800">
+      {/* Top Admin Navbar */}
+      <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="text-xs font-semibold uppercase tracking-wider text-amber-700 hover:text-amber-800"
+            >
+              ← Admin Home
+            </Link>
+            <span className="text-slate-300">•</span>
+            <span className="text-sm font-bold text-[#071026]">Student Admissions Review Queue</span>
+          </div>
 
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+          <div className="flex items-center gap-3">
+            {moderator && (
+              <span className="hidden text-xs text-slate-500 sm:inline">
+                {moderator.isGlobal ? 'Global Admin' : 'Chapter Lead Moderator'}: {moderator.email}
+              </span>
+            )}
+            <Link
+              href="/admin/audit"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Audit Log →
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      <div className="mb-4 flex flex-wrap gap-3">
-        <select
-          value={linkFilter}
-          onChange={(e) => setLinkFilter(e.target.value)}
-          className="rounded-lg border border-[#e4dcc9] bg-white px-3 py-2 text-sm"
-        >
-          <option value="all">All links</option>
-          {links.map((l) => (
-            <option key={l._id} value={l._id}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={pathwayFilter}
-          onChange={(e) => setPathwayFilter(e.target.value)}
-          className="rounded-lg border border-[#e4dcc9] bg-white px-3 py-2 text-sm"
-        >
-          <option value="all">All roles</option>
-          {Object.entries(ROLE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-          <option value="investment">Investment (legacy)</option>
-          <option value="get-involved">Get Involved (legacy)</option>
-        </select>
-      </div>
+      {/* Main Content */}
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-10">
+        {/* Banner */}
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-amber-700">
+              Student Investment Network • Kogi Campuses Pilot
+            </p>
+            <h1 className="mt-1 text-2xl font-black tracking-tight text-[#071026] sm:text-3xl">
+              Member Applications Queue
+            </h1>
+            <p className="mt-1 text-xs text-slate-600 sm:text-sm">
+              Review and moderate incoming student member applications. Approving an applicant provisions
+              their role, assigns their campus chapter, and mints their digital Member ID.
+            </p>
+          </div>
 
-      <div className="rounded-xl border border-[#e4dcc9] bg-white overflow-hidden">
-        {loading ? (
-          <div className="py-16 text-center text-sm text-[#7b7263]">Loading applications…</div>
-        ) : applications.length === 0 ? (
-          <div className="py-16 text-center text-sm text-[#7b7263]">No applications match this filter.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] text-left text-sm">
-              <thead className="border-b border-[#e4dcc9] bg-[#f9f7f2]">
-                <tr>
-                  {['Applicant', 'Role', 'Source Link', 'Details', 'Submitted', 'Status', ''].map((h) => (
-                    <th key={h} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#7b7263]">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0eae0]">
-                {applications.map((app) => {
-                  const d = app.data;
-                  return (
-                    <tr key={app._id} className="hover:bg-[#f9f7f2]">
-                      <td className="px-5 py-4">
-                        <p className="font-semibold text-[#0d1a4a]">{String(d.fullName || '—')}</p>
-                        <p className="text-xs text-[#7b7263]">{maskEmail(String(d.email || ''))}</p>
-                      </td>
-                      <td className="px-5 py-4 capitalize text-[#0d1a4a]">{pathwayDisplay(app)}</td>
-                      <td className="px-5 py-4 text-xs text-[#7b7263]">{app.sourceLinkName || '—'}</td>
-                      <td className="px-5 py-4 text-[#7b7263]">{detailsDisplay(app)}</td>
-                      <td className="px-5 py-4 text-xs text-[#7b7263]">
-                        {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-5 py-4">
-                        <StatusBadge status={app.status} />
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <Link
-                          href={`/admin/applications/${app._id}`}
-                          className="text-xs font-semibold text-[#d9711b] hover:underline"
-                        >
-                          Review →
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <button
+            onClick={load}
+            disabled={loading}
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            {loading ? 'Refreshing…' : '↻ Refresh Queue'}
+          </button>
+        </div>
+
+        {/* Filters Bar */}
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="mt-1 rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-800 outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="submitted">Pending Review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Division
+            </label>
+            <select
+              value={divisionFilter}
+              onChange={(e) => setDivisionFilter(e.target.value)}
+              className="mt-1 rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-800 outline-none"
+            >
+              <option value="all">All Divisions</option>
+              <option value="student_finance">Student Finance</option>
+              <option value="student_enterprise">Student Enterprise</option>
+              <option value="governance_records">Governance & Records</option>
+            </select>
+          </div>
+
+          <div className="ml-auto text-xs font-semibold text-slate-500 self-end py-2">
+            Showing {applications.length} applications
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800">
+            {error}
           </div>
         )}
-      </div>
-    </AdminShell>
+
+        {/* Applications List */}
+        <div className="space-y-4">
+          {applications.map((app) => {
+            const isProcessing = actionInProgress === app.id;
+            const isPending = app.status === 'submitted' || app.status === 'under_review';
+
+            return (
+              <div
+                key={app.id}
+                className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-slate-300"
+              >
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-900">
+                        {app.universityShortName}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      {getDivisionBadge(app.division)}
+                      <span className="text-slate-300">•</span>
+                      {getStatusBadge(app.status)}
+                    </div>
+
+                    <h3 className="mt-2 text-lg font-bold text-[#071026]">{app.fullName}</h3>
+                    <p className="text-xs text-slate-500">
+                      {app.email} • {app.phone}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-700">
+                      {app.programme} ({app.level} Level) • {app.universityName}
+                    </p>
+                  </div>
+
+                  {/* Actions for Pending Applications */}
+                  {isPending && (
+                    <div className="flex items-center gap-2 sm:self-start">
+                      <button
+                        onClick={() => handleDecision(app.id, 'approve')}
+                        disabled={isProcessing}
+                        className="inline-flex min-h-[38px] items-center rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                      >
+                        {isProcessing ? 'Processing…' : '✓ Approve & Mint ID'}
+                      </button>
+                      <button
+                        onClick={() => handleDecision(app.id, 'reject')}
+                        disabled={isProcessing}
+                        className="inline-flex min-h-[38px] items-center rounded-xl border border-rose-300 bg-rose-50 px-3.5 text-xs font-bold text-rose-800 transition hover:bg-rose-100 disabled:opacity-50"
+                      >
+                        ✕ Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pitch Statement */}
+                <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4 text-xs leading-relaxed text-slate-700">
+                  <span className="font-bold text-slate-900">Interest / Contribution Pitch:</span>{' '}
+                  {app.contributionPitch}
+                </div>
+
+                {/* Timestamp & Review metadata */}
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400">
+                  <span>
+                    Submitted on{' '}
+                    {new Date(app.createdAt).toLocaleDateString('en-GB', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                  {app.reviewedAt && (
+                    <span>
+                      Reviewed on {new Date(app.reviewedAt).toLocaleDateString()}
+                      {app.reviewRemarks ? ` — Remarks: "${app.reviewRemarks}"` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {applications.length === 0 && !loading && (
+            <div className="my-12 rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-xs text-slate-500">
+              No applications in the queue matching the selected filters.
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
