@@ -40,20 +40,28 @@ export async function POST(request: NextRequest) {
 
     const validated = ContactSchema.parse(body);
     const db = await getMongoDb();
+    const isTest =
+      validated.email.toLowerCase() === 'test@example.com' ||
+      validated.email.toLowerCase().endsWith('@example.com') ||
+      validated.message.toLowerCase().includes('production smoke test');
 
-    await db.collection('contactMessages').insertOne({
+    const result = await db.collection('contactMessages').insertOne({
       name: validated.name,
       email: validated.email,
+      topic: validated.topic || 'General',
       subject: validated.subject,
       message: validated.message,
+      isTest,
       createdAt: new Date(),
     });
+
+    const referenceId = `SNT-${String(result.insertedId).slice(-6).toUpperCase()}`;
 
     try {
       await sendContactNotification({
         name: validated.name,
         email: validated.email,
-        subject: validated.subject,
+        subject: `[${validated.topic}] ${validated.subject}`,
         message: validated.message,
       });
     } catch (error) {
@@ -65,13 +73,13 @@ export async function POST(request: NextRequest) {
         type: 'contact',
         name: validated.name,
         email: validated.email,
-        subject: validated.subject,
+        subject: `[${validated.topic}] ${validated.subject}`,
       });
     } catch (error) {
       console.warn('Admin submission alert failed:', error);
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, referenceId });
   } catch (error: unknown) {
     console.error('Contact API error:', error);
     if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {

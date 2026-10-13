@@ -1,17 +1,43 @@
 'use client';
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ContactSchema, ContactFormData } from '@/lib/schemas/contact.schema';
+import { useSearchParams } from 'next/navigation';
+import {
+  ContactSchema,
+  CONTACT_TOPICS,
+  normalizeContactTopic,
+  type ContactFormData,
+} from '@/lib/schemas/contact.schema';
 import { Button } from '../ui/Button';
 import { trackEvent } from '@/lib/analytics';
 
 export function ContactForm() {
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const searchParams = useSearchParams();
+  const initialTopic = normalizeContactTopic(searchParams?.get('topic'));
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ContactFormData>({
-    resolver: zodResolver(ContactSchema)
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [referenceId, setReferenceId] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(ContactSchema) as any,
+    defaultValues: {
+      topic: initialTopic,
+    },
   });
+
+  useEffect(() => {
+    if (searchParams?.get('topic')) {
+      setValue('topic', normalizeContactTopic(searchParams.get('topic')));
+    }
+  }, [searchParams, setValue]);
 
   const onSubmit = async (data: ContactFormData) => {
     setStatus('loading');
@@ -21,30 +47,56 @@ export function ContactForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, website: '' }),
       });
+      const result = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err?.message || 'Failed to send message');
+        throw new Error(result?.message || 'Failed to send message');
       }
+      setReferenceId(result.referenceId || null);
       setStatus('success');
-      trackEvent('contact_submit', { subject: data.subject });
+      trackEvent('contact_submit', { subject: data.subject, topic: data.topic });
       reset();
-    } catch (err) {
+    } catch {
       setStatus('error');
     }
   };
 
   if (status === 'success') {
     return (
-      <div className="bg-green-50 text-green-800 p-6 rounded-xl border border-green-200 text-center shadow-sm">
-        <h3 className="text-xl font-bold mb-2">Message Sent!</h3>
-        <p>Thank you for reaching out. A member of our team will get back to you shortly.</p>
-        <Button variant="ghost" className="mt-4 border border-green-300" onClick={() => setStatus('idle')}>Send another message</Button>
+      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/50 p-6 md:p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h3 className="text-2xl font-extrabold text-emerald-950">Inquiry Sent Successfully!</h3>
+        {referenceId && (
+          <div className="mt-4 inline-block rounded-xl border border-emerald-600/30 bg-white px-5 py-3 shadow-xs">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Inquiry Reference ID</p>
+            <p className="font-mono text-xl font-black text-[#0d1a4a]">{referenceId}</p>
+          </div>
+        )}
+        <p className="mt-4 text-sm leading-relaxed text-emerald-900 max-w-md mx-auto">
+          Thank you for reaching out to SINet. Please keep your Reference ID handy if you need to follow up with our team.
+        </p>
+        <Button
+          variant="ghost"
+          className="mt-6 border border-emerald-300 text-emerald-900 hover:bg-emerald-100"
+          onClick={() => {
+            setReferenceId(null);
+            setStatus('idle');
+          }}
+        >
+          Send another inquiry
+        </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg border border-slate-100">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full rounded-2xl border border-[#0d1a4a]/15 bg-white p-6 shadow-sm md:p-8"
+    >
       <div className="space-y-4 mb-6">
         <input
           type="text"
@@ -53,76 +105,124 @@ export function ContactForm() {
           className="hidden"
           {...register('website')}
         />
+
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Name *</label>
+          <label htmlFor="topic" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
+            Inquiry Topic *
+          </label>
+          <select
+            id="topic"
+            className="w-full rounded-xl border border-[#0d1a4a]/20 bg-[#fbf9f4] px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:border-[#d9711b] focus:ring-1 focus:ring-[#d9711b]"
+            disabled={status === 'loading'}
+            {...register('topic')}
+          >
+            {CONTACT_TOPICS.map((topic) => (
+              <option key={topic} value={topic}>
+                {topic}
+              </option>
+            ))}
+          </select>
+          {errors.topic && <p className="mt-1 text-xs text-rose-600">{errors.topic.message}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
+            Full Name *
+          </label>
           <input
             id="name"
             type="text"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
+            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
+              errors.name
+                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
+                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
+            }`}
             aria-invalid={errors.name ? 'true' : 'false'}
             aria-describedby={errors.name ? 'name-error' : undefined}
             disabled={status === 'loading'}
+            placeholder="e.g. Samuel Adekunle"
             {...register('name')}
           />
-          {errors.name && <p id="name-error" className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
+          {errors.name && <p id="name-error" className="mt-1 text-xs text-rose-600">{errors.name.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email Address *</label>
+          <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
+            Email Address *
+          </label>
           <input
             id="email"
             type="email"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
+            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
+              errors.email
+                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
+                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
+            }`}
             aria-invalid={errors.email ? 'true' : 'false'}
             aria-describedby={errors.email ? 'email-error' : undefined}
             disabled={status === 'loading'}
+            placeholder="you@domain.com"
             {...register('email')}
           />
-          {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
+          {errors.email && <p id="email-error" className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="subject" className="block text-sm font-medium text-slate-700 mb-1">Subject *</label>
+          <label htmlFor="subject" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
+            Subject *
+          </label>
           <input
             id="subject"
             type="text"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.subject ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
+            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
+              errors.subject
+                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
+                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
+            }`}
             aria-invalid={errors.subject ? 'true' : 'false'}
             aria-describedby={errors.subject ? 'subject-error' : undefined}
             disabled={status === 'loading'}
+            placeholder="Brief summary of inquiry"
             {...register('subject')}
           />
-          {errors.subject && <p id="subject-error" className="mt-1 text-sm text-red-600">{errors.subject.message}</p>}
+          {errors.subject && <p id="subject-error" className="mt-1 text-xs text-rose-600">{errors.subject.message}</p>}
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">Message *</label>
+          <label htmlFor="message" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
+            Message *
+          </label>
           <textarea
             id="message"
             rows={5}
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.message ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
+            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
+              errors.message
+                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
+                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
+            }`}
             aria-invalid={errors.message ? 'true' : 'false'}
             aria-describedby={errors.message ? 'message-error' : undefined}
             disabled={status === 'loading'}
+            placeholder="Provide context, details, and how we can assist you..."
             {...register('message')}
           />
-          {errors.message && <p id="message-error" className="mt-1 text-sm text-red-600">{errors.message.message}</p>}
+          {errors.message && <p id="message-error" className="mt-1 text-xs text-rose-600">{errors.message.message}</p>}
         </div>
       </div>
 
       {status === 'error' && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
-          Failed to send message. Please try again later.
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-semibold text-rose-700">
+          Failed to send message. Please verify your connection and try again.
         </div>
       )}
 
-      <Button 
-        type="submit" 
+      <button
+        type="submit"
         disabled={status === 'loading'}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0 py-4"
+        className="w-full rounded-xl bg-[#0d1a4a] py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#d9711b] disabled:opacity-50"
       >
-        {status === 'loading' ? 'Sending...' : 'Send Message'}
-      </Button>
+        {status === 'loading' ? 'Sending Message…' : 'Send Inquiry →'}
+      </button>
     </form>
   );
 }
