@@ -18,31 +18,32 @@ export function Footer({ settings }: FooterProps) {
     ['What We Do', '/sectors'],
     ...(FEATURE_FLAGS.showProducts ? [['Products', '/products']] : []),
     ['Gallery', '/gallery'],
-    ...(FEATURE_FLAGS.showNews ? [['News & Updates', '/news']] : []),
+    ...(FEATURE_FLAGS.showNews ? [['News', '/news']] : []),
   ];
 
   const communityLinks = [
     ['About & Leadership', '/about'],
-    ['Membership', '/membership'],
-    ['Join SINet', '/join'],
     ['Campus Chapters', '/chapters'],
-    ['Student Member Portal', '/portal'],
-    ['Verify Credential', '/verify'],
     ['Student Network', '/student-network'],
-    ...(FEATURE_FLAGS.showPartners ? [['Partners', '/partners']] : []),
-    ['Contact', '/contact'],
+    ['Academy', '/academy'],
+    ['Membership', '/membership'],
+  ];
+
+  const membersLinks = [
+    ['Sign in', '/sign-in'],
+    ['Verify credential', '/verify'],
+  ];
+
+  const legalLinks = [
+    ['Privacy Policy', '/privacy'],
+    ['Terms of Service', '/terms'],
   ];
 
   const columns = [
     { title: 'Explore', links: exploreLinks },
     { title: 'Community', links: communityLinks },
-    {
-      title: 'Legal',
-      links: [
-        ['Privacy Policy', '/privacy'],
-        ['Terms of Service', '/terms'],
-      ],
-    },
+    { title: 'Members', links: membersLinks },
+    { title: 'Legal', links: legalLinks },
   ];
 
   const customSocial = {
@@ -70,7 +71,7 @@ export function Footer({ settings }: FooterProps) {
           />
         </div>
       </div>
-      <div className="mx-auto grid max-w-[1380px] gap-8 px-4 py-10 xs:gap-10 xs:px-5 xs:py-12 md:grid-cols-2 lg:grid-cols-[1.35fr_repeat(3,1fr)] lg:px-8">
+      <div className="mx-auto grid max-w-[1380px] gap-8 px-4 py-10 xs:gap-10 xs:px-5 xs:py-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.35fr_repeat(4,1fr)] lg:px-8">
         <div className="max-w-[285px] text-sm leading-6 text-[#c7cad9]">
           <p>{brandCopy}</p>
           {contact?.address && (

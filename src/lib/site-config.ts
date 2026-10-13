@@ -79,11 +79,17 @@ export const SOCIAL_LINKS: readonly SocialLinkItem[] = [
   },
 ] as const;
 
+export interface PrimaryNavItem {
+  label: string;
+  href?: string;
+  children?: { label: string; href: string }[];
+}
+
 /**
  * Dynamically filtered primary navigation based on feature flags.
  */
-export function getPrimaryNav(): { label: string; href: string }[] {
-  const nav = [
+export function getPrimaryNav(): PrimaryNavItem[] {
+  const nav: PrimaryNavItem[] = [
     { label: 'About', href: '/about' },
     { label: 'What We Do', href: '/sectors' },
   ];
@@ -103,9 +109,14 @@ export function getPrimaryNav(): { label: string; href: string }[] {
   }
 
   nav.push(
-    { label: 'Campus Chapters', href: '/chapters' },
-    { label: 'Student Network', href: '/student-network' },
-    { label: 'Membership', href: '/membership' },
+    {
+      label: 'Community',
+      children: [
+        { label: 'Campus Chapters', href: '/chapters' },
+        { label: 'Student Network', href: '/student-network' },
+        { label: 'Academy', href: '/academy' },
+      ],
+    },
     { label: 'Contact', href: '/contact' }
   );
 

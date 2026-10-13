@@ -37,7 +37,7 @@ describe('Admin Route Guards & Middleware Security', () => {
     const memberToken = await createSessionToken({
       userId: 'usr-12345',
       email: 'student@fulokoja.edu.ng',
-      roles: ['student'],
+      roles: ['member'],
       chapterIds: ['chapter-1'],
       is2faAuthenticated: false,
     });

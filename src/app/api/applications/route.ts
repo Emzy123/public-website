@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { issueCsrfToken } from '@/lib/security/csrf-handler';
+import { getActiveMembershipApplication } from '@/lib/applications/active-link';
 
 export const runtime = 'nodejs';
 
-/** Registration is admin-controlled via campaign links — no open walk-up submissions. */
-export async function GET(request: NextRequest) {
-  return issueCsrfToken(request);
+/** Registration is admin-controlled via campaign links — checks active campaign status. */
+export async function GET(_request: NextRequest) {
+  const target = await getActiveMembershipApplication();
+  return NextResponse.json({
+    active: target.status === 'open',
+    url: target.status === 'open' ? target.url : null,
+    slug: target.status === 'open' ? target.slug : null,
+    name: target.status === 'open' ? target.name : null,
+  });
 }
 
 export async function POST(_request: NextRequest) {
