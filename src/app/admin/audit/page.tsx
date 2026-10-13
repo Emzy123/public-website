@@ -1,23 +1,23 @@
 import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth/session';
-import { isGlobalAdmin } from '@/lib/auth/roles';
 import { db } from '@/lib/db';
 import { auditLog } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { AuditLogClient } from './AuditLogClient';
 
+/**
+ * Security Audit Log page.
+ *
+ * Route guard: handled entirely by middleware.ts which checks the admin JWT
+ * (sinet_admin_session) and redirects to /admin/login?next=... when absent.
+ * We must NOT call getSession() here — that reads the MEMBER cookie and would
+ * incorrectly redirect authenticated admins to the public /sign-in page.
+ */
 export const metadata: Metadata = {
-  title: 'Institutional Audit Log — Admin Panel',
-  description: 'Cryptographic immutable record of administrative actions and review decisions.',
+  title: 'Security Audit Log — Admin',
+  description: 'Immutable record of administrative actions and review decisions.',
 };
 
 export default async function AdminAuditPage() {
-  const session = await getSession();
-  if (!session || !isGlobalAdmin(session.roles)) {
-    redirect('/sign-in');
-  }
-
   const rawLogs = await db
     .select()
     .from(auditLog)
