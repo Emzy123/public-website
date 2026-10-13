@@ -7,30 +7,73 @@ export interface CorePillar {
   description: string;
 }
 
+/**
+ * Single config object defining the official pillars, their subsectors/keywords,
+ * and cross-pillar functional leadership mappings.
+ */
+export const PILLAR_MAPPING = {
+  pillars: {
+    agriculture: {
+      id: 'agriculture' as const,
+      name: 'Agriculture',
+      shortName: 'Agriculture',
+      description: 'Crop cycles, agro-allied commerce, food processing, and farm-to-market systems.',
+      subsectors: ['Agriculture', 'Food & Processing'],
+      keywords: ['agri', 'farm', 'food', 'processing', 'crop', 'agro'],
+    },
+    'trade-distribution': {
+      id: 'trade-distribution' as const,
+      name: 'Trade & Goods Distribution',
+      shortName: 'Trade & Distribution',
+      description: 'Active goods trade, fashion, creative enterprise, wholesale distribution, and retail operations.',
+      subsectors: ['Trade & Goods Distribution', 'Fashion & Creative'],
+      keywords: ['trade', 'distribut', 'fashion', 'creative', 'retail', 'wholesale', 'merchandis'],
+    },
+    'real-estate': {
+      id: 'real-estate' as const,
+      name: 'Real Estate',
+      shortName: 'Real Estate',
+      description: 'Student living communities, logistics hubs, property marketing, and long-term land acquisition.',
+      subsectors: ['Real Estate'],
+      keywords: ['estate', 'property', 'housing', 'hostel', 'land'],
+    },
+  },
+  crossPillar: {
+    tech: {
+      label: 'Cross-Pillar: Tech & Innovation',
+      keywords: ['tech', 'innovation', 'software', 'systems'],
+    },
+    socialImpact: {
+      label: 'Cross-Pillar: Social Impact',
+      keywords: ['social', 'impact', 'branding', 'media', 'community'],
+    },
+  },
+} as const;
+
 export const CORE_PILLARS: CorePillar[] = [
   {
-    id: 'agriculture',
-    name: 'Agriculture',
-    shortName: 'Agriculture',
-    description: 'Crop cycles, agro-allied commerce, and farm-to-market systems.',
+    id: PILLAR_MAPPING.pillars.agriculture.id,
+    name: PILLAR_MAPPING.pillars.agriculture.name,
+    shortName: PILLAR_MAPPING.pillars.agriculture.shortName,
+    description: PILLAR_MAPPING.pillars.agriculture.description,
   },
   {
-    id: 'trade-distribution',
-    name: 'Trade & Goods Distribution',
-    shortName: 'Trade & Distribution',
-    description: 'Active goods trade, wholesale distribution, and commercial retail operations.',
+    id: PILLAR_MAPPING.pillars['trade-distribution'].id,
+    name: PILLAR_MAPPING.pillars['trade-distribution'].name,
+    shortName: PILLAR_MAPPING.pillars['trade-distribution'].shortName,
+    description: PILLAR_MAPPING.pillars['trade-distribution'].description,
   },
   {
-    id: 'real-estate',
-    name: 'Real Estate',
-    shortName: 'Real Estate',
-    description: 'Student living communities, logistics hubs, and long-term land acquisition.',
+    id: PILLAR_MAPPING.pillars['real-estate'].id,
+    name: PILLAR_MAPPING.pillars['real-estate'].name,
+    shortName: PILLAR_MAPPING.pillars['real-estate'].shortName,
+    description: PILLAR_MAPPING.pillars['real-estate'].description,
   },
 ];
 
 /**
  * Maps a single legacy tag/sector string to either one of the 3 official pillars
- * or a cross-pillar / functional leadership designation.
+ * or a cross-pillar / functional leadership designation according to PILLAR_MAPPING.
  */
 export function mapLegacyTagToPillar(rawTag: string): {
   isPillar: boolean;
@@ -40,29 +83,51 @@ export function mapLegacyTagToPillar(rawTag: string): {
   const trimmed = rawTag.trim();
   const lower = trimmed.toLowerCase();
 
-  if (lower.includes('agri')) {
-    return { isPillar: true, label: 'Agriculture', pillarId: 'agriculture' };
-  }
+  // 1. Agriculture: Agriculture + Food & Processing
   if (
-    lower.includes('trade') ||
-    lower.includes('distribut') ||
-    lower.includes('food') ||
-    lower.includes('processing') ||
-    lower.includes('fashion') ||
-    lower.includes('creative')
+    PILLAR_MAPPING.pillars.agriculture.keywords.some((kw) => lower.includes(kw))
   ) {
-    return { isPillar: true, label: 'Trade & Goods Distribution', pillarId: 'trade-distribution' };
-  }
-  if (lower.includes('estate') || lower.includes('property') || lower.includes('housing') || lower.includes('hostel')) {
-    return { isPillar: true, label: 'Real Estate', pillarId: 'real-estate' };
+    return {
+      isPillar: true,
+      label: PILLAR_MAPPING.pillars.agriculture.name,
+      pillarId: 'agriculture',
+    };
   }
 
-  // Tags that do not map to the 3 commercial pillars represent cross-pillar functional leadership:
-  if (lower.includes('tech') || lower.includes('innovation') || lower.includes('software')) {
-    return { isPillar: false, label: 'Cross-Pillar: Tech & Systems' };
+  // 2. Trade & Goods Distribution: Fashion & Creative (+ Trade/Distribution)
+  if (
+    PILLAR_MAPPING.pillars['trade-distribution'].keywords.some((kw) => lower.includes(kw))
+  ) {
+    return {
+      isPillar: true,
+      label: PILLAR_MAPPING.pillars['trade-distribution'].name,
+      pillarId: 'trade-distribution',
+    };
   }
-  if (lower.includes('social') || lower.includes('impact') || lower.includes('branding') || lower.includes('media')) {
-    return { isPillar: false, label: 'Cross-Pillar: Brand & Impact' };
+
+  // 3. Real Estate: Real Estate
+  if (
+    PILLAR_MAPPING.pillars['real-estate'].keywords.some((kw) => lower.includes(kw))
+  ) {
+    return {
+      isPillar: true,
+      label: PILLAR_MAPPING.pillars['real-estate'].name,
+      pillarId: 'real-estate',
+    };
+  }
+
+  // 4. Cross-Pillar: Tech & Innovation
+  if (
+    PILLAR_MAPPING.crossPillar.tech.keywords.some((kw) => lower.includes(kw))
+  ) {
+    return { isPillar: false, label: PILLAR_MAPPING.crossPillar.tech.label };
+  }
+
+  // 5. Cross-Pillar: Social Impact
+  if (
+    PILLAR_MAPPING.crossPillar.socialImpact.keywords.some((kw) => lower.includes(kw))
+  ) {
+    return { isPillar: false, label: PILLAR_MAPPING.crossPillar.socialImpact.label };
   }
 
   return { isPillar: false, label: trimmed };
