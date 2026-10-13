@@ -33,6 +33,7 @@ describe('Contact Topics and Schema', () => {
       topic: 'Partnership',
       subject: 'Collaboration opportunity',
       message: 'We would love to partner with SINet on agricultural commerce.',
+      csrfToken: 'test-csrf-token',
     });
     expect(valid.success).toBe(true);
     if (valid.success) {
@@ -46,6 +47,7 @@ describe('Contact Topics and Schema', () => {
       email: 'john@example.com',
       subject: 'Inquiry',
       message: 'Hello, I have a quick question about SINet.',
+      csrfToken: 'test-csrf-token',
     });
     expect(valid.success).toBe(true);
     if (valid.success) {
