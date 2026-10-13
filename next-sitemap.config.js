@@ -3,5 +3,14 @@ module.exports = {
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.sinet.africa',
   generateRobotsTxt: false,
   outDir: 'public',
-  exclude: ['/blueprint', '/transparency', '/admin/*', '/portal/*'],
+  exclude: [
+    '/blueprint',
+    '/transparency',
+    '/empires',
+    '/impact',
+    '/waitlist',
+    '/connect',
+    '/admin/*',
+    '/portal/*',
+  ],
 };

@@ -33,6 +33,26 @@ const nextConfig = {
         destination: '/sectors',
         permanent: true,
       },
+      {
+        source: '/empires',
+        destination: '/sectors',
+        permanent: true,
+      },
+      {
+        source: '/impact',
+        destination: '/about',
+        permanent: true,
+      },
+      {
+        source: '/waitlist',
+        destination: '/membership',
+        permanent: true,
+      },
+      {
+        source: '/connect',
+        destination: '/contact',
+        permanent: true,
+      },
     ];
   },
   async headers() {

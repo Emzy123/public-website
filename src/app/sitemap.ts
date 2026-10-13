@@ -16,11 +16,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/partners`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${baseUrl}/student-network`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${baseUrl}/contact`, lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${baseUrl}/impact`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${baseUrl}/empires`, lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
     { url: `${baseUrl}/academy`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/waitlist`, lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
-    { url: `${baseUrl}/connect`, lastModified: now, changeFrequency: 'monthly', priority: 0.55 },
     { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
     { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
   ];
