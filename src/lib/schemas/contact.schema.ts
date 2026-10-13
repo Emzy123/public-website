@@ -30,7 +30,7 @@ export const ContactSchema = z.object({
   topic: z.enum(CONTACT_TOPICS).default('General'),
   subject: z.string().min(1, 'Subject is required'),
   message: z.string().min(10, 'Message must be at least 10 characters'),
-  csrfToken: z.string().optional(),
+  csrfToken: z.string().min(1, 'Security verification failed'),
   website: z.string().max(0).optional(),
 });
 
