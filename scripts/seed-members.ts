@@ -1,5 +1,5 @@
 import { db } from '../src/lib/db';
-import { universities, chapters, badges } from '../src/lib/db/schema';
+import { universities, chapters, badges, campaigns } from '../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const KOGI_UNIVERSITIES = [
@@ -133,6 +133,54 @@ export async function seedMembersDatabase() {
     if (!existingBadge) {
       await db.insert(badges).values(badgeData);
       console.log(`+ Badge created: ${badgeData.name} (${badgeData.id})`);
+    }
+  }
+
+  console.log('Seeding initial campaigns...');
+  const INITIAL_CAMPAIGNS = [
+    {
+      slug: 'student-network',
+      name: 'Student Investment Network — Membership (Evergreen)',
+      description: 'Always-open entry pathway into the Student Investment Network. Join your campus chapter and select your student division: Student Finance, Student Enterprise, or Governance & Records.',
+      targetRole: 'member' as const,
+      status: 'active' as const,
+      seatLimit: null,
+    },
+    {
+      slug: 'campus-ambassadors-2026',
+      name: 'Campus Ambassador Cohort 2026 / 2027',
+      description: 'Official student chapter leadership drive across tertiary institutions in Kogi State. Lead your campus chapter, organize events, and represent SINet.',
+      targetRole: 'chapter_lead' as const,
+      status: 'active' as const,
+      seatLimit: 50,
+    },
+    {
+      slug: 'student-enterprise-fellows',
+      name: 'Student Enterprise Innovation Fellows',
+      description: 'Specialized 12-week venture incubation and entrepreneurship sprint for student founders within the Student Enterprise division.',
+      targetRole: 'member' as const,
+      status: 'active' as const,
+      seatLimit: 30,
+    },
+    {
+      slug: 'finance-analysts-cohort-1',
+      name: 'Student Finance Research Analysts (Cohort 1)',
+      description: 'First cohort for student capital market analysts and financial modeling fellows. Currently closed.',
+      targetRole: 'member' as const,
+      status: 'closed' as const,
+      seatLimit: 25,
+    },
+  ];
+
+  for (const campaignData of INITIAL_CAMPAIGNS) {
+    const [existingCampaign] = await db
+      .select()
+      .from(campaigns)
+      .where(eq(campaigns.slug, campaignData.slug));
+
+    if (!existingCampaign) {
+      await db.insert(campaigns).values(campaignData);
+      console.log(`+ Campaign created: ${campaignData.name} (/join/${campaignData.slug}) [${campaignData.status}]`);
     }
   }
 

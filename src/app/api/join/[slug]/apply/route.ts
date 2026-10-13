@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { campaignApplicationSchema } from '@/lib/schemas/application.schema';
+import { memberApplicationSchema } from '@/lib/schemas/member-application.schema';
 import { waitlistSchema } from '@/lib/schemas/registration-link.schema';
 import { issueCsrfToken } from '@/lib/security/csrf-handler';
 import { getClientIp } from '@/lib/security/rate-limit-unified';
@@ -10,6 +11,11 @@ import { isDevelopmentMode } from '@/lib/runtime/envMode';
 import { sendApplicationReceivedEmail } from '@/lib/email/application-mail';
 import { attachDocumentsToApplication } from '@/lib/applications/document-storage';
 import { getRoleDefinition } from '@/lib/applications/role-definitions';
+import {
+  getCampaignBySlug,
+  addCampaignWaitlist,
+  submitCampaignApplication,
+} from '@/lib/applications/campaigns';
 import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
@@ -26,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
   const blocked = await enforcePublicFormGuards(request, {
     routeKey: 'applications',
     rateLimitPrefix: 'join-applications',
-    maxRequests: 5,
+    maxRequests: 10,
     windowSeconds: 15 * 60,
   });
   if (blocked) return blocked;
@@ -38,10 +44,64 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       return NextResponse.json({ success: true, applicationId: 'ok' }, { status: 201 });
     }
 
+    // 1. Check if campaign exists in PostgreSQL
+    const campaignInfo = await getCampaignBySlug(params.slug);
+
+    if (campaignInfo) {
+      // Handle Waitlist submission for closed/active Postgres campaigns
+      if (body?.waitlist === true) {
+        const parsed = waitlistSchema.safeParse(body);
+        if (!parsed.success) {
+          return NextResponse.json(
+            { error: 'Please provide a valid email address.', issues: parsed.error.flatten() },
+            { status: 400 }
+          );
+        }
+
+        await addCampaignWaitlist(campaignInfo.campaign.id, parsed.data.email);
+        return NextResponse.json({
+          success: true,
+          message: 'You have been added to the notification waitlist.',
+        });
+      }
+
+      // Handle Application submission
+      const parsed = memberApplicationSchema.safeParse(body);
+      if (!parsed.success) {
+        return NextResponse.json(
+          {
+            error: 'Please review the highlighted application fields.',
+            issues: parsed.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      try {
+        const result = await submitCampaignApplication(params.slug, parsed.data);
+        return NextResponse.json(
+          {
+            success: true,
+            applicationId: result.applicationId,
+            campaignName: result.campaignName,
+            message: 'Your application has been received and is under review.',
+          },
+          { status: 201 }
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Application submission failed';
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
+    }
+
+    // 2. Legacy MongoDB fallback
     if (body?.waitlist === true) {
       const parsed = waitlistSchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json({ error: 'Please provide a valid email.', issues: parsed.error.flatten() }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Please provide a valid email.', issues: parsed.error.flatten() },
+          { status: 400 }
+        );
       }
 
       const db = await getMongoDb();
@@ -52,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       await db.collection(LINK_WAITLIST_COLLECTION).updateOne(
         { linkId: link._id, email },
         { $set: { email, linkId: link._id, capturedAt: new Date() } },
-        { upsert: true },
+        { upsert: true }
       );
 
       return NextResponse.json({ success: true });
@@ -60,7 +120,13 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
     const parsed = campaignApplicationSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Please review the highlighted application details.', issues: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: 'Please review the highlighted application details.',
+          issues: parsed.error.flatten(),
+        },
+        { status: 400 }
+      );
     }
 
     const data = parsed.data;
@@ -82,7 +148,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
     const submittedAt = new Date();
     const agreementText =
-      'I confirm that my details are accurate and agree to represent SINet\'s community values. This registration is subject to review before role assignment is confirmed.';
+      "I confirm that my details are accurate and agree to represent SINet's community values. This registration is subject to review before role assignment is confirmed.";
     const agreementMeta = {
       acceptedAt: submittedAt.toISOString(),
       version: 'community-code-of-conduct-v2',
@@ -126,7 +192,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
         $setOnInsert: { createdAt: submittedAt, status: 'pending' },
         $addToSet: { pathways: role },
       },
-      { upsert: true },
+      { upsert: true }
     );
 
     sendApplicationReceivedEmail({
@@ -139,6 +205,9 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
   } catch (error) {
     console.error('Campaign application submission error:', error);
     const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;
-    return NextResponse.json({ error: 'We could not save your application. Please try again.', ...(details ? { details } : {}) }, { status: 503 });
+    return NextResponse.json(
+      { error: 'We could not save your application. Please try again.', ...(details ? { details } : {}) },
+      { status: 503 }
+    );
   }
 }

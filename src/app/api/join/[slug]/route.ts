@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCampaignBySlug } from '@/lib/applications/campaigns';
 import { ObjectId } from 'mongodb';
 import { getMongoDb } from '@/lib/db/mongodb';
 import {
@@ -11,27 +12,62 @@ import { csrfProtect } from '@/lib/csrf';
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {
-    const db = await getMongoDb();
-    const link = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
-    if (!link) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
+    // 1. Check PostgreSQL campaigns first (Phase 1 source of truth)
+    const campaignInfo = await getCampaignBySlug(params.slug);
+    if (campaignInfo) {
+      const { campaign, isAccepting, statusReason, seatsRemaining } = campaignInfo;
+      const response = NextResponse.json({
+        campaign: {
+          id: campaign.id,
+          name: campaign.name,
+          slug: campaign.slug,
+          description: campaign.description,
+          targetRole: campaign.targetRole,
+          isAccepting,
+          statusReason,
+          seatsRemaining,
+          applicationCount: campaign.applicationCount,
+        },
+        link: {
+          name: campaign.name,
+          slug: campaign.slug,
+          roles: [campaign.targetRole],
+          accepting: isAccepting,
+          status: campaign.status,
+        },
+      });
+      await csrfProtect(request, response);
+      return response;
+    }
 
-    if (link.isOpen) await maybeAutoCloseLink(db, link as typeof link & { _id: ObjectId });
-    const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
-    const accepting = isLinkAcceptingApplications(refreshed!);
+    // 2. Fall back to legacy MongoDB registration links if present
+    try {
+      const db = await getMongoDb();
+      const link = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
+      if (link) {
+        if (link.isOpen) await maybeAutoCloseLink(db, link as typeof link & { _id: ObjectId });
+        const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
+        const accepting = isLinkAcceptingApplications(refreshed!);
 
-    const response = NextResponse.json({
-      link: {
-        name: refreshed!.name,
-        slug: refreshed!.slug,
-        roles: refreshed!.roles,
-        accepting,
-        status: serialiseRegistrationLink(refreshed!).status,
-      },
-    });
-    await csrfProtect(request, response);
-    return response;
+        const response = NextResponse.json({
+          link: {
+            name: refreshed!.name,
+            slug: refreshed!.slug,
+            roles: refreshed!.roles,
+            accepting,
+            status: serialiseRegistrationLink(refreshed!).status,
+          },
+        });
+        await csrfProtect(request, response);
+        return response;
+      }
+    } catch {
+      // Mongo optional fallback failed; proceed to 404
+    }
+
+    return NextResponse.json({ error: 'Registration campaign not found' }, { status: 404 });
   } catch (error) {
-    console.error('Public link lookup error:', error);
-    return NextResponse.json({ error: 'Unable to load registration link' }, { status: 503 });
+    console.error('Public campaign lookup error:', error);
+    return NextResponse.json({ error: 'Unable to load registration campaign' }, { status: 500 });
   }
 }
