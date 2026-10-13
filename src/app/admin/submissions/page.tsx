@@ -45,11 +45,13 @@ function Tab({
 
 function SubmissionCard({
   unread,
+  isTest,
   onToggleRead,
   toggling,
   children,
 }: {
   unread: boolean;
+  isTest?: boolean;
   onToggleRead: () => void;
   toggling: boolean;
   children: React.ReactNode;
@@ -61,13 +63,18 @@ function SubmissionCard({
       }`}
     >
       <div className="mb-3 flex items-center justify-between gap-2">
-        {unread ? (
-          <span className="rounded-full bg-[#d9a23c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0d1a4a]">
-            New
-          </span>
-        ) : (
-          <span />
-        )}
+        <div className="flex items-center gap-1.5">
+          {unread && (
+            <span className="rounded-full bg-[#d9a23c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0d1a4a]">
+              New
+            </span>
+          )}
+          {isTest && (
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
+              Test data
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={onToggleRead}
@@ -91,8 +98,10 @@ export default function SubmissionsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [showTest, setShowTest] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [markingTest, setMarkingTest] = useState(false);
   const [csrfToken, setCsrfToken] = useState('');
 
   const loadSubmissions = useCallback(async () => {
@@ -101,6 +110,7 @@ export default function SubmissionsPage() {
     const params = new URLSearchParams();
     if (typeFilter !== 'all') params.set('type', typeFilter);
     if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (showTest) params.set('showTest', 'true');
     if (search.trim()) params.set('q', search.trim());
 
     try {
@@ -116,7 +126,7 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, typeFilter]);
+  }, [search, showTest, statusFilter, typeFilter]);
 
   useEffect(() => {
     const timer = setTimeout(loadSubmissions, search ? 300 : 0);
@@ -199,6 +209,28 @@ export default function SubmissionsPage() {
   const showContacts = typeFilter === 'all' || typeFilter === 'contact';
   const showAcademy = typeFilter === 'all' || typeFilter === 'academy';
 
+  const markSmokeTests = async () => {
+    if (!window.confirm('Tag known smoke test submissions (e.g. test@example.com, Tester) as test data?')) return;
+    setMarkingTest(true);
+    try {
+      const res = await fetch('/api/admin/submissions/mark-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to mark smoke tests');
+      await loadSubmissions();
+      alert(`Marked ${data.modifiedCount ?? 0} submission(s) as test data.`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to mark smoke tests');
+    } finally {
+      setMarkingTest(false);
+    }
+  };
+
   return (
     <AdminShell
       title="Form Submissions"
@@ -208,14 +240,25 @@ export default function SubmissionsPage() {
           : 'Contact messages and academy interest from the public site'
       }
       actions={
-        <button
-          type="button"
-          onClick={() => void exportCsv('all')}
-          disabled={loading || exporting || (contacts.length === 0 && academy.length === 0)}
-          className="rounded-lg border border-[#e4dcc9] bg-white px-4 py-2 text-sm font-medium text-[#0d1a4a] transition-colors hover:border-[#d9a23c] hover:bg-[#fdf8ef] disabled:opacity-40"
-        >
-          {exporting ? 'Exporting…' : 'Export CSV'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={markSmokeTests}
+            disabled={markingTest || loading}
+            className="rounded-lg border border-[#e4dcc9] bg-white px-3 py-2 text-xs font-medium text-[#7b7263] transition-colors hover:border-[#d9a23c] hover:text-[#0d1a4a] disabled:opacity-40"
+            title="Mark known smoke-test submissions as test data"
+          >
+            {markingTest ? 'Tagging…' : 'Tag smoke tests'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void exportCsv('all')}
+            disabled={loading || exporting || (contacts.length === 0 && academy.length === 0)}
+            className="rounded-lg border border-[#e4dcc9] bg-white px-4 py-2 text-sm font-medium text-[#0d1a4a] transition-colors hover:border-[#d9a23c] hover:bg-[#fdf8ef] disabled:opacity-40"
+          >
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+        </div>
       }
     >
       {error && (
@@ -252,6 +295,15 @@ export default function SubmissionsPage() {
               Read
             </Tab>
           </div>
+          <label className="flex items-center gap-2 rounded-xl border border-[#e4dcc9] bg-white px-3 py-2 text-xs font-medium text-[#0d1a4a] cursor-pointer hover:bg-[#fdf8ef] select-none">
+            <input
+              type="checkbox"
+              checked={showTest}
+              onChange={(e) => setShowTest(e.target.checked)}
+              className="h-4 w-4 rounded border-[#d9d1bf] text-[#0d1a4a] focus:ring-[#d9a23c]"
+            />
+            Show test data
+          </label>
         </div>
       </div>
 
@@ -274,6 +326,7 @@ export default function SubmissionsPage() {
                   <SubmissionCard
                     key={c._id}
                     unread={isUnread(c)}
+                    isTest={c.isTest}
                     toggling={togglingId === c._id}
                     onToggleRead={() => toggleRead('contact', c._id, isUnread(c))}
                   >
@@ -337,6 +390,7 @@ export default function SubmissionsPage() {
                   <SubmissionCard
                     key={a._id}
                     unread={isUnread(a)}
+                    isTest={a.isTest}
                     toggling={togglingId === a._id}
                     onToggleRead={() => toggleRead('academy', a._id, isUnread(a))}
                   >

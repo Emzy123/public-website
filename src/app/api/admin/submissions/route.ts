@@ -13,6 +13,7 @@ function serializeDoc(doc: Record<string, unknown>) {
     _id: String(doc._id),
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : doc.createdAt,
     readAt: doc.readAt instanceof Date ? doc.readAt.toISOString() : doc.readAt,
+    isTest: Boolean(doc.isTest),
   };
 }
 
@@ -28,12 +29,13 @@ function buildStatusFilter(status: string | null) {
   return {};
 }
 
-async function getCounts(db: Awaited<ReturnType<typeof getMongoDb>>) {
+async function getCounts(db: Awaited<ReturnType<typeof getMongoDb>>, showTest: boolean = false) {
+  const baseFilter = showTest ? {} : { isTest: { $ne: true } };
   const [contactTotal, contactUnread, academyTotal, academyUnread] = await Promise.all([
-    db.collection('contactMessages').countDocuments(),
-    db.collection('contactMessages').countDocuments({ readAt: { $exists: false } }),
-    db.collection('academyInterests').countDocuments(),
-    db.collection('academyInterests').countDocuments({ readAt: { $exists: false } }),
+    db.collection('contactMessages').countDocuments(baseFilter),
+    db.collection('contactMessages').countDocuments({ ...baseFilter, readAt: { $exists: false } }),
+    db.collection('academyInterests').countDocuments(baseFilter),
+    db.collection('academyInterests').countDocuments({ ...baseFilter, readAt: { $exists: false } }),
   ]);
 
   return {
@@ -64,16 +66,20 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type') ?? 'all';
     const status = searchParams.get('status') ?? 'all';
     const q = searchParams.get('q');
+    const showTest = searchParams.get('showTest') === 'true';
     const limit = Math.min(Number(searchParams.get('limit') ?? 100), 200);
 
     const db = await getMongoDb();
-    const counts = await getCounts(db);
+    const counts = await getCounts(db, showTest);
+    const testFilter = showTest ? {} : { isTest: { $ne: true } };
 
     const contactFilter = {
+      ...testFilter,
       ...buildStatusFilter(status),
       ...buildTextFilter(q, ['name', 'email', 'subject', 'message']),
     };
     const academyFilter = {
+      ...testFilter,
       ...buildStatusFilter(status),
       ...buildTextFilter(q, ['fullName', 'email']),
     };

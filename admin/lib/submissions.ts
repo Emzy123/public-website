@@ -8,6 +8,7 @@ export type ContactSubmission = {
   message: string;
   createdAt?: string;
   readAt?: string;
+  isTest?: boolean;
 };
 
 export type AcademySubmission = {
@@ -16,6 +17,7 @@ export type AcademySubmission = {
   email: string;
   createdAt?: string;
   readAt?: string;
+  isTest?: boolean;
 };
 
 export type SubmissionCounts = {

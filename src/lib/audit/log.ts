@@ -12,6 +12,7 @@ export type AuditAction =
   | 'application.export'
   | 'submissions.export'
   | 'submissions.read_status_update'
+  | 'submissions.mark_test'
   | 'registration_link.create'
   | 'registration_link.update';
 
