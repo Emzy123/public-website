@@ -130,11 +130,11 @@ export function PortalClient({
       </header>
 
       {/* Main Content */}
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+      <main className="mx-auto max-w-6xl px-3.5 py-6 sm:px-6 md:py-12">
         {/* Welcome Banner */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Member Portal</p>
-          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#071026] sm:text-3xl">
+          <h1 className="mt-1 text-xl font-extrabold tracking-tight text-[#071026] sm:text-3xl">
             Welcome, {user.profile?.fullName || user.email.split('@')[0]}
           </h1>
           <p className="mt-1 text-xs text-slate-600 sm:text-sm">
@@ -144,13 +144,20 @@ export function PortalClient({
         </div>
 
         {/* Grid Layout: Card on Left, Details & Weekly Pulse on Right */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* LEFT: Digital ID Card */}
-          <div className="space-y-6 lg:col-span-5">
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900">Digital Member ID</h2>
-                <span className="text-[11px] font-semibold text-slate-500">Tap card to flip</span>
+          <div className="space-y-5 lg:col-span-5">
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-3.5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900">Digital Member ID</h2>
+                  {user.memberCard && (
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800">
+                      Offline Ready
+                    </span>
+                  )}
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500 sm:text-[11px]">Tap to flip</span>
               </div>
 
               {user.memberCard ? (

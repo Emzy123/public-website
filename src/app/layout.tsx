@@ -48,6 +48,7 @@ export const metadata: Metadata = {
 };
 
 import { headers } from 'next/headers';
+import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 
 export default function RootLayout({
   children,
@@ -60,6 +61,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={`${geist.variable} antialiased min-h-screen flex flex-col`}>
         <AnalyticsScripts nonce={nonce} />
+        <ServiceWorkerRegister />
         <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
