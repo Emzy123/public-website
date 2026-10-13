@@ -15,7 +15,7 @@ function newAdvert(sortOrder: number): AdvertItem {
     ctaLabel: 'Learn more',
     ctaHref: '/contact',
     enabled: false,
-    showModal: true,
+    showModal: false,
     dismissalDays: 7,
     startsAt: '',
     endsAt: '',

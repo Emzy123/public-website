@@ -896,7 +896,7 @@ export function normalizeAdvertsContent(data: Partial<AdvertsContent> | undefine
           ctaLabel: String(item.ctaLabel || ''),
           ctaHref: String(item.ctaHref || ''),
           enabled: Boolean(item.enabled),
-          showModal: item.showModal !== false,
+          showModal: Boolean(item.showModal),
           startsAt: String(item.startsAt || ''),
           endsAt: String(item.endsAt || ''),
           sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
