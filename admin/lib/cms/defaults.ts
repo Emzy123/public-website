@@ -603,7 +603,7 @@ export const DEFAULT_PAGE_SEO: SiteSettings['pageSeo'] = {
   about: {
     title: 'About',
     description:
-      'From Student Dreams to Pan-African Movement. Founded in March 2025. Meet the founder, the leadership team, and learn how SINet is building 5 Mega Empires across Africa.',
+      'From Student Dreams to Pan-African Movement. Founded in March 2025. Meet the founder, the leadership team, and learn how SINet is building sustainable commercial systems across Africa.',
   },
   blueprint: {
     title: 'The SINet Blueprint',

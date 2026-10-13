@@ -66,8 +66,8 @@ const INITIAL_DEMO_POSTS: Array<Omit<PostRecord, 'id' | 'createdAt' | 'updatedAt
     slug: 'kogi-state-campuses-pilot-launch',
     title: 'SINet Officially Launches Pilot Operations Across 6 Kogi State Campuses',
     summary:
-      'The Student Investment Network commences on-ground student enterprise, agricultural partnerships, and financial leadership across FULOKOJA, PAAU, CUSTECH, and sister institutions.',
-    contentHtml: `<p>We are thrilled to announce the official commencement of <strong>Student Investment Network (SINet)</strong> pilot chapters across six premier higher institutions in Kogi State.</p>
+      'SINet commences on-ground student enterprise, agricultural partnerships, and financial leadership across FULOKOJA, PAAU, CUSTECH, and sister institutions.',
+    contentHtml: `<p>We are thrilled to announce the official commencement of <strong>SINet</strong> pilot chapters across six premier higher institutions in Kogi State.</p>
 <p>The network is structured around three foundational divisions:</p>
 <ul>
   <li><strong>Student Finance:</strong> Applied financial modeling, personal budgeting, and peer savings initiatives.</li>

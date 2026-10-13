@@ -242,7 +242,7 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f2e8; margin: 0; padding: 24px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid rgba(13,26,74,0.15); padding: 32px; border-radius: 8px;">
-    <h2 style="color: #0d1a4a; margin-top: 0;">Student Investment Network</h2>
+    <h2 style="color: #0d1a4a; margin-top: 0;">SINet</h2>
     <p style="color: #464238; font-size: 15px; line-height: 1.5;">Here is your single-use verification code to sign in to your SINet member account:</p>
     <div style="background: #0d1a4a; color: #eccb7c; font-size: 32px; font-weight: bold; letter-spacing: 6px; text-align: center; padding: 18px; border-radius: 6px; margin: 24px 0;">
       ${otp}
@@ -287,12 +287,12 @@ export async function sendMagicLinkEmail(email: string, url: string): Promise<vo
   const resend = new Resend(apiKey);
   const emailPayload = {
     to: [email],
-    subject: `Sign in to Student Investment Network`,
+    subject: `Sign in to SINet`,
     html: `<!DOCTYPE html>
 <html>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f6f2e8; margin: 0; padding: 24px;">
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border: 1px solid rgba(13,26,74,0.15); padding: 32px; border-radius: 8px;">
-    <h2 style="color: #0d1a4a; margin-top: 0;">Student Investment Network</h2>
+    <h2 style="color: #0d1a4a; margin-top: 0;">SINet</h2>
     <p style="color: #464238; font-size: 15px; line-height: 1.5;">Click the button below to sign in directly to your SINet member account on this device:</p>
     <div style="text-align: center; margin: 28px 0;">
       <a href="${url}" style="background: #0d1a4a; color: #ffffff; text-decoration: none; font-weight: bold; padding: 14px 28px; border-radius: 6px; display: inline-block;">

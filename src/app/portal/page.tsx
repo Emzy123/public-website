@@ -15,8 +15,8 @@ import { SITE_URL } from '@/lib/site-config';
 import { PortalClient } from './PortalClient';
 
 export const metadata = {
-  title: 'Member Portal — Student Investment Network',
-  description: 'Manage your student membership, view your digital Member ID Card, and explore campus chapter activities.',
+  title: 'Member Portal — SINet',
+  description: 'Manage your membership, view your digital Member ID Card, and explore campus chapter activities.',
 };
 
 export default async function PortalPage() {

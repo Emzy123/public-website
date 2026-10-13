@@ -8,14 +8,14 @@ describe('Admin 2FA TOTP Engine', () => {
     expect(secret.length).toBeGreaterThan(16);
     expect(uri).toContain('otpauth://totp/');
     expect(uri).toContain('admin%40sinet.africa');
-    expect(uri).toContain('SINet%20Africa');
+    expect(uri).toContain('SINet');
   });
 
   it('verifies a generated TOTP code successfully', () => {
     const { secret } = createTotpSecret('admin@sinet.africa');
 
     const totp = new OTPAuth.TOTP({
-      issuer: 'SINet Africa',
+      issuer: 'SINet',
       algorithm: 'SHA1',
       digits: 6,
       period: 30,

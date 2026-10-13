@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Student Investment Network — SINet',
+    name: 'SINet',
     short_name: 'SINet',
     description:
       'Student ecosystem for finance, enterprise, and governance across Nigerian universities.',

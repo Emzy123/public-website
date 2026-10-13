@@ -5,7 +5,7 @@ import { RegistrationClosedView } from '@/components/applications/RegistrationCl
 export const metadata = {
   title: 'Join SINet | Admissions & Membership',
   description:
-    'Apply to join the Student Investment Network or get notified when the next cohort opens.',
+    'Apply to join SINet or get notified when the next cohort opens.',
 };
 
 export const dynamic = 'force-dynamic';

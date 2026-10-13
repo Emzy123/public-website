@@ -227,7 +227,7 @@ export function StudentCampaignApplicationForm({
               href="/"
               className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-amber-700 hover:text-amber-800"
             >
-              ← Student Investment Network
+              ← SINet
             </Link>
             <button
               type="button"
@@ -477,7 +477,7 @@ export function StudentCampaignApplicationForm({
               />
               <span>
                 I confirm that all information provided is accurate and agree to abide by the
-                Student Investment Network Community Code of Conduct and leadership values.
+                SINet Community Code of Conduct and leadership values.
               </span>
             </label>
 

@@ -246,8 +246,8 @@ async function sendApplicationNotice(opts: {
   division: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const subject = `Application Received: ${opts.campaignName} — Student Investment Network`;
-  const text = `Hello ${opts.fullName},\n\nWe have received your application for '${opts.campaignName}' in the ${opts.division.replace('_', ' ')} division.\n\nOur admissions review committee reviews applications continuously. You can check your status anytime by signing in at ${SITE_URL}/sign-in.\n\nBest regards,\nStudent Investment Network Team`;
+  const subject = `Application Received: ${opts.campaignName} — SINet`;
+  const text = `Hello ${opts.fullName},\n\nWe have received your application for '${opts.campaignName}' in the ${opts.division.replace('_', ' ')} division.\n\nOur admissions review committee reviews applications continuously. You can check your status anytime by signing in at ${SITE_URL}/sign-in.\n\nBest regards,\nSINet Team`;
 
   if (apiKey && apiKey !== 're_placeholder_key') {
     try {

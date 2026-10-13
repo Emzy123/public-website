@@ -8,9 +8,9 @@ import { ChaptersDirectoryClient } from '@/components/chapters/ChaptersDirectory
 import { FEATURE_FLAGS } from '@/lib/site-config';
 
 export const metadata: Metadata = {
-  title: 'Campus Chapters Directory — Student Investment Network',
+  title: 'Campus Chapters Directory — SINet',
   description:
-    'Explore tertiary institution chapters of the Student Investment Network across Kogi State, Nigeria.',
+    'Explore tertiary institution chapters of SINet across Kogi State, Nigeria.',
 };
 
 export const dynamic = 'force-dynamic';

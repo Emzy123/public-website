@@ -47,7 +47,7 @@ export function ChaptersDirectoryClient({
                 Campus Chapters Directory
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                Discover student-led chapters of the Student Investment Network across universities
+                Discover student-led chapters of SINet across universities
                 in Kogi State. Join your campus chapter to access mentorship, investment clubs, and
                 enterprise sprints.
               </p>

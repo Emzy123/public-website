@@ -9,7 +9,7 @@ describe('Offline PWA & Budget Android Optimizations', () => {
 
   test('PWA manifest returns valid standalone metadata and branding for Nigerian students', () => {
     const data = manifest();
-    expect(data.name).toBe('Student Investment Network — SINet');
+    expect(data.name).toBe('SINet');
     expect(data.short_name).toBe('SINet');
     expect(data.start_url).toBe('/portal');
     expect(data.display).toBe('standalone');

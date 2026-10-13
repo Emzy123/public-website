@@ -3,6 +3,8 @@
  * Defines canonical domain, contact details, social channels, and feature flags.
  */
 
+export const SITE_NAME = 'SINet';
+export const OFFICIAL_LEGAL_NAME = '______';
 export const SITE_URL = 'https://www.sinet.africa';
 
 // Single source of truth for the contact email.

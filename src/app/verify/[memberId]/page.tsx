@@ -11,14 +11,14 @@ export async function generateMetadata({
   const record = await getVerifiedMemberRecord(params.memberId);
   if (!record) {
     return {
-      title: 'Credential Verification — SINet Africa',
-      description: 'Verify digital student membership credentials on the Student Investment Network.',
+      title: 'Credential Verification — SINet',
+      description: 'Verify digital membership credentials on SINet.',
     };
   }
 
   return {
     title: `Verify Member: ${record.fullName} (${record.fullMemberId}) — SINet`,
-    description: `Official digital credential verification for ${record.fullName}, ${record.universityName || 'Student Investment Network'}.`,
+    description: `Official digital credential verification for ${record.fullName}, ${record.universityName || 'SINet'}.`,
   };
 }
 
@@ -53,7 +53,7 @@ export default async function MemberVerificationPage({
           </h1>
           <p className="mt-4 text-xs leading-relaxed text-slate-400">
             The identifier <span className="font-mono text-slate-200">{params.memberId}</span> does
-            not exist in the Student Investment Network registry.
+            not exist in the SINet registry.
           </p>
           <Link
             href="/"
@@ -90,7 +90,7 @@ export default async function MemberVerificationPage({
                 Official Credential Verification
               </p>
               <p className="text-xs font-bold text-slate-300">
-                Student Investment Network (SINet)
+                SINet
               </p>
             </div>
             <div
@@ -183,7 +183,7 @@ export default async function MemberVerificationPage({
               <span>Authentic Digital Credential Verified</span>
             </div>
             <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-              This digital identity card was minted by the Student Investment Network authority. The
+              This digital identity card was minted by the SINet authority. The
               cryptographic token matches the records stored in the central institutional registry.
             </p>
           </div>
@@ -194,7 +194,7 @@ export default async function MemberVerificationPage({
               href="/"
               className="inline-flex min-h-[44px] items-center justify-center text-xs font-semibold text-slate-400 transition hover:text-white"
             >
-              ← Visit SINet Africa
+              ← Visit SINet
             </Link>
             <Link
               href="/sign-in"

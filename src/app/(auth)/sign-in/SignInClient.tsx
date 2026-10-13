@@ -62,11 +62,8 @@ export function SignInClient() {
               SINet<span className="text-[#d9711b]">.</span>
             </span>
           </Link>
-          <p className="mt-2 text-xs font-data uppercase tracking-[.18em] text-[#d9711b]">
-            Student Investment Network
-          </p>
           <h1 className="mt-4 font-editorial text-2xl xs:text-3xl font-bold tracking-tight text-[#0d1a4a]">
-            Member Sign In
+            Sign in to SINet
           </h1>
           <p className="mt-2 text-sm text-[#5b554a]">
             Passwordless &amp; secure. Receive a verification code directly to your email.
@@ -99,7 +96,7 @@ export function SignInClient() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. student@fulokoja.edu.ng"
+                placeholder="you@example.com"
                 className="w-full h-12 px-3.5 border border-[#0d1a4a]/30 bg-[#fbf9f4] text-sm text-[#0d1a4a] placeholder-[#9c9589] focus:outline-none focus:border-[#d9711b] focus:ring-1 focus:ring-[#d9711b]"
               />
             </div>
@@ -146,8 +143,8 @@ export function SignInClient() {
           <div className="mt-8 pt-6 border-t border-[#0d1a4a]/10 text-center">
             <p className="text-xs text-[#5b554a]">
               Not a member yet?{' '}
-              <Link href="/student-network" className="font-bold text-[#d9711b] hover:underline">
-                Join the Student Network →
+              <Link href="/membership" className="font-bold text-[#d9711b] hover:underline">
+                View Membership →
               </Link>
             </p>
           </div>

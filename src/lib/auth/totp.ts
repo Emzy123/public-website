@@ -2,7 +2,7 @@ import * as OTPAuth from 'otpauth';
 
 export function createTotpSecret(email: string): { secret: string; uri: string } {
   const totp = new OTPAuth.TOTP({
-    issuer: 'SINet Africa',
+    issuer: 'SINet',
     label: email,
     algorithm: 'SHA1',
     digits: 6,
@@ -19,7 +19,7 @@ export function createTotpSecret(email: string): { secret: string; uri: string }
 export function verifyTotpCode(secret: string, token: string): boolean {
   try {
     const totp = new OTPAuth.TOTP({
-      issuer: 'SINet Africa',
+      issuer: 'SINet',
       algorithm: 'SHA1',
       digits: 6,
       period: 30,

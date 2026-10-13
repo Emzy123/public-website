@@ -52,7 +52,7 @@ export default function TermsPage() {
                 // TODO-VERIFY: CEO approval needed for removal of 'Student Investment Network / connects investors / returns / investment model'
                 n: '1', title: 'About SINet',
                 body: (
-                  <p className="text-slate-600 leading-relaxed text-sm">SINet is a student-driven business and commerce ecosystem connecting students, entrepreneurs, and partners across agriculture, trade &amp; distribution, and real estate. Our website provides information about our community programs, commercial initiatives, products, and partnership opportunities.</p>
+                  <p className="text-slate-600 leading-relaxed text-sm">______ (operating publicly as SINet) is a business and commerce ecosystem connecting students, entrepreneurs, and partners across agriculture, trade &amp; distribution, and real estate. Our website provides information about our community programs, commercial initiatives, products, and partnership opportunities.</p>
                 ),
               },
               {

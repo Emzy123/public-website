@@ -111,7 +111,7 @@ export function PortalClient({
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#071026] text-xs font-black text-amber-400">
               SI
             </span>
-            <span className="text-sm font-bold text-[#071026]">Student Investment Network</span>
+            <span className="text-sm font-bold text-[#071026]">SINet</span>
           </Link>
 
           <div className="flex items-center gap-3">

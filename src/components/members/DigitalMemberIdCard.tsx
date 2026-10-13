@@ -96,7 +96,7 @@ function escapeHtml(value?: string | null): string {
 <body>
   <div class="card">
     <div class="header">
-      <div class="logo">STUDENT INVESTMENT NETWORK</div>
+      <div class="logo">SINET</div>
       <div class="badge">OFFLINE PASS</div>
     </div>
     <div class="profile">
@@ -168,7 +168,7 @@ function escapeHtml(value?: string | null): string {
                 </div>
                 <div>
                   <p className="text-[9px] font-extrabold tracking-wider text-amber-400 sm:text-[10px]">
-                    STUDENT INVESTMENT NETWORK
+                    SINET
                   </p>
                   <p className="text-[8px] font-medium tracking-tight text-slate-300 sm:text-[9px]">
                     Digital Student Membership Card
@@ -251,7 +251,7 @@ function escapeHtml(value?: string | null): string {
 
             {/* Security Notice */}
             <div className="border-t border-white/10 pt-1.5 text-center text-[8px] text-slate-400 sm:text-[9px]">
-              Cryptographically signed by Student Investment Network Authority.
+              Cryptographically signed by SINet Authority.
             </div>
           </div>
         </div>

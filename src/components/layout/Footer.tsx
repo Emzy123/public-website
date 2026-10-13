@@ -104,7 +104,7 @@ export function Footer({ settings }: FooterProps) {
       </div>
       <div className="border-t border-white/15 px-4 py-5 text-xs text-[#a9aec5] xs:px-5 lg:px-8">
         <div className="mx-auto flex max-w-[1380px] flex-col justify-between gap-3 sm:flex-row">
-          <p>© {new Date().getFullYear()} SINet. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ______ (SINet). All rights reserved.</p>
           <p>Kogi State, Nigeria</p>
         </div>
       </div>

@@ -18,8 +18,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${chapter.name} (${chapter.campusCode}) — Student Investment Network`,
-    description: `Official campus chapter of the Student Investment Network at ${chapter.universityName}, Kogi State.`,
+    title: `${chapter.name} (${chapter.campusCode}) — SINet`,
+    description: `Official campus chapter of SINet at ${chapter.universityName}, Kogi State.`,
   };
 }
 
@@ -130,7 +130,7 @@ export default async function ChapterDetailPage({
             Divisions at this Chapter
           </h2>
           <p className="mt-2 text-xs text-slate-600 sm:text-sm">
-            Every member of the Student Investment Network belongs to one of three operational
+            Every member of SINet belongs to one of three operational
             divisions:
           </p>
 
