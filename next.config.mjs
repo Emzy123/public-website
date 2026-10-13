@@ -26,6 +26,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/blueprint',
+        destination: '/sectors',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
