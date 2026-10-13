@@ -21,7 +21,7 @@ export const REGISTERED_ADDRESS = 'Kogi State, Nigeria';
  * Flip to true once substantive entries/catalog are published.
  */
 export const FEATURE_FLAGS = {
-  showNews: false,      // "No public posts yet"
+  showNews: true,       // Active pilot updates & field notes
   showPartners: false,  // Awaiting real institutional partner roster
   showProducts: false,  // Awaiting verified goods inventory
 } as const;

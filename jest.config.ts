@@ -15,7 +15,7 @@ const config: Config = {
     }],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(jose)/)',
+    '/node_modules/(?!(jose|sanitize-html|htmlparser2|entities|dom-serializer|domelementtype|domhandler|domutils)/)',
   ],
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',
