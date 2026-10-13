@@ -222,12 +222,25 @@ export function StudentCampaignApplicationForm({
       <div className="mx-auto max-w-2xl">
         {/* Header Breadcrumb & Brand */}
         <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-amber-700 hover:text-amber-800"
-          >
-            ← Student Investment Network
-          </Link>
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-amber-700 hover:text-amber-800"
+            >
+              ← Student Investment Network
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Your answers will not be saved. Are you sure you want to leave?')) {
+                  window.location.href = '/';
+                }
+              }}
+              className="text-xs font-semibold text-slate-500 hover:text-slate-800 hover:underline"
+            >
+              Leave application
+            </button>
+          </div>
           <div className="mt-3 flex items-center justify-between gap-4">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-900">
               <span className="h-2 w-2 rounded-full bg-amber-600" />

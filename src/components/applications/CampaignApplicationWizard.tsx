@@ -366,9 +366,17 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
           <Link href="/" className="font-editorial text-xl font-semibold xs:text-2xl">
             SINet. — Join
           </Link>
-          <Link href="/" className="flex min-h-[44px] items-center font-data text-[11px] uppercase tracking-[.12em] text-[#eccb7c]">
-            Save & Exit
-          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm('Your answers will not be saved. Are you sure you want to leave?')) {
+                window.location.href = '/';
+              }
+            }}
+            className="flex min-h-[44px] items-center font-data text-[11px] uppercase tracking-[.12em] text-[#eccb7c] hover:underline"
+          >
+            Leave application
+          </button>
         </div>
         <div className="border-t-2 border-[#d9711b] bg-[#16296b]">
           <div className="mx-auto hidden max-w-[1160px] grid-cols-6 md:grid">
