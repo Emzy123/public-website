@@ -9,17 +9,18 @@ describe('Student Network Divisions', () => {
     ]);
   });
 
-  it('has exact division names', () => {
-    expect(STUDENT_DIVISION_INFO.student_finance.name).toBe('Student Finance Division');
-    expect(STUDENT_DIVISION_INFO.student_enterprise.name).toBe('Student Enterprise Division');
-    expect(STUDENT_DIVISION_INFO.governance_records.name).toBe('Governance & Records Division');
+  it('has exact division names matching Student Finance, Student Enterprise, Governance & Records', () => {
+    expect(STUDENT_DIVISION_INFO.student_finance.name).toBe('Student Finance');
+    expect(STUDENT_DIVISION_INFO.student_enterprise.name).toBe('Student Enterprise');
+    expect(STUDENT_DIVISION_INFO.governance_records.name).toBe('Governance & Records');
   });
 
-  it('does not contain prohibited legacy names', () => {
-    const names = Object.values(STUDENT_DIVISION_INFO).map((d) => d.name.toLowerCase());
+  it('does not contain prohibited legacy names or division suffixes in exact names', () => {
+    const names = Object.values(STUDENT_DIVISION_INFO).map((d) => d.name);
+    expect(names).toEqual(['Student Finance', 'Student Enterprise', 'Governance & Records']);
     for (const name of names) {
-      expect(name).not.toContain('campus operations');
-      expect(name).not.toContain('enterprise development');
+      expect(name.toLowerCase()).not.toContain('campus operations');
+      expect(name.toLowerCase()).not.toContain('enterprise development');
     }
   });
 });

@@ -132,11 +132,13 @@ export function InstitutionalHome() {
             <p className="font-data text-[11px] uppercase tracking-[.16em] text-[#d9711b]">Membership</p>
             <h2 className="mt-5 font-editorial text-4xl tracking-[-.04em]">Join when applications are open.</h2>
             {/* TODO [OWNER APPROVAL]: Confirm application round lifecycle and student pathway terms */}
-            <p className="mt-6 leading-7 text-[#5b554a]">Registration is admin-controlled — apply through a campaign link when SINet opens a period for your role. The Student Network remains a separate, always-open pathway.</p>
+            <p className="mt-6 leading-7 text-[#5b554a]">
+              Registration is admin-controlled — apply through a campaign link when SINet opens a period for your role. The Student Network remains a dedicated pathway built around three active student divisions: <span className="font-semibold text-[#0d1a4a]">Student Finance</span>, <span className="font-semibold text-[#0d1a4a]">Student Enterprise</span>, and <span className="font-semibold text-[#0d1a4a]">Governance &amp; Records</span>.
+            </p>
           </div>
           <div className="flex flex-col justify-center gap-3">
             <Link href="/membership" className="inline-flex min-h-[48px] items-center justify-center bg-[#0d1a4a] px-6 text-sm font-bold text-white hover:bg-[#d9711b]">Join SINet</Link>
-            <Link href="/student-network" className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold hover:border-[#d9711b]">Student Network</Link>
+            <Link href="/student-network" className="inline-flex min-h-[48px] items-center justify-center border border-[#0d1a4a] px-6 text-sm font-bold hover:border-[#d9711b]">Explore Student Divisions</Link>
           </div>
         </div>
       </section>

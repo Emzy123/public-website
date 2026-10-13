@@ -13,17 +13,17 @@ export const STUDENT_DIVISION_INFO: Record<
   { name: string; description: string; focus: string }
 > = {
   student_finance: {
-    name: 'Student Finance Division',
+    name: 'Student Finance',
     description: 'Financial literacy, capital markets, investment research, and personal wealth mastery.',
     focus: 'Investment clubs, trading simulations, equity analysis, and campus venture funds.',
   },
   student_enterprise: {
-    name: 'Student Enterprise Division',
+    name: 'Student Enterprise',
     description: 'Campus venture creation, entrepreneurship sprints, pitch showcases, and SME growth.',
     focus: 'Student start-ups, business modeling, commercial incubation, and corporate internships.',
   },
   governance_records: {
-    name: 'Governance & Records Division',
+    name: 'Governance & Records',
     description: 'Chapter operations, student advocacy, treasury oversight, and institutional record-keeping.',
     focus: 'Leadership accountability, campus chapter administration, and executive coordination.',
   },
