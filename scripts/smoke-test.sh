@@ -43,12 +43,18 @@ check "About page" "GET" "/about" "200"
 check "Sectors page" "GET" "/sectors" "200"
 check "Membership page" "GET" "/membership" "200"
 check "Gallery page" "GET" "/gallery" "200"
+check "News page" "GET" "/news" "200"
+check "RSS feed" "GET" "/feed.xml" "200"
+check "Campus Chapters page" "GET" "/chapters" "200"
+check "Student Network page" "GET" "/student-network" "200"
 
 # Admin API (unauthenticated should 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
 check "Admin media API requires auth" "GET" "/api/admin/media" "401"
 check "Admin submissions API requires auth" "GET" "/api/admin/submissions" "401"
 check "Admin applications API requires auth" "GET" "/api/admin/applications" "401"
+check "Admin posts API requires auth" "GET" "/api/admin/posts" "401"
+check "Admin audit API requires auth" "GET" "/api/admin/audit" "401"
 
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
