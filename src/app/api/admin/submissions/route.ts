@@ -29,6 +29,8 @@ function buildStatusFilter(status: string | null) {
   return {};
 }
 
+import { CONTACT_TOPICS, normalizeContactTopic } from '@/lib/schemas/contact.schema';
+
 async function getCounts(db: Awaited<ReturnType<typeof getMongoDb>>, showTest: boolean = false) {
   const baseFilter = showTest ? {} : { isTest: { $ne: true } };
   const [contactTotal, contactUnread, academyTotal, academyUnread] = await Promise.all([
@@ -38,9 +40,42 @@ async function getCounts(db: Awaited<ReturnType<typeof getMongoDb>>, showTest: b
     db.collection('academyInterests').countDocuments({ ...baseFilter, readAt: { $exists: false } }),
   ]);
 
+  // Aggregate unread and total counts grouped by topic
+  const topicStats: Record<string, { total: number; unread: number }> = {};
+  for (const t of CONTACT_TOPICS) {
+    topicStats[t] = { total: 0, unread: 0 };
+  }
+  topicStats['Academy Interest'] = { total: academyTotal, unread: academyUnread };
+
+  const [contactAggTotal, contactAggUnread] = await Promise.all([
+    db
+      .collection('contactMessages')
+      .aggregate([{ $match: baseFilter }, { $group: { _id: '$topic', count: { $sum: 1 } } }])
+      .toArray(),
+    db
+      .collection('contactMessages')
+      .aggregate([
+        { $match: { ...baseFilter, readAt: { $exists: false } } },
+        { $group: { _id: '$topic', count: { $sum: 1 } } },
+      ])
+      .toArray(),
+  ]);
+
+  for (const row of contactAggTotal) {
+    const topic = normalizeContactTopic(typeof row._id === 'string' ? row._id : null);
+    if (!topicStats[topic]) topicStats[topic] = { total: 0, unread: 0 };
+    topicStats[topic].total += row.count;
+  }
+  for (const row of contactAggUnread) {
+    const topic = normalizeContactTopic(typeof row._id === 'string' ? row._id : null);
+    if (!topicStats[topic]) topicStats[topic] = { total: 0, unread: 0 };
+    topicStats[topic].unread += row.count;
+  }
+
   return {
     contacts: { total: contactTotal, unread: contactUnread },
     academy: { total: academyTotal, unread: academyUnread },
+    byTopic: topicStats,
   };
 }
 
@@ -51,9 +86,9 @@ function csvEscape(value: unknown): string {
 
 function toCsv(contacts: Record<string, unknown>[], academy: Record<string, unknown>[]): string {
   const rows = [
-    ['Type', 'Name', 'Email', 'Subject / Interest', 'Message', 'Created at'],
-    ...contacts.map((item) => ['Contact', item.name, item.email, item.subject, item.message, item.createdAt]),
-    ...academy.map((item) => ['Academy interest', item.fullName, item.email, item.interest ?? '', '', item.createdAt]),
+    ['Type', 'Name', 'Email', 'Topic / Interest', 'Subject', 'Message', 'Created at'],
+    ...contacts.map((item) => ['Contact', item.name, item.email, item.topic || 'General', item.subject, item.message, item.createdAt]),
+    ...academy.map((item) => ['Academy interest', item.fullName, item.email, item.interest ?? 'Academy', '', '', item.createdAt]),
   ];
   return rows.map((row) => row.map(csvEscape).join(',')).join('\r\n');
 }
@@ -65,6 +100,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type') ?? 'all';
     const status = searchParams.get('status') ?? 'all';
+    const topic = searchParams.get('topic');
     const q = searchParams.get('q');
     const showTest = searchParams.get('showTest') === 'true';
     const limit = Math.min(Number(searchParams.get('limit') ?? 100), 200);
@@ -73,19 +109,32 @@ export async function GET(req: NextRequest) {
     const counts = await getCounts(db, showTest);
     const testFilter = showTest ? {} : { isTest: { $ne: true } };
 
-    const contactFilter = {
+    const contactFilter: Record<string, unknown> = {
       ...testFilter,
       ...buildStatusFilter(status),
-      ...buildTextFilter(q, ['name', 'email', 'subject', 'message']),
+      ...buildTextFilter(q, ['name', 'email', 'subject', 'message', 'topic']),
     };
-    const academyFilter = {
+    if (topic && topic !== 'all' && topic !== 'Academy Interest') {
+      contactFilter.topic = topic;
+    }
+
+    const academyFilter: Record<string, unknown> = {
       ...testFilter,
       ...buildStatusFilter(status),
       ...buildTextFilter(q, ['fullName', 'email']),
     };
 
-    const fetchContacts = type === 'all' || type === 'contact';
-    const fetchAcademy = type === 'all' || type === 'academy';
+    let fetchContacts = type === 'all' || type === 'contact';
+    let fetchAcademy = type === 'all' || type === 'academy';
+
+    if (topic && topic !== 'all') {
+      if (topic === 'Academy Interest') {
+        fetchContacts = false;
+        fetchAcademy = true;
+      } else {
+        fetchAcademy = false;
+      }
+    }
 
     const [contacts, academy] = await Promise.all([
       fetchContacts

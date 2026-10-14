@@ -6,6 +6,8 @@ export type ContactSubmission = {
   email: string;
   subject: string;
   message: string;
+  topic?: string;
+  referenceId?: string;
   createdAt?: string;
   readAt?: string;
   isTest?: boolean;
@@ -15,6 +17,7 @@ export type AcademySubmission = {
   _id: string;
   fullName: string;
   email: string;
+  interest?: string;
   createdAt?: string;
   readAt?: string;
   isTest?: boolean;
@@ -23,6 +26,7 @@ export type AcademySubmission = {
 export type SubmissionCounts = {
   contacts: { total: number; unread: number };
   academy: { total: number; unread: number };
+  byTopic?: Record<string, { total: number; unread: number }>;
 };
 
 export function matchesSearch(

@@ -6,6 +6,8 @@ import { AdminShell, AdminCard } from '@admin/components/AdminShell';
 import type { SubmissionCounts } from '@admin/lib/submissions';
 import type { RegistrationLink } from '@/lib/types/membership';
 import type { UnifiedApplication } from '@/app/api/admin/applications/route';
+import { formatWatDate, formatWatDateTime } from '@/lib/date';
+import { StatusPill } from '@/components/ui/Badge';
 
 function MetricCard({
   label,
@@ -66,6 +68,15 @@ export default function AdminDashboardPage() {
     total: 0,
   });
   const [activeLinks, setActiveLinks] = useState<RegistrationLink[]>([]);
+  const [auditLogs, setAuditLogs] = useState<
+    Array<{
+      id: string;
+      actorEmail: string;
+      action: string;
+      resource: string;
+      createdAt: string;
+    }>
+  >([]);
   const [loading, setLoading] = useState(true);
   const [appFilter, setAppFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -75,9 +86,10 @@ export default function AdminDashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [subRes, appRes] = await Promise.allSettled([
+      const [subRes, appRes, auditRes] = await Promise.allSettled([
         fetch('/api/admin/submissions?limit=1').then((r) => (r.ok ? r.json() : null)),
         fetch('/api/admin/applications').then((r) => (r.ok ? r.json() : null)),
+        fetch('/api/admin/audit?limit=5').then((r) => (r.ok ? r.json() : null)),
       ]);
 
       if (subRes.status === 'fulfilled' && subRes.value?.counts) {
@@ -100,6 +112,10 @@ export default function AdminDashboardPage() {
 
         const linksList: RegistrationLink[] = appRes.value.links || [];
         setActiveLinks(linksList);
+      }
+
+      if (auditRes.status === 'fulfilled' && auditRes.value?.logs) {
+        setAuditLogs(auditRes.value.logs);
       }
     } finally {
       setLoading(false);
@@ -361,26 +377,11 @@ export default function AdminDashboardPage() {
                           </td>
 
                           <td className="py-3 pr-3 text-slate-500 text-[11px] whitespace-nowrap">
-                            {new Date(app.createdAt).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
+                            {formatWatDate(app.createdAt)}
                           </td>
 
                           <td className="py-3 pr-3">
-                            {app.status === 'approved' ? (
-                              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-500/20">
-                                ✓ Approved
-                              </span>
-                            ) : app.status === 'rejected' ? (
-                              <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-500/20">
-                                ✕ Rejected
-                              </span>
-                            ) : (
-                              <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-500/20">
-                                ● Pending
-                              </span>
-                            )}
+                            <StatusPill status={app.status} />
                           </td>
 
                           <td className="py-3 text-right whitespace-nowrap">
@@ -560,58 +561,82 @@ export default function AdminDashboardPage() {
             </div>
           </AdminCard>
 
-          {/* Card D: Inbound Form Inquiries */}
+          {/* Card D: Inquiries by Topic Breakdown */}
           <AdminCard
-            title="Inbound Form Submissions"
+            title="Inquiries by Topic"
             actions={
               <Link
                 href="/admin/submissions"
                 className="text-xs font-bold text-blue-600 hover:underline"
               >
-                View all →
+                Full Inbox ({unreadCount} unread) →
               </Link>
             }
           >
             {loading ? (
-              <div className="py-6 text-center text-xs text-slate-400">Loading submissions…</div>
-            ) : submissionCounts ? (
-              <div className="space-y-3">
-                <Link
-                  href="/admin/submissions"
-                  className="flex items-center justify-between rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition"
-                >
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">Contact Messages</p>
-                    <p className="text-[11px] text-slate-500">{submissionCounts.contacts.total} total received</p>
-                  </div>
-                  {submissionCounts.contacts.unread > 0 ? (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
-                      {submissionCounts.contacts.unread} unread
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">All read</span>
-                  )}
-                </Link>
-
-                <Link
-                  href="/admin/submissions"
-                  className="flex items-center justify-between rounded-xl border border-slate-100 p-3 hover:bg-slate-50 transition"
-                >
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">Academy Inquiries</p>
-                    <p className="text-[11px] text-slate-500">{submissionCounts.academy.total} total received</p>
-                  </div>
-                  {submissionCounts.academy.unread > 0 ? (
-                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
-                      {submissionCounts.academy.unread} unread
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-slate-400">All read</span>
-                  )}
-                </Link>
+              <div className="py-6 text-center text-xs text-slate-400">Loading topic metrics…</div>
+            ) : submissionCounts?.byTopic ? (
+              <div className="space-y-1.5">
+                {Object.entries(submissionCounts.byTopic).map(([topic, stats]) => (
+                  <Link
+                    key={topic}
+                    href={`/admin/submissions?topic=${encodeURIComponent(topic)}`}
+                    className="flex items-center justify-between rounded-xl border border-slate-100 p-2.5 transition-all hover:border-slate-200 hover:bg-slate-50"
+                  >
+                    <div className="min-w-0 pr-2">
+                      <p className="text-xs font-semibold text-slate-900 truncate">{topic}</p>
+                      <p className="text-[10px] text-slate-500">{stats.total} total received</p>
+                    </div>
+                    {stats.unread > 0 ? (
+                      <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-500/30">
+                        {stats.unread} unread
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-[10px] text-slate-400 font-medium">All read</span>
+                    )}
+                  </Link>
+                ))}
               </div>
             ) : (
               <p className="py-6 text-center text-xs text-slate-400">No submissions found.</p>
+            )}
+          </AdminCard>
+
+          {/* Card E: Recent Audit Events Feed */}
+          <AdminCard
+            title="Recent Audit Events"
+            actions={
+              <Link
+                href="/admin/audit"
+                className="text-xs font-bold text-blue-600 hover:underline"
+              >
+                Audit Trail →
+              </Link>
+            }
+          >
+            {loading ? (
+              <div className="py-6 text-center text-xs text-slate-400">Loading audit trail…</div>
+            ) : auditLogs.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {auditLogs.map((log) => (
+                  <div key={log.id} className="py-2.5 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">
+                        {log.action}
+                      </span>
+                      <span className="text-[10px] font-medium text-slate-400 whitespace-nowrap">
+                        {formatWatDateTime(log.createdAt)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-600">
+                      <span className="truncate font-sans font-medium text-slate-800">{log.actorEmail}</span>
+                      <span className="truncate text-slate-400 text-[10px]">{log.resource}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-6 text-center text-xs text-slate-400">No recent audit events logged.</p>
             )}
           </AdminCard>
 
