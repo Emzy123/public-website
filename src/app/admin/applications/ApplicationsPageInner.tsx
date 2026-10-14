@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { AdminShell } from '@admin/components/AdminShell';
 import type { UnifiedApplication } from '@/app/api/admin/applications/route';
 import { StatusPill } from '@/components/ui/Badge';
-import { formatWatDate } from '@/lib/date';
+import { formatWatDate, formatWatDateTime } from '@/lib/date';
 
 type ModeratorScope = {
   id: string;
@@ -35,6 +35,8 @@ export default function ApplicationsPageInner() {
   const [activeTab, setActiveTab] = useState<'all' | 'submitted' | 'approved' | 'rejected'>('all');
   const [divisionFilter, setDivisionFilter] = useState<string>('all');
   const [universityFilter, setUniversityFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeLinkId, setActiveLinkId] = useState<string>(linkIdFromUrl);
 
@@ -109,6 +111,15 @@ export default function ApplicationsPageInner() {
     return Array.from(unis);
   }, [applications]);
 
+  // Unique divisions for filter dropdown
+  const divisionOptions = useMemo(() => {
+    const divs = new Set<string>();
+    applications.forEach((a) => {
+      if (a.division) divs.add(a.division);
+    });
+    return Array.from(divs);
+  }, [applications]);
+
   // Filtered applications list
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
@@ -119,9 +130,17 @@ export default function ApplicationsPageInner() {
       }
       if (divisionFilter !== 'all' && app.division !== divisionFilter) return false;
       if (universityFilter !== 'all' && app.universityName !== universityFilter) return false;
+      if (startDate) {
+        const start = new Date(startDate).getTime();
+        if (new Date(app.createdAt).getTime() < start) return false;
+      }
+      if (endDate) {
+        const end = new Date(endDate).getTime() + 86400000;
+        if (new Date(app.createdAt).getTime() > end) return false;
+      }
       return true;
     });
-  }, [applications, activeTab, divisionFilter, universityFilter]);
+  }, [applications, activeTab, divisionFilter, universityFilter, startDate, endDate]);
 
   // Open drawer for an application
   const openReviewDrawer = (app: UnifiedApplication, initialTab: 'responses' | 'documents' | 'decision' = 'responses') => {
@@ -220,7 +239,20 @@ export default function ApplicationsPageInner() {
   // Export to CSV
   const handleExportCsv = () => {
     if (filteredApps.length === 0) return;
-    const headers = ['Full Name', 'Email', 'Phone', 'Institution', 'Programme', 'Level', 'Division', 'Status', 'Submitted At', 'Review Remarks'];
+    const headers = [
+      'Full Name',
+      'Email',
+      'Phone',
+      'Institution',
+      'Programme',
+      'Level',
+      'Division',
+      'Status',
+      'Source',
+      'Campaign Link',
+      'Submitted At (WAT)',
+      'Review Remarks',
+    ];
     const rows = filteredApps.map((a) => [
       `"${a.fullName.replace(/"/g, '""')}"`,
       `"${a.email}"`,
@@ -230,15 +262,22 @@ export default function ApplicationsPageInner() {
       `"${a.level}"`,
       `"${a.division}"`,
       `"${a.status}"`,
-      `"${new Date(a.createdAt).toLocaleDateString()}"`,
+      `"${a.source === 'mongo' ? 'Campaign Link' : 'Direct Portal'}"`,
+      `"${(a.campaignName || '').replace(/"/g, '""')}"`,
+      `"${formatWatDateTime(a.createdAt)}"`,
       `"${(a.reviewRemarks || '').replace(/"/g, '""')}"`,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `sinet_admissions_report_${Date.now()}.csv`);
+    link.setAttribute(
+      'download',
+      `sinet_admissions_report_${new Date().toISOString().slice(0, 10)}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -292,7 +331,7 @@ export default function ApplicationsPageInner() {
             onClick={handleExportCsv}
             className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-600/30 bg-emerald-50 px-3.5 py-2 text-xs font-bold text-emerald-800 shadow-sm hover:bg-emerald-100 transition"
           >
-            <span>📥 Export CSV</span>
+            <span>📥 Export Applications CSV</span>
           </button>
 
           <button
@@ -394,7 +433,7 @@ export default function ApplicationsPageInner() {
               className="w-full lg:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-5 py-3 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-sm"
             >
               <span>📥</span>
-              <span>Download Report</span>
+              <span>Export Applications CSV</span>
             </button>
           </div>
         </div>
@@ -451,9 +490,19 @@ export default function ApplicationsPageInner() {
             className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
           >
             <option value="all">All Divisions &amp; Roles</option>
-            <option value="student_finance">Student Finance</option>
-            <option value="student_enterprise">Student Enterprise</option>
-            <option value="governance_records">Governance &amp; Records</option>
+            {divisionOptions.length > 0 ? (
+              divisionOptions.map((div) => (
+                <option key={div} value={div}>
+                  {div.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                </option>
+              ))
+            ) : (
+              <>
+                <option value="student_finance">Student Finance</option>
+                <option value="student_enterprise">Student Enterprise</option>
+                <option value="governance_records">Governance &amp; Records</option>
+              </>
+            )}
           </select>
 
           {/* University / Campus Filter */}
@@ -470,6 +519,42 @@ export default function ApplicationsPageInner() {
                 </option>
               ))}
             </select>
+          )}
+
+          {/* Date Range Filters */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50/50 px-2.5 py-1 text-xs text-slate-600">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">From</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-transparent text-xs text-slate-700 outline-none"
+              title="Filter by submission date from"
+            />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">To</span>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-transparent text-xs text-slate-700 outline-none"
+              title="Filter by submission date to"
+            />
+          </div>
+
+          {(startDate || endDate || divisionFilter !== 'all' || universityFilter !== 'all' || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                setDivisionFilter('all');
+                setUniversityFilter('all');
+                setSearchQuery('');
+              }}
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline px-1.5 py-1"
+            >
+              Reset filters
+            </button>
           )}
         </div>
 
