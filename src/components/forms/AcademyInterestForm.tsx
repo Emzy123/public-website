@@ -1,17 +1,23 @@
 'use client';
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AcademyInterestSchema, AcademyInterestFormData } from '@/lib/schemas/academy.schema';
-import { Button } from '../ui/Button';
+import { FormField, Input, Button } from '../ui';
 import { trackEvent } from '@/lib/analytics';
 
 export function AcademyInterestForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<AcademyInterestFormData>({
-    resolver: zodResolver(AcademyInterestSchema)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<AcademyInterestFormData>({
+    resolver: zodResolver(AcademyInterestSchema),
   });
 
   const onSubmit = async (data: AcademyInterestFormData) => {
@@ -22,7 +28,7 @@ export function AcademyInterestForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, website: '' }),
       });
-      
+
       if (res.ok) {
         setStatus('success');
         trackEvent('academy_interest_submit', {});
@@ -31,27 +37,39 @@ export function AcademyInterestForm() {
         const errData = await res.json();
         throw new Error(errData.message || 'Failed to register interest');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
-      setErrorMessage(err.message);
+      setErrorMessage((err as Error).message || 'Failed to register interest');
     }
   };
 
   if (status === 'success') {
     return (
-      <div className="bg-green-50 text-green-800 p-6 rounded-xl border border-green-200 shadow-sm text-center">
+      <div className="bg-emerald-50 text-emerald-900 p-6 rounded-2xl border border-emerald-200 shadow-sm text-center">
         <h3 className="text-xl font-bold mb-2">Registration Successful!</h3>
-        <p>Thank you for your interest in the SINet Academy. We'll notify you as soon as we launch.</p>
-        <Button variant="ghost" className="mt-4 border border-green-300" onClick={() => setStatus('idle')}>Register another</Button>
+        <p className="text-xs leading-relaxed text-emerald-700">
+          Thank you for your interest in the SINet Academy. We will notify you as soon as the curriculum launches.
+        </p>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="mt-4"
+          onClick={() => setStatus('idle')}
+        >
+          Register another
+        </Button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="w-full bg-white p-6 md:p-8 rounded-xl shadow-lg border border-slate-100">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200/90"
+    >
       <div className="mb-6">
-        <h3 className="text-2xl font-bold text-slate-900 mb-2">Register Your Interest</h3>
-        <p className="text-slate-600">Be the first to know when the Academy curriculum goes live.</p>
+        <h3 className="text-2xl font-bold text-brand-ink mb-1 font-editorial">Register Your Interest</h3>
+        <p className="text-xs text-slate-500">Be the first to know when the Academy curriculum goes live.</p>
       </div>
 
       <div className="space-y-4 mb-6">
@@ -62,47 +80,54 @@ export function AcademyInterestForm() {
           className="hidden"
           {...register('website')}
         />
-        <div>
-          <label htmlFor="fullName" className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
-          <input
+
+        <FormField
+          id="fullName"
+          label="Full Name"
+          required
+          error={errors.fullName?.message}
+        >
+          <Input
             id="fullName"
             type="text"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.fullName ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
-            aria-invalid={errors.fullName ? 'true' : 'false'}
-            aria-describedby={errors.fullName ? 'fullName-error' : undefined}
             disabled={status === 'loading'}
+            error={Boolean(errors.fullName)}
+            placeholder="e.g. Samuel Adekunle"
             {...register('fullName')}
           />
-          {errors.fullName && <p id="fullName-error" className="mt-1 text-sm text-red-600">{errors.fullName.message}</p>}
-        </div>
+        </FormField>
 
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">Email Address *</label>
-          <input
+        <FormField
+          id="email"
+          label="Email Address"
+          required
+          error={errors.email?.message}
+        >
+          <Input
             id="email"
             type="email"
-            className={`w-full px-4 py-3 rounded-md border text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500 bg-red-50 focus:ring-red-500' : 'border-slate-300'}`}
-            aria-invalid={errors.email ? 'true' : 'false'}
-            aria-describedby={errors.email ? 'email-error' : undefined}
             disabled={status === 'loading'}
+            error={Boolean(errors.email)}
+            placeholder="you@domain.com"
             {...register('email')}
           />
-          {errors.email && <p id="email-error" className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-        </div>
+        </FormField>
       </div>
 
       {status === 'error' && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+        <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-semibold">
           {errorMessage}
         </div>
       )}
 
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
+        variant="primary"
+        loading={status === 'loading'}
         disabled={status === 'loading'}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
+        className="w-full"
       >
-        {status === 'loading' ? 'Submitting...' : 'Join Academy Waitlist'}
+        {status === 'loading' ? 'Submitting…' : 'Join Academy Waitlist →'}
       </Button>
     </form>
   );

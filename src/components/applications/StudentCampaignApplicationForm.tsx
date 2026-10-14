@@ -218,14 +218,14 @@ export function StudentCampaignApplicationForm({
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] px-4 py-10 xs:px-6 md:py-16">
+    <div className="min-h-screen bg-brand-canvas px-4 py-10 xs:px-6 md:py-16 text-brand-ink">
       <div className="mx-auto max-w-2xl">
         {/* Header Breadcrumb & Brand */}
         <div className="mb-6">
           <div className="flex items-center justify-between gap-4">
             <Link
               href="/"
-              className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-amber-700 hover:text-amber-800"
+              className="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-brand-accent hover:text-brand-accent-hover"
             >
               ← SINet
             </Link>
@@ -484,7 +484,7 @@ export function StudentCampaignApplicationForm({
             <button
               type="submit"
               disabled={submitting}
-              className="flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#071026] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-[48px] w-full items-center justify-center rounded-xl bg-brand-ink px-6 text-sm font-bold text-white shadow-sm transition hover:bg-brand-ink-navy active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? (
                 <span className="flex items-center gap-2">

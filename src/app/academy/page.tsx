@@ -32,7 +32,7 @@ export default async function AcademyPage() {
         </div>
       </section>
 
-      <section className="py-24 bg-slate-50">
+      <section className="py-24 bg-brand-canvas">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row gap-16 items-start max-w-7xl mx-auto">
             <div className="w-full lg:w-3/5">

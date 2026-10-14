@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import type { ChapterListItem } from '@/lib/chapters/chapters';
 
+import { EmptyState, Badge } from '@/components/ui';
+
 export function ChaptersDirectoryClient({
   initialChapters,
   stats,
@@ -34,16 +36,16 @@ export function ChaptersDirectoryClient({
   }, [initialChapters, search]);
 
   return (
-    <div className="min-h-screen bg-[#f7f5f0] text-slate-800">
+    <div className="min-h-screen bg-brand-canvas text-brand-ink">
       {/* Hero Section */}
-      <section className="border-b border-slate-200/80 bg-white/80 px-4 py-12 backdrop-blur-md xs:px-6 md:py-16">
+      <section className="border-b border-slate-200/80 bg-white px-4 py-12 xs:px-6 md:py-16">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-mono text-xs font-bold uppercase tracking-widest text-amber-700">
+              <p className="font-mono text-xs font-bold uppercase tracking-widest text-brand-accent">
                 Tertiary Institutions Network • Kogi State
               </p>
-              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-[#071026] sm:text-4xl md:text-5xl">
+              <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-brand-ink sm:text-4xl md:text-5xl font-editorial">
                 Campus Chapters Directory
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
@@ -55,7 +57,7 @@ export function ChaptersDirectoryClient({
 
             <Link
               href="/join"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-[#071026] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-brand-ink px-6 text-sm font-bold text-white shadow-sm transition hover:bg-brand-ink-navy active:scale-[0.98]"
             >
               Join Student Network →
             </Link>
@@ -145,17 +147,16 @@ export function ChaptersDirectoryClient({
               <div>
                 {/* Header: Campus Code & Status */}
                 <div className="flex items-center justify-between">
-                  <span className="rounded-lg bg-[#071026] px-2.5 py-1 font-mono text-xs font-black text-amber-400">
+                  <span className="rounded-lg bg-brand-ink px-2.5 py-1 font-mono text-xs font-black text-amber-400">
                     {chapter.campusCode}
                   </span>
-                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-bold text-emerald-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  <Badge variant="success" dot>
                     Chapter Active
-                  </span>
+                  </Badge>
                 </div>
 
                 {/* Chapter Name & University */}
-                <h3 className="mt-4 text-lg font-bold text-[#071026] group-hover:text-amber-800 transition">
+                <h3 className="mt-4 text-lg font-bold text-brand-ink group-hover:text-brand-accent transition">
                   {chapter.name}
                 </h3>
                 <p className="mt-1 text-xs font-medium text-slate-600">
@@ -186,7 +187,7 @@ export function ChaptersDirectoryClient({
               <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                 {showMemberCounts ? (
                   <div className="text-xs font-semibold text-slate-600">
-                    <span className="font-bold text-slate-900">{chapter.memberCount}</span> members
+                    <span className="font-bold text-brand-ink">{chapter.memberCount}</span> members
                   </div>
                 ) : (
                   <div />
@@ -195,13 +196,13 @@ export function ChaptersDirectoryClient({
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/chapters/${chapter.slug}`}
-                    className="inline-flex min-h-[36px] items-center rounded-xl bg-slate-100 px-3.5 text-xs font-bold text-slate-800 transition hover:bg-slate-200"
+                    className="inline-flex min-h-[36px] items-center rounded-xl border border-slate-200/90 bg-white px-3.5 text-xs font-semibold text-brand-ink transition hover:bg-brand-canvas-subtle hover:border-slate-300"
                   >
                     View Chapter →
                   </Link>
                   <Link
                     href={`/join/student-network?campus=${chapter.campusCode}`}
-                    className="inline-flex min-h-[36px] items-center rounded-xl bg-[#071026] px-3.5 text-xs font-bold text-white transition hover:bg-slate-800"
+                    className="inline-flex min-h-[36px] items-center rounded-xl bg-brand-ink px-4 text-xs font-bold text-white transition hover:bg-brand-ink-navy active:scale-[0.98]"
                   >
                     Join
                   </Link>
@@ -212,14 +213,20 @@ export function ChaptersDirectoryClient({
         </div>
 
         {filteredChapters.length === 0 && (
-          <div className="my-12 rounded-3xl border border-dashed border-slate-300 bg-white/50 p-12 text-center">
-            <p className="text-sm font-semibold text-slate-600">No chapters matched your search query.</p>
-            <button
-              onClick={() => setSearch('')}
-              className="mt-3 text-xs font-bold text-amber-700 hover:underline"
-            >
-              Clear search filter
-            </button>
+          <div className="my-12">
+            <EmptyState
+              title="No chapters matched your search query"
+              description="Try clearing your search query or entering a different campus name."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  className="rounded-xl bg-brand-ink px-4 py-2 text-xs font-bold text-white hover:bg-brand-ink-navy transition"
+                >
+                  Clear search filter
+                </button>
+              }
+            />
           </div>
         )}
       </main>

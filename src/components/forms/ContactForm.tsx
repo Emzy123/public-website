@@ -10,7 +10,7 @@ import {
   normalizeContactTopic,
   type ContactFormData,
 } from '@/lib/schemas/contact.schema';
-import { Button } from '../ui/Button';
+import { FormField, Input, Select, Textarea, Button } from '../ui';
 import { trackEvent } from '@/lib/analytics';
 
 export function ContactForm() {
@@ -132,14 +132,16 @@ export function ContactForm() {
           {...register('website')}
         />
 
-        <div>
-          <label htmlFor="topic" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
-            Inquiry Topic *
-          </label>
-          <select
+        <FormField
+          id="topic"
+          label="Inquiry Topic"
+          required
+          error={errors.topic?.message}
+        >
+          <Select
             id="topic"
-            className="w-full rounded-xl border border-[#0d1a4a]/20 bg-[#fbf9f4] px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:border-[#d9711b] focus:ring-1 focus:ring-[#d9711b]"
             disabled={status === 'loading'}
+            error={Boolean(errors.topic)}
             {...register('topic')}
           >
             {CONTACT_TOPICS.map((topic) => (
@@ -147,93 +149,80 @@ export function ContactForm() {
                 {topic}
               </option>
             ))}
-          </select>
-          {errors.topic && <p className="mt-1 text-xs text-rose-600">{errors.topic.message}</p>}
-        </div>
+          </Select>
+        </FormField>
 
-        <div>
-          <label htmlFor="name" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
-            Full Name *
-          </label>
-          <input
+        <FormField
+          id="name"
+          label="Full Name"
+          required
+          error={errors.name?.message}
+        >
+          <Input
             id="name"
             type="text"
-            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
-              errors.name
-                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
-                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
-            }`}
+            disabled={status === 'loading'}
+            error={Boolean(errors.name)}
             aria-invalid={errors.name ? 'true' : 'false'}
             aria-describedby={errors.name ? 'name-error' : undefined}
-            disabled={status === 'loading'}
             placeholder="e.g. Samuel Adekunle"
             {...register('name')}
           />
-          {errors.name && <p id="name-error" className="mt-1 text-xs text-rose-600">{errors.name.message}</p>}
-        </div>
+        </FormField>
 
-        <div>
-          <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
-            Email Address *
-          </label>
-          <input
+        <FormField
+          id="email"
+          label="Email Address"
+          required
+          error={errors.email?.message}
+        >
+          <Input
             id="email"
             type="email"
-            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
-              errors.email
-                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
-                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
-            }`}
+            disabled={status === 'loading'}
+            error={Boolean(errors.email)}
             aria-invalid={errors.email ? 'true' : 'false'}
             aria-describedby={errors.email ? 'email-error' : undefined}
-            disabled={status === 'loading'}
             placeholder="you@domain.com"
             {...register('email')}
           />
-          {errors.email && <p id="email-error" className="mt-1 text-xs text-rose-600">{errors.email.message}</p>}
-        </div>
+        </FormField>
 
-        <div>
-          <label htmlFor="subject" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
-            Subject *
-          </label>
-          <input
+        <FormField
+          id="subject"
+          label="Subject"
+          required
+          error={errors.subject?.message}
+        >
+          <Input
             id="subject"
             type="text"
-            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
-              errors.subject
-                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
-                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
-            }`}
+            disabled={status === 'loading'}
+            error={Boolean(errors.subject)}
             aria-invalid={errors.subject ? 'true' : 'false'}
             aria-describedby={errors.subject ? 'subject-error' : undefined}
-            disabled={status === 'loading'}
             placeholder="Brief summary of inquiry"
             {...register('subject')}
           />
-          {errors.subject && <p id="subject-error" className="mt-1 text-xs text-rose-600">{errors.subject.message}</p>}
-        </div>
+        </FormField>
 
-        <div>
-          <label htmlFor="message" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a] mb-1.5">
-            Message *
-          </label>
-          <textarea
+        <FormField
+          id="message"
+          label="Message"
+          required
+          error={errors.message?.message}
+        >
+          <Textarea
             id="message"
             rows={5}
-            className={`w-full rounded-xl border px-4 py-3 text-sm text-[#0d1a4a] outline-none transition focus:ring-1 ${
-              errors.message
-                ? 'border-rose-500 bg-rose-50/30 focus:border-rose-500 focus:ring-rose-500'
-                : 'border-[#0d1a4a]/20 bg-[#fbf9f4] focus:border-[#d9711b] focus:ring-[#d9711b]'
-            }`}
+            disabled={status === 'loading'}
+            error={Boolean(errors.message)}
             aria-invalid={errors.message ? 'true' : 'false'}
             aria-describedby={errors.message ? 'message-error' : undefined}
-            disabled={status === 'loading'}
             placeholder="Provide context, details, and how we can assist you..."
             {...register('message')}
           />
-          {errors.message && <p id="message-error" className="mt-1 text-xs text-rose-600">{errors.message.message}</p>}
-        </div>
+        </FormField>
       </div>
 
       {status === 'error' && (
@@ -242,13 +231,15 @@ export function ContactForm() {
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
+        variant="primary"
+        loading={status === 'loading'}
         disabled={status === 'loading'}
-        className="w-full rounded-xl bg-[#0d1a4a] py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-colors hover:bg-[#d9711b] disabled:opacity-50"
+        className="w-full uppercase tracking-wider text-xs"
       >
         {status === 'loading' ? 'Sending Message…' : 'Send Inquiry →'}
-      </button>
+      </Button>
     </form>
   );
 }

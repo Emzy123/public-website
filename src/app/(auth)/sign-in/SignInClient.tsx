@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { FormField, Input, Button } from '@/components/ui';
 
 export function SignInClient() {
   const router = useRouter();
@@ -44,7 +45,6 @@ export function SignInClient() {
         setSuccessMessage('Magic sign-in link sent! Check your inbox to sign in directly.');
         setLoading(false);
       } else {
-        // Forward to verify-code page with email in query
         router.push(`/verify-code?email=${encodeURIComponent(email.trim().toLowerCase())}`);
       }
     } catch {
@@ -54,41 +54,42 @@ export function SignInClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f2e8] text-[#0d1a4a] flex flex-col justify-center px-4 py-12 xs:px-6 lg:px-8">
+    <div className="min-h-screen bg-brand-canvas text-brand-ink flex flex-col justify-center px-4 py-12 xs:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="font-editorial text-3xl font-bold tracking-tight text-[#0d1a4a]">
-              SINet<span className="text-[#d9711b]">.</span>
+            <span className="font-editorial text-3xl font-bold tracking-tight text-brand-ink">
+              SINet<span className="text-brand-accent">.</span>
             </span>
           </Link>
-          <h1 className="mt-4 font-editorial text-2xl xs:text-3xl font-bold tracking-tight text-[#0d1a4a]">
+          <h1 className="mt-4 font-editorial text-2xl xs:text-3xl font-bold tracking-tight text-brand-ink">
             Sign in to SINet
           </h1>
-          <p className="mt-2 text-sm text-[#5b554a]">
+          <p className="mt-2 text-xs leading-relaxed text-slate-500">
             Passwordless &amp; secure. Receive a verification code directly to your email.
           </p>
         </div>
 
-        <div className="bg-white border border-[#0d1a4a]/20 p-6 xs:p-8 shadow-sm">
+        <div className="rounded-2xl bg-white border border-slate-200/90 p-6 xs:p-8 shadow-sm">
           {errorMessage && (
-            <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 text-xs text-red-800">
+            <div className="mb-6 rounded-xl bg-rose-50 border border-rose-200 p-3.5 text-xs font-semibold text-rose-800">
               {errorMessage}
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 text-xs text-emerald-800">
+            <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-3.5 text-xs font-semibold text-emerald-800">
               {successMessage}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-xs font-semibold uppercase tracking-wider text-[#0d1a4a] mb-2">
-                Email address
-              </label>
-              <input
+            <FormField
+              id="email"
+              label="Email Address"
+              required
+            >
+              <Input
                 id="email"
                 type="email"
                 inputMode="email"
@@ -96,23 +97,23 @@ export function SignInClient() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full h-12 px-3.5 border border-[#0d1a4a]/30 bg-[#fbf9f4] text-sm text-[#0d1a4a] placeholder-[#9c9589] focus:outline-none focus:border-[#d9711b] focus:ring-1 focus:ring-[#d9711b]"
+                placeholder="you@domain.com"
+                disabled={loading}
               />
-            </div>
+            </FormField>
 
             <div className="pt-1">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#0d1a4a] mb-2">
-                Sign-in method
+              <label className="block text-xs font-bold text-brand-ink mb-2">
+                Sign-In Method
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setMode('otp')}
-                  className={`h-11 px-3 text-xs font-bold border transition-colors ${
+                  className={`h-11 rounded-xl px-3 text-xs font-bold border transition-all ${
                     mode === 'otp'
-                      ? 'bg-[#0d1a4a] text-white border-[#0d1a4a]'
-                      : 'bg-white text-[#5b554a] border-[#0d1a4a]/20 hover:border-[#0d1a4a]'
+                      ? 'bg-brand-ink text-white border-brand-ink shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   6-Digit Code
@@ -120,10 +121,10 @@ export function SignInClient() {
                 <button
                   type="button"
                   onClick={() => setMode('magic_link')}
-                  className={`h-11 px-3 text-xs font-bold border transition-colors ${
+                  className={`h-11 rounded-xl px-3 text-xs font-bold border transition-all ${
                     mode === 'magic_link'
-                      ? 'bg-[#0d1a4a] text-white border-[#0d1a4a]'
-                      : 'bg-white text-[#5b554a] border-[#0d1a4a]/20 hover:border-[#0d1a4a]'
+                      ? 'bg-brand-ink text-white border-brand-ink shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                   }`}
                 >
                   Magic Link
@@ -131,20 +132,26 @@ export function SignInClient() {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
+              variant="gold"
+              loading={loading}
               disabled={loading || !email.trim()}
-              className="w-full min-h-[48px] bg-[#d9711b] hover:bg-[#0d1a4a] text-white text-sm font-bold tracking-wide transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-4"
+              className="w-full text-xs font-bold uppercase tracking-wider"
             >
-              {loading ? 'Sending code…' : mode === 'otp' ? 'Continue with 6-Digit Code →' : 'Send Magic Link →'}
-            </button>
+              {loading
+                ? 'Sending code…'
+                : mode === 'otp'
+                ? 'Continue with 6-Digit Code →'
+                : 'Send Magic Link →'}
+            </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-[#0d1a4a]/10 text-center">
-            <p className="text-xs text-[#5b554a]">
-              Not a member yet?{' '}
-              <Link href="/membership" className="font-bold text-[#d9711b] hover:underline">
-                View Membership →
+          <div className="mt-6 border-t border-slate-100 pt-5 text-center">
+            <p className="text-xs text-slate-500">
+              Need to submit an application?{' '}
+              <Link href="/membership" className="font-bold text-brand-accent hover:underline">
+                Explore Membership →
               </Link>
             </p>
           </div>
