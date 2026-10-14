@@ -69,7 +69,8 @@ function applySecurityHeaders(response: NextResponse, pathname: string, csp: str
   if (
     pathname.startsWith('/admin') ||
     pathname.startsWith('/api/admin') ||
-    pathname.startsWith('/api/auth')
+    pathname.startsWith('/api/auth') ||
+    pathname === '/transparency'
   ) {
     response.headers.set('X-Robots-Tag', 'noindex, nofollow');
     response.headers.set('Cache-Control', 'no-store, max-age=0');
