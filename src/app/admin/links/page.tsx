@@ -133,6 +133,12 @@ export default function RegistrationLinksPage() {
   };
 
   const toggleLink = async (link: RegistrationLink, isOpen: boolean) => {
+    if (!isOpen) {
+      const confirmed = window.confirm(
+        `Close admissions for "${link.name}"? Applicants using this campaign link will no longer be able to submit applications.`
+      );
+      if (!confirmed) return;
+    }
     try {
       const res = await fetch('/api/admin/registration-links', {
         method: 'PATCH',

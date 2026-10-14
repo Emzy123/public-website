@@ -160,6 +160,16 @@ export default function ApplicationsPageInner() {
   const handleSubmitDecision = async () => {
     if (!selectedApp) return;
 
+    if (decisionType === 'reject' && !decisionRemarks.trim()) {
+      alert('Please specify constructive feedback remarks explaining why this application was not approved.');
+      return;
+    }
+
+    const actionWord = decisionType === 'approve' ? 'Approve' : 'Reject';
+    if (!confirm(`${actionWord} application for ${selectedApp.fullName}? An official notification will be dispatched.`)) {
+      return;
+    }
+
     setActionInProgress(selectedApp.id);
     setFeedbackBanner(null);
 
@@ -215,6 +225,8 @@ export default function ApplicationsPageInner() {
       const input = prompt('Enter reason for rejection:');
       if (input === null) return;
       remarks = input.trim() || undefined;
+    } else {
+      if (!confirm('Approve this application and issue admission notice?')) return;
     }
 
     setActionInProgress(appId);
@@ -884,7 +896,7 @@ export default function ApplicationsPageInner() {
                       <p className="text-xs text-slate-800">{selectedApp.reviewRemarks}</p>
                       <p className="text-[10px] text-slate-400 mt-1">
                         Reviewed by {selectedApp.reviewedBy || 'Moderator'} on{' '}
-                        {selectedApp.reviewedAt ? new Date(selectedApp.reviewedAt).toLocaleString() : 'N/A'}
+                        {selectedApp.reviewedAt ? formatWatDateTime(selectedApp.reviewedAt) : 'N/A'}
                       </p>
                     </div>
                   )}

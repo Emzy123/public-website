@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { listPublishedPosts } from '@/lib/posts/posts';
 import { POST_PILLARS, type PostPillar } from '@/lib/db/schema/posts';
+import { formatWatDate } from '@/lib/date';
 
 export const metadata = {
   title: 'News & Dispatches',
@@ -176,13 +177,7 @@ export default async function NewsPage({ searchParams }: NewsPageProps) {
                     <div>
                       <p className="font-semibold text-slate-800">{post.authorName}</p>
                       <p className="text-[10px] text-slate-400">
-                        {post.publishedAt
-                          ? new Date(post.publishedAt).toLocaleDateString('en-GB', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })
-                          : 'Recent'}
+                        {post.publishedAt ? formatWatDate(post.publishedAt) : 'Recent'}
                       </p>
                     </div>
 

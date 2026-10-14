@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { AdminShell } from '@admin/components/AdminShell';
+import { StatusPill } from '@/components/ui/Badge';
+import { formatWatDateTime } from '@/lib/date';
 
 type Detail = {
   _id: string;
@@ -21,16 +23,6 @@ type Detail = {
   documents: { key: string; label: string; id: string; downloadUrl: string }[];
 };
 
-const STATUS_CONFIG: Record<string, { label: string; classes: string }> = {
-  pending: { label: 'Pending Review', classes: 'bg-amber-500/10 text-amber-600 border-amber-500/30' },
-  submitted: { label: 'Submitted', classes: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
-  under_review: { label: 'Under Review', classes: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
-  approved: { label: 'Accepted', classes: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
-  declined: { label: 'Rejected', classes: 'bg-rose-500/10 text-rose-600 border-rose-500/30' },
-  rejected: { label: 'Rejected', classes: 'bg-rose-500/10 text-rose-600 border-rose-500/30' },
-  active: { label: 'Active Member', classes: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' },
-};
-
 const REJECTION_PRESETS = [
   'Incomplete statement of interest or background information.',
   'Missing required verification documents or unreadable attachment.',
@@ -40,15 +32,7 @@ const REJECTION_PRESETS = [
 ];
 
 function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status] ?? {
-    label: status,
-    classes: 'bg-slate-100 text-slate-600 border-slate-200',
-  };
-  return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cfg.classes}`}>
-      {cfg.label}
-    </span>
-  );
+  return <StatusPill status={status} />;
 }
 
 export default function ApplicationDetailPage() {
@@ -158,13 +142,13 @@ export default function ApplicationDetailPage() {
                 <div>
                   <dt className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Submitted</dt>
                   <dd className="mt-1 font-semibold text-slate-800">
-                    {app.submittedAt ? new Date(app.submittedAt).toLocaleDateString() : '—'}
+                    {app.submittedAt ? formatWatDateTime(app.submittedAt) : '—'}
                   </dd>
                 </div>
                 <div>
                   <dt className="font-semibold uppercase tracking-wider text-slate-400 text-[10px]">Last Updated</dt>
                   <dd className="mt-1 font-semibold text-slate-800">
-                    {app.updatedAt ? new Date(app.updatedAt).toLocaleDateString() : '—'}
+                    {app.updatedAt ? formatWatDateTime(app.updatedAt) : '—'}
                   </dd>
                 </div>
                 {app.reviewedBy && (

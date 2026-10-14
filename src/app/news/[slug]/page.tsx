@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getPostBySlug } from '@/lib/posts/posts';
 import { ReportPostModal } from '@/components/posts/ReportPostModal';
 import { SITE_URL } from '@/lib/site-config';
+import { formatWatDate } from '@/lib/date';
 import type { Metadata } from 'next';
 
 type Props = { params: { slug: string } };
@@ -45,14 +46,7 @@ export default async function NewsPostPage({ params }: Props) {
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
 
-  const formattedDate = (post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt)).toLocaleDateString(
-    'en-GB',
-    {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }
-  );
+  const formattedDate = formatWatDate(post.publishedAt || post.createdAt);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
