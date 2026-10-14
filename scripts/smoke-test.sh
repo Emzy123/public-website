@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${SMOKE_BASE_URL:-http://localhost:3000}"
+BASE_URL="${1:-${SMOKE_BASE_URL:-http://localhost:3000}}"
 PASS=0
 FAIL=0
 
