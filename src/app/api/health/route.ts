@@ -31,7 +31,14 @@ export async function GET(request: NextRequest) {
 
   const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? 'ok' : 'degraded';
-  const email = process.env.RESEND_API_KEY?.trim() ? 'ok' : 'degraded';
+  const emailMissingFrom = Boolean(
+    process.env.RESEND_API_KEY?.trim() && !process.env.AUTH_FROM_EMAIL?.trim()
+  );
+  const email = emailMissingFrom
+    ? 'error'
+    : (process.env.RESEND_API_KEY?.trim() && process.env.AUTH_FROM_EMAIL?.trim())
+      ? 'ok'
+      : 'degraded';
   const checks = { mongo, redis, email };
   const hasError = Object.values(checks).includes('error');
 

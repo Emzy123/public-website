@@ -3,6 +3,11 @@ import { RequestOtpSchema } from '@/lib/schemas/auth.schema';
 import { createEmailOtp, createMagicLink, sendOtpEmail, sendMagicLinkEmail } from '@/lib/auth/otp';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
+import { writeAuditLog } from '@/lib/audit/log';
+import { writeAdminAudit } from '@/lib/auth/guards';
+
+export const CLIENT_AUTH_ERROR_MESSAGE =
+  "We couldn't send your code right now. Please try again shortly or contact hello@sinet.africa.";
 
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
@@ -48,11 +53,26 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Unable to send verification code. Please try again later.';
-    console.error('Request OTP error:', error);
+    const rawError = error instanceof Error ? error.message : String(error);
+    console.error('Request OTP/Magic Link provider error:', error);
+
+    await writeAuditLog({
+      action: 'auth.otp_failed',
+      actor: email,
+      ip,
+      metadata: { mode, error: rawError },
+    });
+    await writeAdminAudit({
+      actorEmail: email,
+      action: 'auth.otp_failed',
+      resource: 'auth',
+      ipAddress: ip,
+      metadata: { mode, error: rawError },
+    });
+
     return NextResponse.json(
-      { error: errorMsg },
-      { status: 500 }
+      { error: CLIENT_AUTH_ERROR_MESSAGE },
+      { status: 503 }
     );
   }
 }

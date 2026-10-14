@@ -14,7 +14,8 @@ export type AuditAction =
   | 'submissions.read_status_update'
   | 'submissions.mark_test'
   | 'registration_link.create'
-  | 'registration_link.update';
+  | 'registration_link.update'
+  | 'auth.otp_failed';
 
 export type AuditEntry = {
   action: AuditAction;

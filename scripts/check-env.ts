@@ -25,7 +25,7 @@ const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }>
   },
   contact: {
     label: 'Contact + Academy APIs',
-    vars: ['MONGODB_URI', 'MONGODB_DB', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL'],
+    vars: ['MONGODB_URI', 'MONGODB_DB', 'RESEND_API_KEY', 'RESEND_FROM_EMAIL', 'AUTH_FROM_EMAIL'],
   },
   waitlist: {
     label: 'Full stack (waitlist form)',

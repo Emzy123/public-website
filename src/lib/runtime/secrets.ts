@@ -40,6 +40,7 @@ export function assertProductionSecrets(): void {
     'NEXT_PUBLIC_SITE_URL',
     'MONGODB_URI',
     'MONGODB_DB',
+    'AUTH_FROM_EMAIL',
   ] as const;
 
   const missing = required.filter((key) => !process.env[key]?.trim());

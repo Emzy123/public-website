@@ -225,9 +225,19 @@ export async function verifyOtpOrMagicToken(
   return { success: false, error: 'Verification code expired or not found. Please request a new one.' };
 }
 
+export function getAuthFromEmail(): string {
+  const email = process.env.AUTH_FROM_EMAIL?.trim();
+  if (!email) {
+    throw new Error(
+      'AUTH_FROM_EMAIL environment variable is missing. Configured sender required (e.g. AUTH_FROM_EMAIL="SINet <no-reply@sinet.africa>").'
+    );
+  }
+  return email;
+}
+
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'SINet <noreply@sinet.africa>';
+  const fromEmail = getAuthFromEmail();
 
   if (!apiKey || apiKey.includes('placeholder')) {
     console.log(`[DEV EMAIL MOCK] To: ${email} | Verification Code: ${otp}`);
@@ -253,31 +263,18 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 </html>`,
   };
 
-  try {
-    const res = await resend.emails.send({
-      from: configuredFrom,
-      ...emailPayload,
-    });
-    if (res.error) {
-      throw new Error(res.error.message);
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[Resend] Primary send failed (${msg}), attempting fallback to onboarding@resend.dev`);
-    // Fallback to Resend default verified sender
-    const fallbackRes = await resend.emails.send({
-      from: 'SINet <onboarding@resend.dev>',
-      ...emailPayload,
-    });
-    if (fallbackRes.error) {
-      throw new Error(`Email delivery failed: ${fallbackRes.error.message}`);
-    }
+  const res = await resend.emails.send({
+    from: fromEmail,
+    ...emailPayload,
+  });
+  if (res.error) {
+    throw new Error(`Email delivery failed: ${res.error.message}`);
   }
 }
 
 export async function sendMagicLinkEmail(email: string, url: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const configuredFrom = process.env.RESEND_FROM_EMAIL?.trim() || 'SINet <noreply@sinet.africa>';
+  const fromEmail = getAuthFromEmail();
 
   if (!apiKey || apiKey.includes('placeholder')) {
     console.log(`[DEV EMAIL MOCK] To: ${email} | Magic Link: ${url}`);
@@ -305,23 +302,11 @@ export async function sendMagicLinkEmail(email: string, url: string): Promise<vo
 </html>`,
   };
 
-  try {
-    const res = await resend.emails.send({
-      from: configuredFrom,
-      ...emailPayload,
-    });
-    if (res.error) {
-      throw new Error(res.error.message);
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[Resend] Primary magic link send failed (${msg}), attempting fallback to onboarding@resend.dev`);
-    const fallbackRes = await resend.emails.send({
-      from: 'SINet <onboarding@resend.dev>',
-      ...emailPayload,
-    });
-    if (fallbackRes.error) {
-      throw new Error(`Email delivery failed: ${fallbackRes.error.message}`);
-    }
+  const res = await resend.emails.send({
+    from: fromEmail,
+    ...emailPayload,
+  });
+  if (res.error) {
+    throw new Error(`Email delivery failed: ${res.error.message}`);
   }
 }
