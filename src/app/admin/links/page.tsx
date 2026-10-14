@@ -1,10 +1,10 @@
-'use client';
-
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { AdminShell, AdminCard } from '@admin/components/AdminShell';
 import { APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole, type RegistrationLink } from '@/lib/types/membership';
 import { StatusPill } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { formatWatDate } from '@/lib/date';
 
 function shareableLinkUrl(link: RegistrationLink): string {
@@ -12,6 +12,18 @@ function shareableLinkUrl(link: RegistrationLink): string {
   if (typeof window !== 'undefined') return `${window.location.origin}/join/${link.slug}`;
   return `/join/${link.slug}`;
 }
+
+function getDefaultExpiry(): string {
+  const d = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 16);
+}
+
+const DEFAULT_FORM = {
+  name: '',
+  roles: ['volunteer', 'community-member'] as ApplicationRole[],
+  expiresAt: getDefaultExpiry(),
+  quota: '100',
+};
 
 export default function RegistrationLinksPage() {
   const [links, setLinks] = useState<RegistrationLink[]>([]);
@@ -22,13 +34,11 @@ export default function RegistrationLinksPage() {
   const [showForm, setShowForm] = useState(false);
   const [selected, setSelected] = useState<RegistrationLink | null>(null);
   const [detail, setDetail] = useState<{ applications: unknown[]; waitlist: { email: string; capturedAt: string }[] } | null>(null);
+  const [qrModalLink, setQrModalLink] = useState<RegistrationLink | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
-    name: '',
-    roles: ['volunteer', 'community-member', 'ambassador', 'staff', 'partnership-interest'] as ApplicationRole[],
-    expiresAt: '',
-    quota: '',
-  });
+  const [form, setForm] = useState(DEFAULT_FORM);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +68,40 @@ export default function RegistrationLinksPage() {
     } catch { /* ignore */ }
   };
 
+  useEffect(() => {
+    if (qrModalLink) {
+      const url = shareableLinkUrl(qrModalLink);
+      QRCode.toDataURL(url, {
+        width: 320,
+        margin: 2,
+        color: { dark: '#0D1A4A', light: '#FFFFFF' },
+      })
+        .then(setQrDataUrl)
+        .catch(() => setQrDataUrl(''));
+    } else {
+      setQrDataUrl('');
+    }
+  }, [qrModalLink]);
+
+  const copyLink = (link: RegistrationLink) => {
+    const url = shareableLinkUrl(link);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(url);
+      setCopiedId(link._id);
+      setTimeout(() => setCopiedId(null), 2500);
+    }
+  };
+
+  const downloadQrCode = () => {
+    if (!qrDataUrl || !qrModalLink) return;
+    const a = document.createElement('a');
+    a.href = qrDataUrl;
+    a.download = `sinet-qr-${qrModalLink.slug}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   const createLink = async () => {
     setCreating(true);
     setError('');
@@ -75,7 +119,7 @@ export default function RegistrationLinksPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unable to create link');
       setShowForm(false);
-      setForm({ name: '', roles: ['volunteer', 'community-member', 'ambassador', 'staff', 'partnership-interest'], expiresAt: '', quota: '' });
+      setForm(DEFAULT_FORM);
       if (data.link) {
         setSelected(data.link);
         void loadDetail(data.link);
@@ -170,24 +214,83 @@ export default function RegistrationLinksPage() {
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="border-b border-[#e4dcc9] bg-[#f9f7f2]">
                 <tr>
-                  {['Name', 'Scope', 'Status', 'Applications', 'Created', ''].map((h) => (
+                  {['Campaign Name', 'Role Scope', 'Status', 'Applications & Quota', 'Created (WAT)', 'Actions'].map((h) => (
                     <th key={h} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[#7b7263]">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f0eae0]">
-                {links.map((link) => (
-                  <tr key={link._id} onClick={() => loadDetail(link)} className={`cursor-pointer hover:bg-[#f9f7f2] ${selected?._id === link._id ? 'bg-[#fdf8ef]' : ''}`}>
-                    <td className="px-5 py-4 font-semibold text-[#0d1a4a]">{link.name}</td>
-                    <td className="px-5 py-4 text-xs text-[#7b7263]">{link.roles.map((r) => ROLE_LABELS[r]).join(', ')}</td>
-                    <td className="px-5 py-4">
-                      <StatusPill status={link.status} />
-                    </td>
-                    <td className="px-5 py-4">{link.applicationCount}{link.quota ? ` / ${link.quota}` : ''}</td>
-                    <td className="px-5 py-4 text-xs text-[#7b7263] whitespace-nowrap">{formatWatDate(link.createdAt)}</td>
-                    <td className="px-5 py-4 text-xs text-[#d9a23c]">Details →</td>
-                  </tr>
-                ))}
+                {links.map((link) => {
+                  const quotaPercent = link.quota
+                    ? Math.min(100, Math.round((link.applicationCount / link.quota) * 100))
+                    : null;
+                  const isCopied = copiedId === link._id;
+
+                  return (
+                    <tr
+                      key={link._id}
+                      onClick={() => loadDetail(link)}
+                      className={`cursor-pointer hover:bg-[#f9f7f2] transition ${
+                        selected?._id === link._id ? 'bg-[#fdf8ef]' : ''
+                      }`}
+                    >
+                      <td className="px-5 py-4 font-semibold text-[#0d1a4a]">
+                        <p>{link.name}</p>
+                        <p className="font-mono text-[10px] text-slate-400">/join/{link.slug}</p>
+                      </td>
+                      <td className="px-5 py-4 text-xs text-[#7b7263]">
+                        {link.roles.map((r) => ROLE_LABELS[r]).join(', ')}
+                      </td>
+                      <td className="px-5 py-4">
+                        <StatusPill status={link.status} />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-baseline gap-1 font-semibold text-slate-900">
+                          <span>{link.applicationCount}</span>
+                          {link.quota && <span className="text-slate-400 text-xs">/ {link.quota}</span>}
+                        </div>
+                        {quotaPercent !== null && (
+                          <div className="mt-1 h-1.5 w-24 rounded-full bg-slate-100 overflow-hidden">
+                            <div
+                              className="h-full bg-amber-500 rounded-full"
+                              style={{ width: `${quotaPercent}%` }}
+                            />
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-5 py-4 text-xs text-[#7b7263] whitespace-nowrap">
+                        {formatWatDate(link.createdAt)}
+                      </td>
+                      <td className="px-5 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="inline-flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => copyLink(link)}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+                            title="Copy shareable link"
+                          >
+                            {isCopied ? '✓ Copied' : 'Copy'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQrModalLink(link)}
+                            className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition"
+                            title="View QR Code"
+                          >
+                            QR
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => loadDetail(link)}
+                            className="text-xs font-semibold text-[#d9a23c] hover:underline px-1"
+                          >
+                            Details →
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -196,23 +299,84 @@ export default function RegistrationLinksPage() {
         {selected && (
           <div className="space-y-4">
             <AdminCard title={selected.name}>
-              <p className="mb-2 text-xs text-[#7b7263]">Shareable URL</p>
-              <code className="block break-all rounded bg-[#f6f2e8] p-2 text-xs">{shareableLinkUrl(selected)}</code>
-              <button
-                type="button"
-                onClick={() => void navigator.clipboard.writeText(shareableLinkUrl(selected))}
-                className="mt-2 text-xs font-semibold text-[#d9a23c] hover:underline"
-              >
-                Copy link
-              </button>
-              <div className="mt-4 flex gap-2">
-                {selected.isOpen ? (
-                  <button onClick={() => toggleLink(selected, false)} className="flex-1 rounded-lg border border-red-200 py-2 text-sm font-medium text-red-600 hover:bg-red-50">Close Now</button>
-                ) : (
-                  <button onClick={() => toggleLink(selected, true)} className="flex-1 rounded-lg bg-emerald-600 py-2 text-sm font-semibold text-white hover:bg-emerald-700">Reopen</button>
+              <div className="mb-3 flex items-center justify-between">
+                <StatusPill status={selected.status} />
+                <button
+                  type="button"
+                  onClick={() => setQrModalLink(selected)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  <span>📱 View QR Code</span>
+                </button>
+              </div>
+
+              <p className="mb-1 text-xs font-medium text-[#7b7263]">Shareable Public URL</p>
+              <code className="block break-all rounded-xl bg-[#f6f2e8] p-2.5 text-xs font-mono text-slate-800">
+                {shareableLinkUrl(selected)}
+              </code>
+
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyLink(selected)}
+                  className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-slate-800"
+                >
+                  {copiedId === selected._id ? '✓ Copied URL' : '1-Click Copy'}
+                </button>
+                <Link
+                  href={`/join/${selected.slug}`}
+                  target="_blank"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Preview Public Page ↗
+                </Link>
+              </div>
+
+              {/* Quota & Conversion Stats */}
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                  <span className="font-medium">Admissions Quota:</span>
+                  <span className="font-bold text-slate-900">
+                    {selected.applicationCount} {selected.quota ? `/ ${selected.quota} seats` : 'applications'}
+                  </span>
+                </div>
+                {selected.quota && (
+                  <div className="mt-1 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className="h-full bg-amber-500 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round((selected.applicationCount / selected.quota) * 100)
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                )}
+                {selected.expiresAt && (
+                  <p className="mt-2 text-[11px] text-slate-500">
+                    Expires on: <span className="font-semibold text-slate-700">{formatWatDate(selected.expiresAt)}</span>
+                  </p>
                 )}
               </div>
-              <Link href={`/join/${selected.slug}`} target="_blank" className="mt-3 block text-center text-xs font-semibold text-[#d9a23c] hover:underline">Preview public page →</Link>
+
+              <div className="mt-4 flex gap-2">
+                {selected.isOpen ? (
+                  <button
+                    onClick={() => toggleLink(selected, false)}
+                    className="flex-1 rounded-lg border border-red-200 py-2 text-xs font-bold text-red-600 hover:bg-red-50"
+                  >
+                    Close Admissions Now
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => toggleLink(selected, true)}
+                    className="flex-1 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                  >
+                    Reopen Admissions
+                  </button>
+                )}
+              </div>
             </AdminCard>
             {detail && (
               <>
@@ -242,6 +406,60 @@ export default function RegistrationLinksPage() {
           </div>
         )}
       </div>
+
+      {/* QR Code Sharing Modal */}
+      <Modal
+        isOpen={Boolean(qrModalLink)}
+        onClose={() => setQrModalLink(null)}
+        title={qrModalLink ? `Campaign QR: ${qrModalLink.name}` : 'QR Code'}
+      >
+        {qrModalLink && (
+          <div className="flex flex-col items-center text-center">
+            <p className="text-xs text-slate-500 mb-4">
+              Scan with any mobile camera to open the public admission form directly on a smartphone.
+            </p>
+
+            {qrDataUrl ? (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={qrDataUrl}
+                  alt={`QR code for ${qrModalLink.name}`}
+                  className="h-56 w-56 rounded-xl"
+                />
+              </div>
+            ) : (
+              <div className="h-56 w-56 flex items-center justify-center text-slate-400 text-xs">
+                Generating QR code…
+              </div>
+            )}
+
+            <div className="mt-4 w-full">
+              <code className="block break-all rounded-xl bg-slate-50 p-2.5 text-xs font-mono text-slate-700 border border-slate-200">
+                {shareableLinkUrl(qrModalLink)}
+              </code>
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 w-full">
+              <button
+                type="button"
+                onClick={() => copyLink(qrModalLink)}
+                className="rounded-xl bg-[#0d1a4a] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#1a2d66] transition"
+              >
+                {copiedId === qrModalLink._id ? '✓ Copied to Clipboard' : 'Copy Public URL'}
+              </button>
+              <button
+                type="button"
+                onClick={downloadQrCode}
+                disabled={!qrDataUrl}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm hover:bg-slate-50 transition disabled:opacity-50"
+              >
+                📥 Download PNG
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </AdminShell>
   );
 }
