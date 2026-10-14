@@ -285,7 +285,7 @@ function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => vo
       />
       <div
         ref={dialogRef}
-        className="relative z-10 grid max-h-[92vh] w-full max-w-4xl overflow-hidden border border-[#eccb7c]/30 bg-[#f6f2e8] shadow-2xl md:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]"
+        className="relative z-10 grid max-h-[92vh] w-full max-w-4xl overflow-y-auto border border-[#eccb7c]/30 bg-[#f6f2e8] shadow-2xl md:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)]"
       >
         {/* Visible close button — top-right corner */}
         <button
