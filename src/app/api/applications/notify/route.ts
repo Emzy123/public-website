@@ -47,7 +47,22 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Input validation (Zod schema)
-    const parsed = notifySchema.parse(rawBody);
+    const validation = notifySchema.safeParse(rawBody);
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const path = issue.path.join('.');
+        if (path) fieldErrors[path] = issue.message;
+      }
+      return NextResponse.json(
+        {
+          error: validation.error.issues[0]?.message || 'Invalid input data',
+          fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+    const parsed = validation.data;
     const email = parsed.email.toLowerCase().trim();
     const fullName = parsed.fullName?.trim() || 'Applicant';
     const isTest = isTestSubmission({ email, fullName });
