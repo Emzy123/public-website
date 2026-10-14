@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AdminCard } from '@admin/components/AdminShell';
+import { StatusPill } from '@/components/ui/Badge';
+import { formatWatDate, formatWatDateTime } from '@/lib/date';
 import type { PostRecord, PostPillar, PostStatus } from '@/lib/db/schema/posts';
 
 export function PostsModerationInner() {
@@ -53,6 +55,17 @@ export function PostsModerationInner() {
   }, [activeTab]);
 
   const handleDecision = async (postId: string, decision: 'approve' | 'reject') => {
+    if (decision === 'approve') {
+      const confirmed = window.confirm(
+        'Approve and publish this post immediately to the public SINet /news feed and RSS feed?'
+      );
+      if (!confirmed) return;
+    }
+    if (decision === 'reject' && !rejectReason.trim()) {
+      alert('Please provide a constructive editorial reason or feedback for rejection.');
+      return;
+    }
+
     setProcessingId(postId);
     setFeedbackMessage(null);
     try {
@@ -61,7 +74,7 @@ export function PostsModerationInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           decision,
-          rejectionReason: decision === 'reject' ? rejectReason : undefined,
+          rejectionReason: decision === 'reject' ? rejectReason.trim() : undefined,
         }),
       });
 
@@ -121,34 +134,7 @@ export function PostsModerationInner() {
   };
 
   const getStatusBadge = (status: PostStatus) => {
-    switch (status) {
-      case 'published':
-        return (
-          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-            ✓ Published
-          </span>
-        );
-      case 'in_review':
-        return (
-          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
-            ⏳ In Review
-          </span>
-        );
-      case 'rejected':
-        return (
-          <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800">
-            ✕ Rejected
-          </span>
-        );
-      case 'draft':
-        return (
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-700">
-            Draft
-          </span>
-        );
-      default:
-        return null;
-    }
+    return <StatusPill status={status} />;
   };
 
   return (
@@ -262,12 +248,7 @@ export function PostsModerationInner() {
                       <span>✍️ By {post.authorName} ({post.authorRole})</span>
                       <span>⏱️ {post.readingTimeMinutes} min read</span>
                       <span>
-                        Created:{' '}
-                        {new Date(post.createdAt).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                        Created: {formatWatDate(post.createdAt)}
                       </span>
                       {post.status === 'published' && (
                         <Link
@@ -343,10 +324,38 @@ export function PostsModerationInner() {
             </div>
 
             <h2 className="mt-2 text-lg font-bold text-slate-900">{selectedPost.title}</h2>
-            <p className="mt-1 text-xs text-slate-500">
-              Submitted by {selectedPost.authorName} • {selectedPost.authorRole} •{' '}
-              {selectedPost.authorEmail || 'No email provided'}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <span>By {selectedPost.authorName} ({selectedPost.authorRole})</span>
+              <span>•</span>
+              <span>{selectedPost.authorEmail || 'No email provided'}</span>
+              <span>•</span>
+              <span>Submitted: {formatWatDateTime(selectedPost.createdAt)}</span>
+            </div>
+            {selectedPost.moderatedAt && (
+              <p className="mt-1 text-[11px] text-slate-500">
+                Moderated by <strong className="text-slate-700">{selectedPost.moderatedBy || 'Editor'}</strong> on{' '}
+                {formatWatDateTime(selectedPost.moderatedAt)}
+              </p>
+            )}
+            {selectedPost.status === 'published' && (
+              <div className="mt-2 flex items-center gap-3 text-xs">
+                <Link
+                  href={`/news/${selectedPost.slug}`}
+                  target="_blank"
+                  className="font-bold text-blue-600 hover:underline inline-flex items-center gap-1"
+                >
+                  <span>View Published Live</span> ↗
+                </Link>
+                <span className="text-slate-300">•</span>
+                <Link
+                  href="/feed.xml"
+                  target="_blank"
+                  className="font-medium text-amber-700 hover:underline"
+                >
+                  RSS 2.0 Feed
+                </Link>
+              </div>
+            )}
 
             <div className="mt-4 rounded-xl bg-slate-50 p-4 border border-slate-100">
               <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Summary Excerpt</h4>
