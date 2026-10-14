@@ -164,6 +164,32 @@ check "Academy CSRF token" "GET" "/api/academy" "200"
 check "Admin login CSRF token" "GET" "/api/admin/auth/login" "200"
 check "Health" "GET" "/api/health" "200"
 
+# 8b. Auth Provider Leak Smoke Check
+check_otp_provider_error_leak() {
+  local response
+  response=$(curl -s -X POST "${BASE_URL}/api/auth/request-otp" \
+    -H "Content-Type: application/json" \
+    -H "Origin: ${BASE_URL}" \
+    -d '{"email":"smoke-leak-test@sinet.africa","mode":"otp"}' 2>/dev/null || echo "")
+
+  local leak=false
+  for forbidden in "resend" "@gmail.com" "testing emails"; do
+    if echo "$response" | grep -qi "$forbidden"; then
+      leak=true
+      break
+    fi
+  done
+
+  if [ "$leak" = false ]; then
+    echo "✓ /api/auth/request-otp never leaks provider text into response body"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ /api/auth/request-otp leaked forbidden provider string in: $response"
+    FAIL=$((FAIL + 1))
+  fi
+}
+check_otp_provider_error_leak
+
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
 check "Admin media API requires auth" "GET" "/api/admin/media" "401"
