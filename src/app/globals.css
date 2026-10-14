@@ -13,6 +13,12 @@
   --sand: #f6f2e8;
   --white: #ffffff;
   --off-white: var(--sand);
+  --brand-canvas: #fbf7ee;
+  --brand-canvas-subtle: #f4eedb;
+  --brand-ink: #071026;
+  --brand-ink-navy: #0d1a4a;
+  --brand-accent: #d97706;
+  --brand-accent-hover: #b45309;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -26,8 +32,8 @@
   --success: #10b981;
   --error: #ef4444;
   --warning: #f59e0b;
-  --background: var(--off-white);
-  --foreground: var(--primary-dark);
+  --background: var(--brand-canvas);
+  --foreground: var(--brand-ink);
 }
 
 @layer base {
