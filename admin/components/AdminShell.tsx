@@ -45,7 +45,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       {
         href: '/admin/applications',
-        label: 'Review Applications',
+        label: 'Applications',
         icon: (
           <Icon d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         ),
@@ -67,27 +67,20 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: 'Publishing & Media',
+    label: 'Publishing',
     items: [
+      {
+        href: '/admin/posts',
+        label: 'News & Updates',
+        icon: (
+          <Icon d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z" />
+        ),
+      },
       {
         href: '/admin/content/adverts',
         label: 'Spotlight & Flyers',
         icon: (
           <Icon d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-        ),
-      },
-      {
-        href: '/admin/posts',
-        label: 'Editorial Moderation',
-        icon: (
-          <Icon d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        ),
-      },
-      {
-        href: '/admin/content/news',
-        label: 'News & Updates',
-        icon: (
-          <Icon d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2z" />
         ),
       },
       {
@@ -104,16 +97,18 @@ const navGroups: { label: string; items: NavItem[] }[] = [
           <Icon d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M23 21v-2a4 4 0 00-3-3.87 M16 3.13a4 4 0 010 7.75" />
         ),
       },
-      {
-        href: '/admin/content',
-        label: 'All Pages CMS',
-        icon: <Icon d="M4 6h16M4 12h16M4 18h10" />,
-      },
     ],
   },
   {
-    label: 'Governance & Config',
+    label: 'Operations & Governance',
     items: [
+      {
+        href: '/chapters',
+        label: 'Campus Chapters',
+        icon: (
+          <Icon d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        ),
+      },
       {
         href: '/admin/audit',
         label: 'Security Audit Log',
