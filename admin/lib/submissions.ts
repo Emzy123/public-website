@@ -53,16 +53,28 @@ export function isUnread(item: { readAt?: string }): boolean {
 export function submissionReplyMailto(type: SubmissionType, item: ContactSubmission | AcademySubmission): string {
   if (type === 'contact') {
     const c = item as ContactSubmission;
-    const subject = encodeURIComponent(`Re: ${c.subject}`);
+    const ref = c.referenceId ? ` [Ref: ${c.referenceId}]` : '';
+    const subject = encodeURIComponent(`Re: ${c.subject || 'SINet Inquiry'}${ref}`);
     const body = encodeURIComponent(
-      `Hi ${c.name},\n\nThank you for contacting SINet.\n\n---\nOriginal message:\n${c.message}`
+      `Hi ${c.name},\n\nThank you for contacting Sinetwork Global Ltd. (SINet) regarding ${c.topic || 'your inquiry'}.\n\n` +
+      `We have received your message and would like to follow up:\n\n\n\n` +
+      `Best regards,\n` +
+      `SINet Communications & Operations Directorate\n` +
+      `https://sinet.africa\n\n` +
+      `---\nOriginal message:\n${c.message}`
     );
     return `mailto:${c.email}?subject=${subject}&body=${body}`;
   }
 
   const a = item as AcademySubmission;
-  const subject = encodeURIComponent('Re: SINet Academy interest');
-  const body = encodeURIComponent(`Hi ${a.fullName},\n\nThank you for your interest in SINet Academy.\n\n`);
+  const subject = encodeURIComponent('Re: SINet Academy Enrollment & Community Inquiry');
+  const body = encodeURIComponent(
+    `Hi ${a.fullName},\n\nThank you for your interest in SINet Academy.\n\n` +
+    `We would like to share information regarding upcoming cohort tracks and campus workshops:\n\n\n\n` +
+    `Best regards,\n` +
+    `SINet Academy Directorate\n` +
+    `https://sinet.africa/academy`
+  );
   return `mailto:${a.email}?subject=${subject}&body=${body}`;
 }
 

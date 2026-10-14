@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AdminShell } from '@admin/components/AdminShell';
 import {
   isUnread,
@@ -12,6 +13,7 @@ import {
 } from '@admin/lib/submissions';
 import { StatusPill, Badge } from '@/components/ui/Badge';
 import { formatWatDateTime } from '@/lib/date';
+import { CONTACT_TOPICS } from '@/lib/schemas/contact.schema';
 
 function maskEmail(email: string): string {
   if (!email || !email.includes('@')) return email;
@@ -90,6 +92,9 @@ function SubmissionCard({
 }
 
 export default function SubmissionsPage() {
+  const searchParams = useSearchParams();
+  const initialTopic = searchParams?.get('topic') || 'all';
+
   const [contacts, setContacts] = useState<ContactSubmission[]>([]);
   const [academy, setAcademy] = useState<AcademySubmission[]>([]);
   const [counts, setCounts] = useState<SubmissionCounts | null>(null);
@@ -98,6 +103,7 @@ export default function SubmissionsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [topicFilter, setTopicFilter] = useState<string>(initialTopic);
   const [showTest, setShowTest] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -110,6 +116,7 @@ export default function SubmissionsPage() {
     const params = new URLSearchParams();
     if (typeFilter !== 'all') params.set('type', typeFilter);
     if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (topicFilter !== 'all') params.set('topic', topicFilter);
     if (showTest) params.set('showTest', 'true');
     if (search.trim()) params.set('q', search.trim());
 
@@ -126,12 +133,20 @@ export default function SubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, showTest, statusFilter, typeFilter]);
+  }, [search, showTest, statusFilter, typeFilter, topicFilter]);
 
   useEffect(() => {
     const timer = setTimeout(loadSubmissions, search ? 300 : 0);
     return () => clearTimeout(timer);
   }, [loadSubmissions, search]);
+
+  const handleQuickReply = (type: SubmissionType, item: ContactSubmission | AcademySubmission) => {
+    const mailto = submissionReplyMailto(type, item);
+    window.location.href = mailto;
+    if (isUnread(item)) {
+      void toggleRead(type, item._id, true);
+    }
+  };
 
   const toggleRead = async (type: SubmissionType, id: string, read: boolean) => {
     setTogglingId(id);
@@ -276,7 +291,7 @@ export default function SubmissionsPage() {
           placeholder="Search by name, email, or subject…"
           className="w-full rounded-xl border border-[#e4dcc9] bg-white px-4 py-2.5 text-sm text-[#0d1a4a] placeholder:text-[#b0a799] focus:border-[#d9a23c] focus:outline-none"
         />
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-1 rounded-xl border border-[#e4dcc9] bg-white p-1">
             {(['all', 'contact', 'academy'] as TypeFilter[]).map((v) => (
               <Tab key={v} active={typeFilter === v} onClick={() => setTypeFilter(v)}>
@@ -295,6 +310,37 @@ export default function SubmissionsPage() {
               Read
             </Tab>
           </div>
+
+          <div className="flex items-center gap-1.5">
+            <select
+              value={topicFilter}
+              onChange={(e) => setTopicFilter(e.target.value)}
+              className="rounded-xl border border-[#e4dcc9] bg-white px-3 py-2 text-xs font-medium text-[#0d1a4a] focus:border-[#d9a23c] focus:outline-none"
+            >
+              <option value="all">All Topics (7 + Academy)</option>
+              {CONTACT_TOPICS.map((topic) => {
+                const stats = counts?.byTopic?.[topic];
+                return (
+                  <option key={topic} value={topic}>
+                    {topic} {stats ? `(${stats.unread} unread / ${stats.total})` : ''}
+                  </option>
+                );
+              })}
+              <option value="Academy Interest">
+                Academy Interest {counts?.byTopic?.['Academy Interest'] ? `(${counts.byTopic['Academy Interest'].unread} unread / ${counts.byTopic['Academy Interest'].total})` : ''}
+              </option>
+            </select>
+            {topicFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setTopicFilter('all')}
+                className="text-xs font-semibold text-blue-600 hover:underline px-1"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           <label className="flex items-center gap-2 rounded-xl border border-[#e4dcc9] bg-white px-3 py-2 text-xs font-medium text-[#0d1a4a] cursor-pointer hover:bg-[#fdf8ef] select-none">
             <input
               type="checkbox"
@@ -330,10 +376,22 @@ export default function SubmissionsPage() {
                     toggling={togglingId === c._id}
                     onToggleRead={() => toggleRead('contact', c._id, isUnread(c))}
                   >
-                    <p className="font-semibold text-[#0d1a4a]">
-                      {c.name}
-                      {c.subject && <span className="font-normal text-[#7b7263]"> — {c.subject}</span>}
-                    </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-[#0d1a4a]">
+                          {c.name}
+                          {c.subject && <span className="font-normal text-[#7b7263]"> — {c.subject}</span>}
+                        </p>
+                        {c.referenceId && (
+                          <span className="font-mono text-[10px] text-slate-400">Ref: {c.referenceId}</span>
+                        )}
+                      </div>
+                      {c.topic && (
+                        <Badge variant="accent" className="shrink-0 text-[10px]">
+                          {c.topic}
+                        </Badge>
+                      )}
+                    </div>
                     <a
                       href={`mailto:${c.email}`}
                       className="mt-0.5 block text-xs text-[#7b7263] hover:text-[#d9a23c]"
@@ -345,13 +403,14 @@ export default function SubmissionsPage() {
                       {c.message}
                     </p>
                     <div className="mt-4 flex items-center justify-between">
-                      <div className="flex gap-3">
-                        <a
-                          href={submissionReplyMailto('contact', c)}
-                          className="text-xs font-medium text-[#d9a23c] hover:underline"
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleQuickReply('contact', c)}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline"
                         >
-                          Reply
-                        </a>
+                          <span>✉️ Quick Reply</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => void exportCsv('contact', [c._id])}
@@ -394,7 +453,17 @@ export default function SubmissionsPage() {
                     toggling={togglingId === a._id}
                     onToggleRead={() => toggleRead('academy', a._id, isUnread(a))}
                   >
-                    <p className="font-semibold text-[#0d1a4a]">{a.fullName}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-[#0d1a4a]">{a.fullName}</p>
+                        {a.interest && (
+                          <p className="text-xs text-slate-500 mt-0.5">Focus track: {a.interest}</p>
+                        )}
+                      </div>
+                      <Badge variant="neutral" className="shrink-0 text-[10px]">
+                        Academy Track
+                      </Badge>
+                    </div>
                     <a
                       href={`mailto:${a.email}`}
                       className="mt-0.5 block text-xs text-[#7b7263] hover:text-[#d9a23c]"
@@ -403,13 +472,14 @@ export default function SubmissionsPage() {
                       {maskEmail(a.email)}
                     </a>
                     <div className="mt-4 flex items-center justify-between">
-                      <div className="flex gap-3">
-                        <a
-                          href={submissionReplyMailto('academy', a)}
-                          className="text-xs font-medium text-[#d9a23c] hover:underline"
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => handleQuickReply('academy', a)}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline"
                         >
-                          Reply
-                        </a>
+                          <span>✉️ Quick Reply</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => void exportCsv('academy', [a._id])}
