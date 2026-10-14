@@ -102,7 +102,7 @@ export function ContactForm() {
           </div>
         )}
         <p className="mt-4 text-sm leading-relaxed text-emerald-900 max-w-md mx-auto">
-          Thank you for reaching out to SINet. Please keep your Reference ID handy if you need to follow up with our team.
+          Thank you for reaching out to SINet. Our team typically reviews and responds within 24–48 business hours. Please keep your Reference ID handy if you need to follow up with our team.
         </p>
         <Button
           variant="ghost"
@@ -240,6 +240,10 @@ export function ContactForm() {
       >
         {status === 'loading' ? 'Sending Message…' : 'Send Inquiry →'}
       </Button>
+
+      <p className="mt-4 text-center text-xs text-slate-500">
+        ⏱️ We typically review and respond to genuine inquiries within 24–48 business hours (WAT).
+      </p>
     </form>
   );
 }

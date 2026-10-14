@@ -18,25 +18,48 @@ export async function GET(request: NextRequest) {
 
 import crypto from 'crypto';
 
-async function generateUniqueReferenceId(db: any): Promise<string> {
-  const collection = db.collection('contactMessages');
-  try {
-    await collection.createIndex({ referenceId: 1 }, { unique: true, sparse: true });
-  } catch {
-    // Index creation safe fallback
+let indexInitPromise: Promise<void> | null = null;
+function ensureContactIndexes(collection: any): Promise<void> {
+  if (!indexInitPromise) {
+    indexInitPromise = collection
+      .createIndex({ referenceId: 1 }, { unique: true, sparse: true })
+      .catch(() => {});
   }
+  return indexInitPromise;
+}
+
+function generateCandidateId(): string {
+  const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+  const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
+  return `SNT-${timestamp}${randomHex}`;
+}
+
+async function insertWithUniqueReferenceId(
+  collection: any,
+  doc: Omit<Record<string, unknown>, 'referenceId'>
+): Promise<string> {
+  await ensureContactIndexes(collection);
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
-    const randomHex = crypto.randomBytes(3).toString('hex').toUpperCase();
-    const candidate = `SNT-${timestamp}${randomHex}`;
-    const existing = await collection.findOne({ referenceId: candidate });
-    if (!existing) {
-      return candidate;
+    const referenceId = generateCandidateId();
+    try {
+      await collection.insertOne({
+        ...doc,
+        referenceId,
+      });
+      return referenceId;
+    } catch (err: any) {
+      const isDuplicateKey = err?.code === 11000 || String(err?.message).includes('E11000');
+      if (isDuplicateKey && attempt < 4) {
+        continue;
+      }
+      throw err;
     }
   }
 
-  return `SNT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+  const fallbackId = `SNT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+  await collection.insertOne({ ...doc, referenceId: fallbackId });
+  return fallbackId;
 }
 
 export async function POST(request: NextRequest) {
@@ -68,10 +91,8 @@ export async function POST(request: NextRequest) {
       validated.email.toLowerCase().endsWith('@example.com') ||
       validated.message.toLowerCase().includes('production smoke test');
 
-    const referenceId = await generateUniqueReferenceId(db);
-
-    await db.collection('contactMessages').insertOne({
-      referenceId,
+    const collection = db.collection('contactMessages');
+    const referenceId = await insertWithUniqueReferenceId(collection, {
       name: validated.name,
       email: validated.email,
       topic: validated.topic || 'General',
