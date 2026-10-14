@@ -25,7 +25,7 @@ function ensureContactIndexes(collection: any): Promise<void> {
       .createIndex({ referenceId: 1 }, { unique: true, sparse: true })
       .catch(() => {});
   }
-  return indexInitPromise;
+  return indexInitPromise!;
 }
 
 function generateCandidateId(): string {
