@@ -36,8 +36,8 @@ check "Academy CSRF token" "GET" "/api/academy" "200"
 check "Admin login CSRF token" "GET" "/api/admin/auth/login" "200"
 check "Health" "GET" "/api/health" "200"
 
-# Key pages
-check "Waitlist page" "GET" "/waitlist" "200"
+# Key pages & redirects
+check "Waitlist redirect" "GET" "/waitlist" "308"
 check "Contact page" "GET" "/contact" "200"
 check "About page" "GET" "/about" "200"
 check "Sectors page" "GET" "/sectors" "200"
