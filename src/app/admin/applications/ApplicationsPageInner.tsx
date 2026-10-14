@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AdminShell } from '@admin/components/AdminShell';
 import type { UnifiedApplication } from '@/app/api/admin/applications/route';
+import { StatusPill } from '@/components/ui/Badge';
+import { formatWatDate } from '@/lib/date';
 
 type ModeratorScope = {
   id: string;
@@ -612,33 +614,12 @@ export default function ApplicationsPageInner() {
 
                       {/* Status Badge */}
                       <td className="py-3 px-4">
-                        {isPending && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-[11px] font-bold text-amber-800">
-                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                            Pending
-                          </span>
-                        )}
-                        {isApproved && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                            Approved
-                          </span>
-                        )}
-                        {isRejected && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-[11px] font-bold text-rose-800">
-                            <span className="h-1.5 w-1.5 rounded-full bg-rose-600" />
-                            Rejected
-                          </span>
-                        )}
+                        <StatusPill status={app.status} />
                       </td>
 
                       {/* Submission Date */}
-                      <td className="py-3 px-4 text-slate-500 text-[11px]">
-                        {new Date(app.createdAt).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
+                      <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+                        {formatWatDate(app.createdAt)}
                       </td>
 
                       {/* Actions */}
@@ -706,15 +687,7 @@ export default function ApplicationsPageInner() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                  selectedApp.status === 'approved'
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : selectedApp.status === 'rejected'
-                    ? 'bg-rose-100 text-rose-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {selectedApp.status.toUpperCase()}
-                </span>
+                <StatusPill status={selectedApp.status} />
                 <button
                   onClick={closeReviewDrawer}
                   className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 font-bold"

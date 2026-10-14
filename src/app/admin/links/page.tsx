@@ -4,12 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AdminShell, AdminCard } from '@admin/components/AdminShell';
 import { APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole, type RegistrationLink } from '@/lib/types/membership';
-
-const STATUS_CLASSES: Record<string, string> = {
-  open: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  closed: 'bg-[#f6f2e8] text-[#7b7263] border-[#e4dcc9]',
-  'auto-closed': 'bg-amber-50 text-amber-700 border-amber-200',
-};
+import { StatusPill } from '@/components/ui/Badge';
+import { formatWatDate } from '@/lib/date';
 
 function shareableLinkUrl(link: RegistrationLink): string {
   if (link.url) return link.url;
@@ -185,10 +181,10 @@ export default function RegistrationLinksPage() {
                     <td className="px-5 py-4 font-semibold text-[#0d1a4a]">{link.name}</td>
                     <td className="px-5 py-4 text-xs text-[#7b7263]">{link.roles.map((r) => ROLE_LABELS[r]).join(', ')}</td>
                     <td className="px-5 py-4">
-                      <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_CLASSES[link.status] || STATUS_CLASSES.closed}`}>{link.status}</span>
+                      <StatusPill status={link.status} />
                     </td>
                     <td className="px-5 py-4">{link.applicationCount}{link.quota ? ` / ${link.quota}` : ''}</td>
-                    <td className="px-5 py-4 text-xs text-[#7b7263]">{new Date(link.createdAt).toLocaleDateString()}</td>
+                    <td className="px-5 py-4 text-xs text-[#7b7263] whitespace-nowrap">{formatWatDate(link.createdAt)}</td>
                     <td className="px-5 py-4 text-xs text-[#d9a23c]">Details →</td>
                   </tr>
                 ))}
@@ -235,7 +231,7 @@ export default function RegistrationLinksPage() {
                       {detail.waitlist.map((entry, i) => (
                         <li key={i} className="flex justify-between border-b border-[#f0eae0] py-1">
                           <span>{entry.email}</span>
-                          <span className="text-[#7b7263]">{new Date(entry.capturedAt).toLocaleDateString()}</span>
+                          <span className="text-[#7b7263]">{formatWatDate(entry.capturedAt)}</span>
                         </li>
                       ))}
                     </ul>

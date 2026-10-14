@@ -61,20 +61,20 @@ export function Badge({
  * - approved / published / active (green)
  * - rejected / closed / archived (slate / red)
  */
-export function StatusPill({ status }: { status: string }) {
+export function StatusPill({ status, className = '' }: { status: string; className?: string }) {
   const normalized = status.toLowerCase().replace(/[\s-]/g, '_');
 
-  if (['approved', 'active', 'published', 'verified', 'open'].includes(normalized)) {
+  if (['approved', 'active', 'published', 'verified', 'open', 'read'].includes(normalized)) {
     return (
-      <Badge variant="success" dot>
+      <Badge variant="success" dot className={className}>
         {status.replace(/_/g, ' ')}
       </Badge>
     );
   }
 
-  if (['pending', 'in_review', 'under_review', 'submitted', 'reviewing'].includes(normalized)) {
+  if (['pending', 'in_review', 'under_review', 'submitted', 'reviewing', 'unread', 'new'].includes(normalized)) {
     return (
-      <Badge variant="warning" dot>
+      <Badge variant="warning" dot className={className}>
         {status.replace(/_/g, ' ')}
       </Badge>
     );
@@ -82,14 +82,22 @@ export function StatusPill({ status }: { status: string }) {
 
   if (['rejected', 'declined', 'failed'].includes(normalized)) {
     return (
-      <Badge variant="error" dot>
+      <Badge variant="error" dot className={className}>
+        {status.replace(/_/g, ' ')}
+      </Badge>
+    );
+  }
+
+  if (['closed', 'archived'].includes(normalized)) {
+    return (
+      <Badge variant="neutral" dot className={className}>
         {status.replace(/_/g, ' ')}
       </Badge>
     );
   }
 
   return (
-    <Badge variant="neutral" dot>
+    <Badge variant="neutral" dot className={className}>
       {status.replace(/_/g, ' ')}
     </Badge>
   );

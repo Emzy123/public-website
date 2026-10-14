@@ -10,6 +10,8 @@ import {
   type SubmissionCounts,
   type SubmissionType,
 } from '@admin/lib/submissions';
+import { StatusPill, Badge } from '@/components/ui/Badge';
+import { formatWatDateTime } from '@/lib/date';
 
 function maskEmail(email: string): string {
   if (!email || !email.includes('@')) return email;
@@ -64,15 +66,13 @@ function SubmissionCard({
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          {unread && (
-            <span className="rounded-full bg-[#d9a23c] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#0d1a4a]">
-              New
-            </span>
+          {unread ? (
+            <StatusPill status="unread" />
+          ) : (
+            <StatusPill status="read" />
           )}
           {isTest && (
-            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-700">
-              Test data
-            </span>
+            <Badge variant="neutral">Test data</Badge>
           )}
         </div>
         <button
@@ -362,7 +362,7 @@ export default function SubmissionsPage() {
                       </div>
                       {c.createdAt && (
                         <span className="text-xs text-[#b0a799]">
-                          {new Date(c.createdAt).toLocaleString()}
+                          {formatWatDateTime(c.createdAt)}
                         </span>
                       )}
                     </div>
@@ -420,7 +420,7 @@ export default function SubmissionsPage() {
                       </div>
                       {a.createdAt && (
                         <span className="text-xs text-[#b0a799]">
-                          {new Date(a.createdAt).toLocaleString()}
+                          {formatWatDateTime(a.createdAt)}
                         </span>
                       )}
                     </div>
