@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { AnimatePresence, motion } from 'framer-motion';
 import { PILLAR_LABELS, PILLARS, type Pillar } from '@/lib/types/membership';
 import type { GalleryContent, GalleryItem } from '@admin/types/content';
+import { EmptyState } from '@/components/ui';
 
 function isFilenameLike(text?: string): boolean {
   if (!text) return true;
@@ -104,8 +105,11 @@ export function GalleryView({ content }: Props) {
         </div>
 
         {items.length === 0 ? (
-          <div className="mt-12 border border-dashed border-[#0d1a4a]/25 bg-white p-12 text-center">
-            <p className="text-sm text-[#7b7263]">Gallery images will appear here once published from the admin dashboard.</p>
+          <div className="mt-12">
+            <EmptyState
+              title="No gallery images in this pillar"
+              description="Photographs and documentation for this pillar will appear here once published."
+            />
           </div>
         ) : (
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
