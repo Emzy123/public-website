@@ -25,6 +25,23 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
   }
 
   try {
+    if (key === 'adverts') {
+      const { data: current } = await getCmsContentForAdmin('adverts');
+      const { checkAdvertRisk } = await import('@/lib/compliance/risk-check');
+      if (current && Array.isArray((current as any).items)) {
+        for (const item of (current as any).items) {
+          if (item.enabled && checkAdvertRisk(item).hasRisk && !item.legalApproval) {
+            return NextResponse.json(
+              {
+                error: `Advert "${item.title || item.id}" contains financial/return terms and cannot be published live without legal approval.`,
+              },
+              { status: 400 }
+            );
+          }
+        }
+      }
+    }
+
     const result = await publishCmsContent(key as CmsKey, session.email);
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 400 });

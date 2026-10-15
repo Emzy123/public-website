@@ -8,6 +8,9 @@ const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
 const MONGO_TOKENS_COLLECTION = 'verification_tokens';
 
+export const CLIENT_AUTH_ERROR_MESSAGE =
+  "We couldn't send your code right now. Please try again shortly or contact hello@sinet.africa.";
+
 async function getMongoFallback() {
   try {
     const { getMongoDb } = await import('@/lib/db/mongodb');

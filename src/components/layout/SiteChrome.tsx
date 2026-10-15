@@ -7,6 +7,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { PreviewBanner } from './PreviewBanner';
 import { AdvertSpotlight } from './AdvertSpotlight';
+import { isAdvertSuppressedRoute } from '@/lib/adverts/suppression';
 
 export async function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = headers().get('x-pathname') ?? '';
@@ -16,6 +17,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const isSuppressed = isAdvertSuppressedRoute(pathname);
   const preview = isPreviewMode();
   const [settings, adverts, linkAdverts] = await Promise.all([
     getCmsContent('site-settings'),
@@ -32,7 +34,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
         stackOffset={preview}
         logoUrl={settings.logoUrl}
       />
-      {spotlightAdverts.length > 0 && (
+      {!isSuppressed && spotlightAdverts.length > 0 && (
         <AdvertSpotlight adverts={spotlightAdverts} stackOffset={preview} />
       )}
       <main className={`flex-grow ${preview ? 'pt-10' : ''}`}>{children}</main>

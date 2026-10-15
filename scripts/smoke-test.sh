@@ -164,13 +164,14 @@ check "Academy CSRF token" "GET" "/api/academy" "200"
 check "Admin login CSRF token" "GET" "/api/admin/auth/login" "200"
 check "Health" "GET" "/api/health" "200"
 
-# 8b. Auth Provider Leak Smoke Check
+# 8b. Auth Provider Leak Smoke Check (OTP and Magic Link)
 check_otp_provider_error_leak() {
+  local mode="$1"
   local response
   response=$(curl -s -X POST "${BASE_URL}/api/auth/request-otp" \
     -H "Content-Type: application/json" \
     -H "Origin: ${BASE_URL}" \
-    -d '{"email":"smoke-leak-test@sinet.africa","mode":"otp"}' 2>/dev/null || echo "")
+    -d "{\"email\":\"smoke-leak-test@sinet.africa\",\"mode\":\"${mode}\"}" 2>/dev/null || echo "")
 
   local leak=false
   for forbidden in "resend" "@gmail.com" "testing emails"; do
@@ -181,14 +182,32 @@ check_otp_provider_error_leak() {
   done
 
   if [ "$leak" = false ]; then
-    echo "✓ /api/auth/request-otp never leaks provider text into response body"
+    echo "✓ /api/auth/request-otp (${mode}) never leaks provider text into response body"
     PASS=$((PASS + 1))
   else
-    echo "✗ /api/auth/request-otp leaked forbidden provider string in: $response"
+    echo "✗ /api/auth/request-otp (${mode}) leaked forbidden provider string in: $response"
     FAIL=$((FAIL + 1))
   fi
 }
-check_otp_provider_error_leak
+check_otp_provider_error_leak "otp"
+check_otp_provider_error_leak "magic_link"
+
+# 8c. Route Advert & Flyer Suppression Check
+check_adverts_suppressed() {
+  local target_path="$1"
+  local html
+  html=$(curl -s "${BASE_URL}${target_path}" 2>/dev/null || echo "")
+  if echo "$html" | grep -q "Featured announcements"; then
+    echo "✗ Advert announcement strip leaked onto suppressed route: ${target_path}"
+    FAIL=$((FAIL + 1))
+  else
+    echo "✓ Adverts and flyers correctly suppressed on ${target_path}"
+    PASS=$((PASS + 1))
+  fi
+}
+check_adverts_suppressed "/sign-in"
+check_adverts_suppressed "/join"
+check_adverts_suppressed "/portal"
 
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
@@ -197,6 +216,7 @@ check "Admin submissions API requires auth" "GET" "/api/admin/submissions" "401"
 check "Admin applications API requires auth" "GET" "/api/admin/applications" "401"
 check "Admin posts API requires auth" "GET" "/api/admin/posts" "401"
 check "Admin audit API requires auth" "GET" "/api/admin/audit" "401"
+check "Admin adverts legal approval requires auth" "POST" "/api/admin/content/adverts/legal-approval" "401"
 
 echo ""
 echo "=========================================================="

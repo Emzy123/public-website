@@ -70,4 +70,35 @@ describe('getActiveAdverts', () => {
       'flyer',
     ]);
   });
+
+  it('excludes adverts matching financial risk without legal approval', () => {
+    const items = [
+      advert({
+        id: 'risky-unapproved',
+        title: 'Earn 40% Return in 3 Months with SINet Private Capital Partnership, 30 slots only',
+        enabled: true,
+        legalApproval: false,
+      }),
+      advert({
+        id: 'safe',
+        title: 'Student Innovation Summit',
+        enabled: true,
+      }),
+    ];
+    const active = getActiveAdverts({ items }, now);
+    expect(active.map((a) => a.id)).toEqual(['safe']);
+  });
+
+  it('includes adverts matching financial risk if legal approval is obtained', () => {
+    const items = [
+      advert({
+        id: 'risky-approved',
+        title: 'Earn 40% Return in 3 Months with SINet Private Capital Partnership, 30 slots only',
+        enabled: true,
+        legalApproval: true,
+      }),
+    ];
+    const active = getActiveAdverts({ items }, now);
+    expect(active.map((a) => a.id)).toEqual(['risky-approved']);
+  });
 });

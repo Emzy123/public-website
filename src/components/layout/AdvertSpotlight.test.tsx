@@ -104,11 +104,16 @@ describe('AdvertSpotlight Flyer Modal', () => {
   it.each([
     ['/join'],
     ['/join/campus-ambassadors'],
+    ['/verify'],
+    ['/verify/MEM-1234'],
     ['/sign-in'],
+    ['/verify-code'],
+    ['/2fa'],
     ['/portal'],
+    ['/dashboard'],
     ['/admin'],
     ['/admin/audit'],
-  ])('never renders modal on excluded path: %s', (path) => {
+  ])('never renders strip or modal on excluded path: %s', (path) => {
     currentPathname = path;
     render(<AdvertSpotlight adverts={[mockAdvert]} />);
 
@@ -117,5 +122,6 @@ describe('AdvertSpotlight Flyer Modal', () => {
     });
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /featured announcements/i })).not.toBeInTheDocument();
   });
 });

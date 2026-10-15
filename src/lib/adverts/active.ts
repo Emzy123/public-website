@@ -1,4 +1,5 @@
 import type { AdvertItem, AdvertsContent } from '@admin/types/content';
+import { checkAdvertRisk } from '@/lib/compliance/risk-check';
 
 function parseBoundary(value: string | undefined, edge: 'start' | 'end'): number | null {
   const raw = value?.trim();
@@ -18,6 +19,10 @@ export function getActiveAdverts(content: AdvertsContent | AdvertItem[] | null |
   return items
     .filter((item) => item && item.enabled && String(item.title || '').trim())
     .filter((item) => {
+      // Advert containing financial promotion / return claims requires legal approval
+      if (checkAdvertRisk(item).hasRisk && !item.legalApproval) {
+        return false;
+      }
       const start = parseBoundary(item.startsAt, 'start');
       const end = parseBoundary(item.endsAt, 'end');
       if (start !== null && now < start) return false;

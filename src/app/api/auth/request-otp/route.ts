@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { RequestOtpSchema } from '@/lib/schemas/auth.schema';
-import { createEmailOtp, createMagicLink, sendOtpEmail, sendMagicLinkEmail } from '@/lib/auth/otp';
+import {
+  createEmailOtp,
+  createMagicLink,
+  sendOtpEmail,
+  sendMagicLinkEmail,
+  CLIENT_AUTH_ERROR_MESSAGE,
+} from '@/lib/auth/otp';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
 import { writeAuditLog } from '@/lib/audit/log';
 import { writeAdminAudit } from '@/lib/auth/guards';
-
-export const CLIENT_AUTH_ERROR_MESSAGE =
-  "We couldn't send your code right now. Please try again shortly or contact hello@sinet.africa.";
 
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {

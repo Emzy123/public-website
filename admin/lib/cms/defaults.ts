@@ -798,6 +798,9 @@ export function normalizeNewsContent(data: Partial<NewsContent> | undefined): Ne
             publishedAt: String(post.publishedAt || ''),
             published: Boolean(post.published),
             sortOrder: typeof post.sortOrder === 'number' ? post.sortOrder : index,
+            legalApproval: Boolean(post.legalApproval),
+            legalApprovedAt: post.legalApprovedAt ? String(post.legalApprovedAt) : undefined,
+            legalApprovedBy: post.legalApprovedBy ? String(post.legalApprovedBy) : undefined,
           };
         })
     : [];
@@ -897,9 +900,13 @@ export function normalizeAdvertsContent(data: Partial<AdvertsContent> | undefine
           ctaHref: String(item.ctaHref || ''),
           enabled: Boolean(item.enabled),
           showModal: Boolean(item.showModal),
+          dismissalDays: typeof item.dismissalDays === 'number' ? item.dismissalDays : 7,
           startsAt: String(item.startsAt || ''),
           endsAt: String(item.endsAt || ''),
           sortOrder: typeof item.sortOrder === 'number' ? item.sortOrder : index,
+          legalApproval: Boolean(item.legalApproval),
+          legalApprovedAt: item.legalApprovedAt ? String(item.legalApprovedAt) : undefined,
+          legalApprovedBy: item.legalApprovedBy ? String(item.legalApprovedBy) : undefined,
         }))
     : [];
 

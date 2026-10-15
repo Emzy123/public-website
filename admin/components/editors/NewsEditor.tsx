@@ -5,6 +5,7 @@ import { AdminCard } from '../AdminShell';
 import { AdminField, AdminInput, AdminTextarea } from '../ui/AdminField';
 import { AdminMarkdownField } from '../ui/AdminMarkdownField';
 import { ImageUploadField } from '../ui/ImageUploadField';
+import { checkNewsPostRisk } from '@/lib/compliance/risk-check';
 
 function slugify(value: string): string {
   return value
@@ -84,24 +85,48 @@ export function NewsEditor({ data, onChange }: { data: NewsContent; onChange: (d
           </p>
         ) : (
           <div className="space-y-4">
-            {sorted.map((post) => (
-              <div key={post.id} className="rounded-xl border border-[#e4dcc9] bg-[#f9f7f2] p-4">
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                  <label className="flex items-center gap-2 text-sm font-medium text-[#0d1a4a]">
-                    <input
-                      type="checkbox"
-                      checked={post.published}
-                      onChange={(e) => update(post.id, { published: e.target.checked })}
-                    />
-                    Published on public site
-                  </label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => move(post.id, -1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↑</button>
-                    <button type="button" onClick={() => move(post.id, 1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↓</button>
-                    <button type="button" onClick={() => remove(post.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+            {sorted.map((post) => {
+              const risk = checkNewsPostRisk(post);
+              return (
+                <div key={post.id} className="rounded-xl border border-[#e4dcc9] bg-[#f9f7f2] p-4">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium text-[#0d1a4a]">
+                      <input
+                        type="checkbox"
+                        checked={post.published}
+                        onChange={(e) => update(post.id, { published: e.target.checked })}
+                      />
+                      Published on public site
+                    </label>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => move(post.id, -1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↑</button>
+                      <button type="button" onClick={() => move(post.id, 1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↓</button>
+                      <button type="button" onClick={() => remove(post.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                    </div>
                   </div>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
+
+                  {risk.hasRisk && (
+                    <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-sm text-amber-950 shadow-sm">
+                      <div className="flex items-start gap-2.5">
+                        <span className="text-lg leading-none" aria-hidden="true">⚠</span>
+                        <div>
+                          <p className="font-bold text-amber-900">
+                            Financial Promotion / Return Terms Detected
+                          </p>
+                          <p className="mt-1 text-xs text-amber-800 leading-relaxed">
+                            This post matches investment/return keywords{' '}
+                            <span className="font-mono font-semibold bg-amber-200/70 px-1 py-0.5 rounded">
+                              {risk.matchedTerms.join(', ') || 'return / investment claims'}
+                            </span>{' '}
+                            in field(s): <span className="font-semibold">{risk.matchedFields.join(', ')}</span>.
+                            Please ensure institutional compliance and legal sign-off before publishing to the public site.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-4 md:grid-cols-2">
                   <AdminField label="Title">
                     <AdminInput
                       value={post.title}
@@ -129,7 +154,8 @@ export function NewsEditor({ data, onChange }: { data: NewsContent; onChange: (d
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </AdminCard>

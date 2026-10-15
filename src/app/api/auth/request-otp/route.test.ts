@@ -1,8 +1,8 @@
 /** @jest-environment node */
 
 import { NextRequest } from 'next/server';
-import { POST, CLIENT_AUTH_ERROR_MESSAGE } from './route';
-import { getAuthFromEmail } from '@/lib/auth/otp';
+import { POST } from './route';
+import { getAuthFromEmail, CLIENT_AUTH_ERROR_MESSAGE } from '@/lib/auth/otp';
 import * as otpModule from '@/lib/auth/otp';
 import * as auditModule from '@/lib/audit/log';
 import * as guardsModule from '@/lib/auth/guards';

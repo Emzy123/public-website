@@ -15,7 +15,8 @@ export type AuditAction =
   | 'submissions.mark_test'
   | 'registration_link.create'
   | 'registration_link.update'
-  | 'auth.otp_failed';
+  | 'auth.otp_failed'
+  | 'cms.advert_legal_approval';
 
 export type AuditEntry = {
   action: AuditAction;

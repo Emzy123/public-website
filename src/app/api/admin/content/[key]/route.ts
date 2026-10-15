@@ -49,6 +49,20 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: 'Missing data field' }, { status: 400 });
     }
 
+    if (key === 'adverts' && data && Array.isArray((data as any).items)) {
+      const { checkAdvertRisk } = await import('@/lib/compliance/risk-check');
+      for (const item of (data as any).items) {
+        if (item.enabled && checkAdvertRisk(item).hasRisk && !item.legalApproval) {
+          return NextResponse.json(
+            {
+              error: `Advert "${item.title || item.id}" contains financial/return terms and cannot be enabled without legal approval.`,
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
     await saveCmsDraft(key as CmsKey, data, session.email);
     await writeAuditLog({
       action: 'cms.draft_save',

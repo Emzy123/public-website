@@ -135,6 +135,7 @@ export async function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-pathname', pathname);
   requestHeaders.set('Content-Security-Policy', cspHeader);
 
   if (response.status !== 200 || response.headers.get('Location')) {

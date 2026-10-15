@@ -345,6 +345,9 @@ export type NewsPost = {
   publishedAt: string;
   published: boolean;
   sortOrder: number;
+  legalApproval?: boolean;
+  legalApprovedAt?: string;
+  legalApprovedBy?: string;
 };
 
 export type NewsContent = {
@@ -409,6 +412,10 @@ export type AdvertItem = {
   startsAt: string;
   endsAt: string;
   sortOrder: number;
+  /** Legal approval for financial/investment promotions */
+  legalApproval?: boolean;
+  legalApprovedAt?: string;
+  legalApprovedBy?: string;
 };
 
 export type AdvertsContent = {

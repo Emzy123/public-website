@@ -1,9 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import type { AdvertItem, AdvertsContent } from '@admin/types/content';
 import { AdminCard } from '../AdminShell';
 import { AdminField, AdminInput, AdminTextarea } from '../ui/AdminField';
 import { ImageUploadField } from '../ui/ImageUploadField';
+import { checkAdvertRisk } from '@/lib/compliance/risk-check';
 
 function newAdvert(sortOrder: number): AdvertItem {
   return {
@@ -20,11 +22,13 @@ function newAdvert(sortOrder: number): AdvertItem {
     startsAt: '',
     endsAt: '',
     sortOrder,
+    legalApproval: false,
   };
 }
 
 export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChange: (d: AdvertsContent) => void }) {
   const sorted = [...data.items].sort((a, b) => a.sortOrder - b.sortOrder);
+  const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
 
   const update = (id: string, patch: Partial<AdvertItem>) => {
     onChange({
@@ -45,13 +49,60 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
     onChange({ items: next.map((item, i) => ({ ...item, sortOrder: i })) });
   };
 
+  const handleLegalApprovalToggle = async (item: AdvertItem, approved: boolean) => {
+    setApprovalLoading((prev) => ({ ...prev, [item.id]: true }));
+    try {
+      // Fetch fresh CSRF token
+      let csrfToken = '';
+      try {
+        const tokenRes = await fetch('/api/admin/content/adverts');
+        csrfToken = tokenRes.headers.get('x-csrf-token') || '';
+      } catch {
+        /* proceed */
+      }
+
+      const res = await fetch('/api/admin/content/adverts/legal-approval', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+        body: JSON.stringify({
+          advertId: item.id,
+          title: item.title,
+          approved,
+        }),
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      update(item.id, {
+        legalApproval: approved,
+        legalApprovedAt: approved ? (json.legalApprovedAt || new Date().toISOString()) : undefined,
+        legalApprovedBy: approved ? (json.legalApprovedBy || 'Admin') : undefined,
+        // If revoking approval, disable the advert immediately
+        ...(approved ? {} : { enabled: false }),
+      });
+    } catch (err) {
+      console.error('Failed to update legal approval state:', err);
+      // Fallback update in local state
+      update(item.id, {
+        legalApproval: approved,
+        legalApprovedAt: approved ? new Date().toISOString() : undefined,
+        ...(approved ? {} : { enabled: false }),
+      });
+    } finally {
+      setApprovalLoading((prev) => ({ ...prev, [item.id]: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <AdminCard title="How this appears on the site">
         <p className="text-sm leading-6 text-[#7b7263]">
           Enabled adverts appear as a <strong className="text-[#0d1a4a]">sticky spotlight strip under the header</strong> on
-          every public page. When a flyer image is set and &quot;Show flyer modal&quot; is on, visitors also see a prominent
-          dismissible flyer lightbox on first visit — ideal for special events and activities.
+          public marketing pages. Adverts and flyers are strictly suppressed on authentication pages, dashboard/portal workspaces,
+          the admin console, application forms (/join), and credential verification (/verify).
         </p>
         <p className="mt-3 text-sm leading-6 text-[#7b7263]">
           Open <strong className="text-[#0d1a4a]">registration links</strong> from Link Management also appear here
@@ -72,85 +123,164 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
           No adverts yet. Add one for a launch, meetup, campaign, or special activity.
         </p>
       ) : (
-        sorted.map((item) => (
-          <AdminCard
-            key={item.id}
-            title={item.title || 'Untitled advert'}
-            actions={
-              <div className="flex gap-2">
-                <button type="button" onClick={() => move(item.id, -1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↑</button>
-                <button type="button" onClick={() => move(item.id, 1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↓</button>
-                <button type="button" onClick={() => remove(item.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+        sorted.map((item) => {
+          const risk = checkAdvertRisk(item);
+          const requiresLegal = risk.hasRisk;
+          const isApproved = Boolean(item.legalApproval);
+          const isEnabledDisabled = requiresLegal && !isApproved;
+
+          return (
+            <AdminCard
+              key={item.id}
+              title={item.title || 'Untitled advert'}
+              actions={
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => move(item.id, -1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↑</button>
+                  <button type="button" onClick={() => move(item.id, 1)} className="text-xs text-[#7b7263] hover:text-[#0d1a4a]">↓</button>
+                  <button type="button" onClick={() => remove(item.id)} className="text-xs text-red-600 hover:underline">Remove</button>
+                </div>
+              }
+            >
+              <div className="mb-4 flex flex-wrap items-center gap-4">
+                <label
+                  className={`flex items-center gap-2 text-sm ${
+                    isEnabledDisabled
+                      ? 'cursor-not-allowed opacity-60 text-slate-500'
+                      : 'cursor-pointer text-[#0d1a4a]'
+                  }`}
+                  title={
+                    isEnabledDisabled
+                      ? 'Legal approval must be obtained before enabling an advert with financial or return claims'
+                      : undefined
+                  }
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.enabled && !isEnabledDisabled}
+                    disabled={isEnabledDisabled}
+                    onChange={(e) => update(item.id, { enabled: e.target.checked })}
+                  />
+                  <span>Enabled (live when published)</span>
+                  {isEnabledDisabled && (
+                    <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700">
+                      Locked — Legal Approval Required
+                    </span>
+                  )}
+                </label>
+                <label className="flex items-center gap-2 text-sm text-[#0d1a4a] cursor-pointer">
+                  <input type="checkbox" checked={item.showModal} onChange={(e) => update(item.id, { showModal: e.target.checked })} />
+                  Show flyer modal
+                </label>
               </div>
-            }
-          >
-            <div className="mb-4 flex flex-wrap gap-4">
-              <label className="flex items-center gap-2 text-sm text-[#0d1a4a]">
-                <input type="checkbox" checked={item.enabled} onChange={(e) => update(item.id, { enabled: e.target.checked })} />
-                Enabled (live when published)
-              </label>
-              <label className="flex items-center gap-2 text-sm text-[#0d1a4a]">
-                <input type="checkbox" checked={item.showModal} onChange={(e) => update(item.id, { showModal: e.target.checked })} />
-                Show flyer modal
-              </label>
-            </div>
-            {item.showModal && (
-              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <strong>⚠ Financial promotions notice:</strong> If this flyer contains investment-related claims or
-                financial offers, it must be reviewed and approved by legal before enabling. Showing unapproved
-                financial promotions may be unlawful.
-              </div>
-            )}
-            <div className="mb-4 flex items-center gap-3">
-              <label className="text-sm text-[#0d1a4a]" htmlFor={`dismissal-${item.id}`}>
-                Dismissal period (days):
-              </label>
-              <input
-                id={`dismissal-${item.id}`}
-                type="number"
-                min={0}
-                max={365}
-                value={item.dismissalDays ?? 7}
-                onChange={(e) => update(item.id, { dismissalDays: Math.max(0, Number(e.target.value)) })}
-                className="w-20 rounded border border-[#d9d1bf] px-2 py-1 text-sm text-[#0d1a4a]"
-              />
-              <span className="text-xs text-[#7b7263]">Set to 0 to re-show on every visit.</span>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <AdminField label="Eyebrow">
-                <AdminInput value={item.eyebrow} onChange={(e) => update(item.id, { eyebrow: e.target.value })} placeholder="Special event" />
-              </AdminField>
-              <AdminField label="Title">
-                <AdminInput value={item.title} onChange={(e) => update(item.id, { title: e.target.value })} placeholder="Campus meetup · Saturday" />
-              </AdminField>
-              <AdminField label="Short message">
-                <AdminTextarea value={item.body} onChange={(e) => update(item.id, { body: e.target.value })} placeholder="One or two lines shown in the spotlight strip" />
-              </AdminField>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <AdminField label="CTA label">
-                  <AdminInput value={item.ctaLabel} onChange={(e) => update(item.id, { ctaLabel: e.target.value })} />
-                </AdminField>
-                <AdminField label="CTA link">
-                  <AdminInput value={item.ctaHref} onChange={(e) => update(item.id, { ctaHref: e.target.value })} placeholder="/contact" />
-                </AdminField>
-                <AdminField label="Starts (optional)">
-                  <AdminInput type="date" value={item.startsAt.slice(0, 10)} onChange={(e) => update(item.id, { startsAt: e.target.value })} />
-                </AdminField>
-                <AdminField label="Ends (optional)">
-                  <AdminInput type="date" value={item.endsAt.slice(0, 10)} onChange={(e) => update(item.id, { endsAt: e.target.value })} />
-                </AdminField>
-              </div>
-              <div className="md:col-span-2">
-                <ImageUploadField
-                  label="Flyer / poster image"
-                  value={item.imageUrl}
-                  onChange={(imageUrl) => update(item.id, { imageUrl })}
-                  previewClassName="h-64"
+
+              {/* Compliance Warning & Legal Approval Gate */}
+              {requiresLegal && (
+                <div
+                  data-testid={`legal-warning-${item.id}`}
+                  className="mb-4 rounded-xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-950 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl leading-none" aria-hidden="true">⚠</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-red-900 text-base">
+                        Financial Promotions Warning — Legal Approval Required
+                      </p>
+                      <p className="mt-1 text-red-800 leading-relaxed">
+                        This advert contains terms matching financial promotion or return claims{' '}
+                        <span className="font-mono font-bold bg-red-200/80 px-1.5 py-0.5 rounded text-red-900">
+                          {risk.matchedTerms.join(', ') || 'return / investment language'}
+                        </span>{' '}
+                        in field(s): <span className="font-semibold">{risk.matchedFields.join(', ')}</span>.
+                      </p>
+                      <p className="mt-1 text-xs text-red-700">
+                        Under regulatory compliance standards, adverts with return, profit, or investment language
+                        cannot be enabled on the website without explicit legal sign-off.
+                      </p>
+
+                      <div className="mt-3.5 pt-3 border-t border-red-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <label className="flex items-center gap-2.5 font-bold text-red-950 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isApproved}
+                            disabled={approvalLoading[item.id]}
+                            onChange={(e) => handleLegalApprovalToggle(item, e.target.checked)}
+                            className="h-4 w-4 rounded border-red-400 text-red-600 focus:ring-red-500"
+                          />
+                          <span>Legal approval obtained</span>
+                        </label>
+                        {isApproved ? (
+                          <span className="text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-1 rounded inline-flex items-center gap-1">
+                            ✓ Approved{item.legalApprovedBy ? ` by ${item.legalApprovedBy}` : ''}{item.legalApprovedAt ? ` on ${new Date(item.legalApprovedAt).toLocaleDateString()}` : ''}
+                          </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-red-700">
+                            Required to enable this advert
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {item.showModal && !requiresLegal && (
+                <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  <strong>⚠ Flyer modal notice:</strong> Ensure flyer poster image and message adhere to SINet
+                  editorial guidelines. Modals open once per visitor per dismissal period.
+                </div>
+              )}
+
+              <div className="mb-4 flex items-center gap-3">
+                <label className="text-sm text-[#0d1a4a]" htmlFor={`dismissal-${item.id}`}>
+                  Dismissal period (days):
+                </label>
+                <input
+                  id={`dismissal-${item.id}`}
+                  type="number"
+                  min={0}
+                  max={365}
+                  value={item.dismissalDays ?? 7}
+                  onChange={(e) => update(item.id, { dismissalDays: Math.max(0, Number(e.target.value)) })}
+                  className="w-20 rounded border border-[#d9d1bf] px-2 py-1 text-sm text-[#0d1a4a]"
                 />
+                <span className="text-xs text-[#7b7263]">Set to 0 to re-show on every visit.</span>
               </div>
-            </div>
-          </AdminCard>
-        ))
+              <div className="grid gap-4 md:grid-cols-2">
+                <AdminField label="Eyebrow">
+                  <AdminInput value={item.eyebrow} onChange={(e) => update(item.id, { eyebrow: e.target.value })} placeholder="Special event" />
+                </AdminField>
+                <AdminField label="Title">
+                  <AdminInput value={item.title} onChange={(e) => update(item.id, { title: e.target.value })} placeholder="Campus meetup · Saturday" />
+                </AdminField>
+                <AdminField label="Short message">
+                  <AdminTextarea value={item.body} onChange={(e) => update(item.id, { body: e.target.value })} placeholder="One or two lines shown in the spotlight strip" />
+                </AdminField>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AdminField label="CTA label">
+                    <AdminInput value={item.ctaLabel} onChange={(e) => update(item.id, { ctaLabel: e.target.value })} />
+                  </AdminField>
+                  <AdminField label="CTA link">
+                    <AdminInput value={item.ctaHref} onChange={(e) => update(item.id, { ctaHref: e.target.value })} placeholder="/contact" />
+                  </AdminField>
+                  <AdminField label="Starts (optional)">
+                    <AdminInput type="date" value={item.startsAt.slice(0, 10)} onChange={(e) => update(item.id, { startsAt: e.target.value })} />
+                  </AdminField>
+                  <AdminField label="Ends (optional)">
+                    <AdminInput type="date" value={item.endsAt.slice(0, 10)} onChange={(e) => update(item.id, { endsAt: e.target.value })} />
+                  </AdminField>
+                </div>
+                <div className="md:col-span-2">
+                  <ImageUploadField
+                    label="Flyer / poster image"
+                    value={item.imageUrl}
+                    onChange={(imageUrl) => update(item.id, { imageUrl })}
+                    previewClassName="h-64"
+                  />
+                </div>
+              </div>
+            </AdminCard>
+          );
+        })
       )}
     </div>
   );

@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { AdvertItem } from '@admin/types/content';
 
+import { isAdvertSuppressedRoute } from '@/lib/adverts/suppression';
+
 const STRIP_DISMISS_KEY = 'sinet-advert-strip-dismissed';
 const MODAL_DISMISS_KEY = 'sinet-flyer-modal-dismissed';
 const ROTATE_MS = 4000;
 const DEFAULT_TTL_DAYS = 7;
-
-/** Paths on which we never auto-open the flyer modal */
-const MODAL_EXCLUDED_PREFIXES = ['/join', '/sign-in', '/portal', '/admin'];
 
 function isMediaUrl(url: string): boolean {
   return Boolean(url) && (url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://'));
@@ -72,7 +71,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
     // Flyer modal — only on first visit within the TTL window, and never on excluded paths
     if (flyer) {
       const ttl = (flyer as AdvertItem & { dismissalDays?: number }).dismissalDays ?? DEFAULT_TTL_DAYS;
-      const excluded = MODAL_EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+      const excluded = isAdvertSuppressedRoute(pathname);
       if (!excluded && !isModalDismissed(ttl)) {
         const timer = window.setTimeout(() => setModalAdvert(flyer), 600);
         return () => window.clearTimeout(timer);
@@ -93,7 +92,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
     return () => window.clearInterval(timer);
   }, [items.length, paused, stripDismissed]);
 
-  if (!ready || items.length === 0) {
+  if (!ready || items.length === 0 || isAdvertSuppressedRoute(pathname)) {
     return null;
   }
 
