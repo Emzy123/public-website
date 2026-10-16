@@ -30,11 +30,13 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       const { checkAdvertRisk, isAdvertApprovalValid } = await import('@/lib/compliance/risk-check');
       if (current && Array.isArray((current as any).items)) {
         for (const item of (current as any).items) {
-          if (item.enabled && checkAdvertRisk(item).hasRisk && !isAdvertApprovalValid(item)) {
+          const risk = checkAdvertRisk(item);
+          if (item.enabled && risk.hasRisk && !isAdvertApprovalValid(item)) {
+            const errorMsg = risk.imageRisk
+              ? "Advert contains an image or modal that can't be auto-checked and cannot be published live without valid legal approval bound to its content."
+              : `Advert "${item.title || item.id}" contains financial/return terms and cannot be published live without valid legal approval bound to its content.`;
             return NextResponse.json(
-              {
-                error: `Advert "${item.title || item.id}" contains financial/return terms and cannot be published live without valid legal approval bound to its content.`,
-              },
+              { error: errorMsg },
               { status: 400 }
             );
           }

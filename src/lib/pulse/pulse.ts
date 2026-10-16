@@ -7,6 +7,7 @@ import {
   type Announcement,
 } from '@/lib/db/schema';
 import { eq, and, or, isNull, desc } from 'drizzle-orm';
+import { checkAdvertRisk, type RiskCheckResult } from '@/lib/compliance/risk-check';
 
 export type PulseTask = {
   id: string;
@@ -126,3 +127,105 @@ function getIsoWeekNumber(date: Date): number {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
+
+export type CreateAnnouncementInput = {
+  chapterId?: string | null;
+  authorId: string;
+  title: string;
+  body: string;
+  imageUrl?: string | null;
+  isApproved?: boolean;
+};
+
+export type UpdateAnnouncementInput = {
+  title?: string;
+  body?: string;
+  imageUrl?: string | null;
+  isApproved?: boolean;
+};
+
+/**
+ * Checks compliance risk for a pulse announcement item.
+ * Runs checkAdvertRisk() and emits a warning if financial risk terms or un-scanned images are detected.
+ * Warning only: does not gate creation or editing.
+ */
+export function checkAnnouncementRisk(item: {
+  title?: string;
+  body?: string;
+  imageUrl?: string | null;
+}): RiskCheckResult {
+  const result = checkAdvertRisk({
+    title: item.title,
+    body: item.body,
+    imageUrl: item.imageUrl || undefined,
+  });
+
+  if (result.hasRisk) {
+    console.warn(
+      `[Compliance Warning] Pulse announcement "${item.title || 'untitled'}" triggered compliance warning: ${result.matchedTerms.join(
+        ', '
+      )} in field(s): ${result.matchedFields.join(', ')}`
+    );
+  }
+
+  return result;
+}
+
+/**
+ * Creates an announcement in the Postgres announcements table.
+ * Runs checkAdvertRisk() to log a compliance warning without gating.
+ */
+export async function createPulseAnnouncement(input: CreateAnnouncementInput) {
+  const complianceRisk = checkAnnouncementRisk({
+    title: input.title,
+    body: input.body,
+    imageUrl: input.imageUrl,
+  });
+
+  const [created] = await db
+    .insert(announcements)
+    .values({
+      chapterId: input.chapterId || null,
+      authorId: input.authorId,
+      title: input.title,
+      body: input.body,
+      imageUrl: input.imageUrl || null,
+      isApproved: input.isApproved ?? false,
+    })
+    .returning();
+
+  return {
+    announcement: created,
+    complianceRisk,
+  };
+}
+
+/**
+ * Updates an announcement in the Postgres announcements table.
+ * Runs checkAdvertRisk() to log a compliance warning without gating.
+ */
+export async function updatePulseAnnouncement(id: string, input: UpdateAnnouncementInput) {
+  const complianceRisk = checkAnnouncementRisk({
+    title: input.title,
+    body: input.body,
+    imageUrl: input.imageUrl,
+  });
+
+  const updateValues: Partial<typeof announcements.$inferInsert> = {};
+  if (input.title !== undefined) updateValues.title = input.title;
+  if (input.body !== undefined) updateValues.body = input.body;
+  if (input.imageUrl !== undefined) updateValues.imageUrl = input.imageUrl;
+  if (input.isApproved !== undefined) updateValues.isApproved = input.isApproved;
+
+  const [updated] = await db
+    .update(announcements)
+    .set(updateValues)
+    .where(eq(announcements.id, id))
+    .returning();
+
+  return {
+    announcement: updated,
+    complianceRisk,
+  };
+}
+

@@ -5,11 +5,7 @@ import type { AdvertItem, AdvertsContent } from '@admin/types/content';
 import { AdminCard } from '../AdminShell';
 import { AdminField, AdminInput, AdminTextarea } from '../ui/AdminField';
 import { ImageUploadField } from '../ui/ImageUploadField';
-import {
-  checkAdvertRisk,
-  computeAdvertContentHash,
-  isAdvertApprovalValid,
-} from '@/lib/compliance/risk-check';
+import { checkAdvertRisk } from '@/lib/compliance/risk-check';
 
 function newAdvert(sortOrder: number): AdvertItem {
   return {
@@ -18,6 +14,7 @@ function newAdvert(sortOrder: number): AdvertItem {
     eyebrow: 'Special event',
     body: '',
     imageUrl: '',
+    flyerImage: '',
     imageAlt: '',
     ctaLabel: 'Learn more',
     ctaHref: '/contact',
@@ -41,12 +38,23 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
         if (item.id !== id) return item;
         const updated = { ...item, ...patch };
 
-        // If content is modified after legal approval, revoke approval and re-lock Enabled
-        if (item.legalApproval && item.legalApprovalHash) {
-          const newHash = computeAdvertContentHash(updated);
-          if (newHash !== item.legalApprovalHash) {
+        // If content is modified after legal approval, revoke approval locally and re-lock Enabled.
+        // Server PUT is the authoritative validator and recomputes the content hash from stored content.
+        if (item.legalApproval) {
+          const contentChanged =
+            patch.title !== undefined ||
+            patch.body !== undefined ||
+            patch.ctaLabel !== undefined ||
+            patch.ctaHref !== undefined ||
+            patch.imageUrl !== undefined ||
+            patch.flyerImage !== undefined ||
+            patch.imageAlt !== undefined ||
+            patch.showModal !== undefined;
+
+          if (contentChanged) {
             updated.legalApproval = false;
-            updated.legalApprovalHash = undefined;
+            updated.legalApprovedBy = undefined;
+            updated.legalApprovedAt = undefined;
             updated.enabled = false;
           }
         }
@@ -92,7 +100,10 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
           body: item.body,
           ctaLabel: item.ctaLabel,
           ctaHref: item.ctaHref,
+          imageUrl: item.imageUrl,
+          flyerImage: item.flyerImage,
           imageAlt: item.imageAlt,
+          showModal: item.showModal,
           approved,
         }),
       });
@@ -103,7 +114,6 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
         legalApproval: approved,
         legalApprovedAt: approved ? json.legalApprovedAt : undefined,
         legalApprovedBy: approved ? json.legalApprovedBy : undefined,
-        legalApprovalHash: approved ? json.legalApprovalHash : undefined,
         // If revoking approval, disable the advert immediately
         ...(approved ? {} : { enabled: false }),
       });
@@ -150,7 +160,7 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
         sorted.map((item) => {
           const risk = checkAdvertRisk(item);
           const requiresLegal = risk.hasRisk;
-          const isApproved = isAdvertApprovalValid(item);
+          const isApproved = Boolean(item.legalApproval);
           const isEnabledDisabled = requiresLegal && !isApproved;
 
           return (
@@ -174,7 +184,7 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                   }`}
                   title={
                     isEnabledDisabled
-                      ? 'Legal approval must be obtained before enabling an advert with financial or return claims'
+                      ? 'Legal approval must be obtained before enabling an advert with financial claims or image content'
                       : undefined
                   }
                 >
@@ -186,14 +196,14 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                   />
                   <span>Enabled (live when published)</span>
                   {isEnabledDisabled && (
-                    <span className="rounded bg-red-100 px-1.5 py-0.5 text-[11px] font-semibold text-red-700">
+                    <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-300">
                       Locked — Legal Approval Required
                     </span>
                   )}
                 </label>
                 <label className="flex items-center gap-2 text-sm text-[#0d1a4a] cursor-pointer">
                   <input type="checkbox" checked={item.showModal} onChange={(e) => update(item.id, { showModal: e.target.checked })} />
-                  Show flyer modal
+                  <span>Show flyer modal</span>
                 </label>
               </div>
 
@@ -201,34 +211,37 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
               {requiresLegal && (
                 <div
                   data-testid={`legal-warning-${item.id}`}
-                  className="mb-4 rounded-xl border-2 border-red-300 bg-red-50 p-4 text-sm text-red-950 shadow-sm"
+                  className="mb-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm"
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-xl leading-none" aria-hidden="true">⚠</span>
+                    <span className="text-xl leading-none text-amber-600" aria-hidden="true">⚠</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-red-900 text-base">
-                        Financial Promotions Warning — Legal Approval Required
+                      <p className="font-bold text-amber-900 text-base">
+                        {risk.imageRisk && !risk.matchedTerms.some((t) => t !== "Image content can't be auto-checked.")
+                          ? 'Image Compliance Notice — Legal Approval Required'
+                          : 'Compliance Warning — Legal Approval Required'}
                       </p>
-                      <p className="mt-1 text-red-800 leading-relaxed">
-                        This advert contains terms matching financial promotion or return claims{' '}
-                        <span className="font-mono font-bold bg-red-200/80 px-1.5 py-0.5 rounded text-red-900">
-                          {risk.matchedTerms.join(', ') || 'return / investment language'}
+                      <p className="mt-1 text-amber-800 leading-relaxed">
+                        This advert requires legal approval{' '}
+                        <span className="font-mono font-bold bg-amber-200/80 px-1.5 py-0.5 rounded text-amber-900">
+                          {risk.matchedTerms.join(', ')}
                         </span>{' '}
                         in field(s): <span className="font-semibold">{risk.matchedFields.join(', ')}</span>.
                       </p>
-                      <p className="mt-1 text-xs text-red-700">
-                        Under regulatory compliance standards, adverts with return, profit, or investment language
-                        cannot be enabled on the website without explicit legal sign-off.
+                      <p className="mt-1 text-xs text-amber-700">
+                        {risk.imageRisk
+                          ? "Image content can't be auto-checked by text scanning. Any advert with a flyer image or modal promo requires explicit legal sign-off before being enabled."
+                          : 'Under regulatory compliance standards, adverts containing return, profit, or investment claims cannot be enabled on the website without explicit legal sign-off.'}
                       </p>
 
-                      <div className="mt-3.5 pt-3 border-t border-red-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                        <label className="flex items-center gap-2.5 font-bold text-red-950 cursor-pointer">
+                      <div className="mt-3.5 pt-3 border-t border-amber-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <label className="flex items-center gap-2.5 font-bold text-amber-950 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={isApproved}
                             disabled={approvalLoading[item.id]}
                             onChange={(e) => handleLegalApprovalToggle(item, e.target.checked)}
-                            className="h-4 w-4 rounded border-red-400 text-red-600 focus:ring-red-500"
+                            className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500"
                           />
                           <span>Legal approval obtained</span>
                         </label>
@@ -237,7 +250,7 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                             ✓ Approved{item.legalApprovedBy ? ` by ${item.legalApprovedBy}` : ''}{item.legalApprovedAt ? ` on ${new Date(item.legalApprovedAt).toLocaleDateString()}` : ''}
                           </span>
                         ) : (
-                          <span className="text-xs font-semibold text-red-700">
+                          <span className="text-xs font-semibold text-amber-800">
                             Required to enable this advert
                           </span>
                         )}
@@ -296,8 +309,8 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                 <div className="md:col-span-2 space-y-4">
                   <ImageUploadField
                     label="Flyer / poster image"
-                    value={item.imageUrl}
-                    onChange={(imageUrl) => update(item.id, { imageUrl })}
+                    value={item.flyerImage || item.imageUrl}
+                    onChange={(url) => update(item.id, { flyerImage: url, imageUrl: url })}
                     previewClassName="h-64"
                   />
                   <AdminField label="Flyer image alt text (for accessibility & compliance binding)">

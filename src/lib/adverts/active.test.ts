@@ -11,7 +11,7 @@ function advert(partial: Partial<AdvertItem> & Pick<AdvertItem, 'id' | 'title'>)
     ctaLabel: '',
     ctaHref: '',
     enabled: true,
-    showModal: true,
+    showModal: false,
     startsAt: '',
     endsAt: '',
     sortOrder: 0,
@@ -115,4 +115,31 @@ describe('getActiveAdverts', () => {
     const active = getActiveAdverts({ items: [riskyAdvert, tamperedAdvert] }, now);
     expect(active.map((a) => a.id)).toEqual(['risky-approved']);
   });
+
+  it('excludes an image-only flyer or modal promo without legal approval from getActiveAdverts()', () => {
+    const items = [
+      advert({
+        id: 'image-flyer-unapproved',
+        title: 'Campus Poster',
+        flyerImage: '/posters/campus-meetup.png',
+        enabled: true,
+        legalApproval: false,
+      }),
+      advert({
+        id: 'modal-unapproved',
+        title: 'Modal Promo',
+        showModal: true,
+        enabled: true,
+        legalApproval: false,
+      }),
+      advert({
+        id: 'safe-text',
+        title: 'Student Innovation Summit',
+        enabled: true,
+      }),
+    ];
+    const active = getActiveAdverts({ items }, now);
+    expect(active.map((a) => a.id)).toEqual(['safe-text']);
+  });
 });
+

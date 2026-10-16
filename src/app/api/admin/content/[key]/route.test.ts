@@ -93,6 +93,57 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
     expect(cmsRepo.saveCmsDraft).not.toHaveBeenCalled();
   });
 
+  it('blocks saving an image-only flyer when enabled without legal approval with 400', async () => {
+    const imageFlyerEnabled = {
+      id: 'adv-flyer-live-1',
+      title: 'October Campus Meetup',
+      flyerImage: '/posters/october.png',
+      enabled: true,
+      legalApproval: false,
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/admin/content/adverts', {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: { items: [imageFlyerEnabled] },
+      }),
+    });
+
+    const res = await PUT(req, { params: { key: 'adverts' } });
+    expect(res.status).toBe(400);
+
+    const body = await res.json();
+    expect(body.error).toContain("Advert contains an image or modal that can't be auto-checked and cannot be enabled without legal approval.");
+    expect(cmsRepo.saveCmsDraft).not.toHaveBeenCalled();
+  });
+
+  it('rejects publishing an image-only flyer if enabled without valid approval with 400', async () => {
+    (cmsRepo.getCmsContentForAdmin as jest.Mock).mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 'adv-flyer-unapproved',
+            title: 'October Campus Meetup',
+            flyerImage: '/posters/october.png',
+            enabled: true,
+            legalApproval: false,
+          },
+        ],
+      },
+      meta: {},
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/admin/content/adverts/publish', {
+      method: 'POST',
+    });
+
+    const res = await publishPOST(req, { params: { key: 'adverts' } });
+    expect(res.status).toBe(400);
+
+    const body = await res.json();
+    expect(body.error).toContain("Advert contains an image or modal that can't be auto-checked and cannot be published live without valid legal approval bound to its content.");
+  });
+
   it('revokes legal approval, re-locks Enabled, and writes audit entry when approved copy is edited', async () => {
     const originalAdvert = {
       id: 'adv-approved',
@@ -100,17 +151,31 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       body: 'Approved text.',
       ctaLabel: 'Learn more',
       ctaHref: '/contact',
+      imageUrl: '',
+      flyerImage: '',
       imageAlt: 'Original alt',
     };
     const approvedHash = computeAdvertContentHash(originalAdvert);
+
+    const storedApprovedAdvert = {
+      ...originalAdvert,
+      enabled: true,
+      legalApproval: true,
+      legalApprovalHash: approvedHash,
+      legalApprovedBy: 'legal@sinet.africa',
+      legalApprovedAt: new Date().toISOString(),
+    };
+
+    (cmsRepo.getCmsContentForAdmin as jest.Mock).mockResolvedValue({
+      data: { items: [storedApprovedAdvert] },
+      meta: {},
+    });
 
     // Editor modifies the title of the approved advert
     const modifiedAdvert = {
       ...originalAdvert,
       title: 'Tampered Title with 40% returns',
       enabled: true,
-      legalApproval: true,
-      legalApprovalHash: approvedHash, // Old hash doesn't match new title!
     };
 
     const req = new NextRequest('http://localhost:3000/api/admin/content/adverts', {
@@ -141,6 +206,200 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
             id: 'adv-approved',
             legalApproval: false,
             enabled: false,
+          }),
+        ],
+      }),
+      'editor@sinet.africa'
+    );
+  });
+
+  it('revokes legal approval, re-locks Enabled, and logs audit entry when an advert image is swapped after approval', async () => {
+    const originalAdvert = {
+      id: 'adv-image-approved',
+      title: 'Approved Launch Poster',
+      body: 'Campus event announcement.',
+      ctaLabel: 'Learn more',
+      ctaHref: '/contact',
+      imageUrl: '/images/poster-v1.jpg',
+      flyerImage: '/images/flyer-v1.png',
+      imageAlt: 'Approved poster artwork',
+    };
+    const approvedHash = computeAdvertContentHash(originalAdvert);
+
+    const storedApprovedAdvert = {
+      ...originalAdvert,
+      enabled: true,
+      legalApproval: true,
+      legalApprovalHash: approvedHash,
+      legalApprovedBy: 'counsel@sinet.africa',
+      legalApprovedAt: new Date().toISOString(),
+    };
+
+    (cmsRepo.getCmsContentForAdmin as jest.Mock).mockResolvedValue({
+      data: { items: [storedApprovedAdvert] },
+      meta: {},
+    });
+
+    // Swapping the flyerImage
+    const modifiedAdvert = {
+      ...storedApprovedAdvert,
+      flyerImage: '/images/poster-v2-swapped.png',
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/admin/content/adverts', {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: { items: [modifiedAdvert] },
+      }),
+    });
+
+    const res = await PUT(req, { params: { key: 'adverts' } });
+    expect(res.status).toBe(200);
+
+    // Verify audit log for revocation
+    expect(auditModule.writeAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'cms.advert_legal_approval_revoked',
+        actor: 'editor@sinet.africa',
+        resource: 'adverts/adv-image-approved',
+        metadata: expect.objectContaining({
+          reason: 'Content modified after legal approval',
+        }),
+      })
+    );
+
+    // Verify advert saved has legalApproval: false and enabled: false
+    expect(cmsRepo.saveCmsDraft).toHaveBeenCalledWith(
+      'adverts',
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            id: 'adv-image-approved',
+            legalApproval: false,
+            enabled: false,
+          }),
+        ],
+      }),
+      'editor@sinet.africa'
+    );
+  });
+
+  it('strips client-supplied legalApproval and legalApprovalHash when sent directly via PUT without calling legal-approval endpoint', async () => {
+    // Unapproved advert in server CMS storage
+    const storedUnapprovedAdvert = {
+      id: 'adv-spoof-1',
+      title: 'Earn 40% Return',
+      body: 'Invest in our project',
+      ctaLabel: 'Learn more',
+      ctaHref: '/contact',
+      imageUrl: '',
+      flyerImage: '',
+      imageAlt: '',
+      enabled: false,
+      legalApproval: false,
+    };
+    (cmsRepo.getCmsContentForAdmin as jest.Mock).mockResolvedValue({
+      data: { items: [storedUnapprovedAdvert] },
+      meta: {},
+    });
+
+    const correctlyComputedHash = computeAdvertContentHash(storedUnapprovedAdvert);
+
+    // Attacker crafts PUT payload with legalApproval: true and a correctly computed hash
+    const spoofedAdvert = {
+      ...storedUnapprovedAdvert,
+      legalApproval: true,
+      legalApprovalHash: correctlyComputedHash,
+      legalApprovedBy: 'attacker@sinet.africa',
+      legalApprovedAt: new Date().toISOString(),
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/admin/content/adverts', {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: { items: [spoofedAdvert] },
+      }),
+    });
+
+    const res = await PUT(req, { params: { key: 'adverts' } });
+    expect(res.status).toBe(200);
+
+    // Stored draft must strip client-supplied legalApproval and store it as unapproved
+    expect(cmsRepo.saveCmsDraft).toHaveBeenCalledWith(
+      'adverts',
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            id: 'adv-spoof-1',
+            legalApproval: false,
+            legalApprovalHash: undefined,
+            legalApprovedBy: undefined,
+            legalApprovedAt: undefined,
+          }),
+        ],
+      }),
+      'editor@sinet.africa'
+    );
+  });
+
+  it('preserves legal approval on no-op save with whitespace variation due to normalized hash stability', async () => {
+    const originalAdvert = {
+      id: 'adv-stable-1',
+      title: 'Stable Approved Program',
+      body: 'Agricultural logistics partnership.',
+      ctaLabel: 'Learn more',
+      ctaHref: '/contact',
+      imageUrl: '/images/adverts/agro.jpg',
+      flyerImage: '/images/flyers/agro.png',
+      imageAlt: 'Agro logistics',
+    };
+    const approvedHash = computeAdvertContentHash(originalAdvert);
+
+    const storedApprovedAdvert = {
+      ...originalAdvert,
+      enabled: true,
+      legalApproval: true,
+      legalApprovalHash: approvedHash,
+      legalApprovedBy: 'counsel@sinet.africa',
+      legalApprovedAt: new Date().toISOString(),
+    };
+
+    (cmsRepo.getCmsContentForAdmin as jest.Mock).mockResolvedValue({
+      data: { items: [storedApprovedAdvert] },
+      meta: {},
+    });
+
+    // Client sends save with harmless whitespace differences (e.g. trailing space or CRLF)
+    const noOpWithWhitespace = {
+      ...storedApprovedAdvert,
+      title: '  Stable Approved Program  ',
+      body: 'Agricultural logistics partnership.\r\n',
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/admin/content/adverts', {
+      method: 'PUT',
+      body: JSON.stringify({
+        data: { items: [noOpWithWhitespace] },
+      }),
+    });
+
+    const res = await PUT(req, { params: { key: 'adverts' } });
+    expect(res.status).toBe(200);
+
+    // Revocation audit log should NOT have been called
+    expect(auditModule.writeAuditLog).not.toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'cms.advert_legal_approval_revoked' })
+    );
+
+    // Preserved approval state
+    expect(cmsRepo.saveCmsDraft).toHaveBeenCalledWith(
+      'adverts',
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            id: 'adv-stable-1',
+            legalApproval: true,
+            legalApprovalHash: approvedHash,
           }),
         ],
       }),

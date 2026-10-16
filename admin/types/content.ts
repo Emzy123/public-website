@@ -400,6 +400,7 @@ export type AdvertItem = {
   body: string;
   imageUrl: string;
   imageAlt?: string;
+  flyerImage?: string;
   ctaLabel: string;
   ctaHref: string;
   enabled: boolean;

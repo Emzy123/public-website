@@ -41,15 +41,50 @@ export async function POST(request: NextRequest) {
     const serverTimestamp = new Date().toISOString();
     const serverActor = session.email;
 
-    const hash = approved
-      ? computeAdvertContentHash({
-          title,
-          body: body?.body,
-          ctaLabel: body?.ctaLabel,
-          ctaHref: body?.ctaHref,
-          imageAlt: body?.imageAlt,
-        })
-      : undefined;
+    const { getCmsContentForAdmin, saveCmsDraft } = await import('@admin/lib/cms/repository');
+    const { data: currentContent } = await getCmsContentForAdmin('adverts');
+    const existingItems = Array.isArray((currentContent as any)?.items) ? [...(currentContent as any).items] : [];
+
+    let targetAdvert = existingItems.find((i: any) => i.id === advertId);
+    if (!targetAdvert) {
+      targetAdvert = {
+        id: advertId,
+        title,
+        body: body?.body || '',
+        ctaLabel: body?.ctaLabel || 'Learn more',
+        ctaHref: body?.ctaHref || '/contact',
+        imageUrl: body?.imageUrl || '',
+        flyerImage: body?.flyerImage || '',
+        imageAlt: body?.imageAlt || '',
+        enabled: false,
+        showModal: Boolean(body?.showModal),
+        eyebrow: body?.eyebrow || 'Special event',
+        startsAt: body?.startsAt || '',
+        endsAt: body?.endsAt || '',
+        sortOrder: existingItems.length,
+      };
+      existingItems.push(targetAdvert);
+    } else {
+      if (body?.title !== undefined) targetAdvert.title = body.title;
+      if (body?.body !== undefined) targetAdvert.body = body.body;
+      if (body?.ctaLabel !== undefined) targetAdvert.ctaLabel = body.ctaLabel;
+      if (body?.ctaHref !== undefined) targetAdvert.ctaHref = body.ctaHref;
+      if (body?.imageUrl !== undefined) targetAdvert.imageUrl = body.imageUrl;
+      if (body?.flyerImage !== undefined) targetAdvert.flyerImage = body.flyerImage;
+      if (body?.imageAlt !== undefined) targetAdvert.imageAlt = body.imageAlt;
+    }
+
+    const hash = approved ? computeAdvertContentHash(targetAdvert) : undefined;
+
+    targetAdvert.legalApproval = approved;
+    targetAdvert.legalApprovedAt = approved ? serverTimestamp : undefined;
+    targetAdvert.legalApprovedBy = approved ? serverActor : undefined;
+    targetAdvert.legalApprovalHash = hash;
+    if (!approved) {
+      targetAdvert.enabled = false;
+    }
+
+    await saveCmsDraft('adverts', { ...currentContent, items: existingItems }, serverActor);
 
     if (approved) {
       await writeAuditLog({
@@ -58,7 +93,7 @@ export async function POST(request: NextRequest) {
         resource: `adverts/${advertId}`,
         metadata: {
           advertId,
-          title,
+          title: targetAdvert.title,
           legalApproval: true,
           timestamp: serverTimestamp,
           approvedBy: serverActor,
@@ -72,7 +107,7 @@ export async function POST(request: NextRequest) {
         resource: `adverts/${advertId}`,
         metadata: {
           advertId,
-          title,
+          title: targetAdvert.title,
           reason: 'Approval revoked by admin',
           timestamp: serverTimestamp,
           revokedBy: serverActor,

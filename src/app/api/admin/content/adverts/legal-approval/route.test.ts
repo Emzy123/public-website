@@ -18,6 +18,14 @@ jest.mock('@/lib/security/csrf-handler', () => ({
   verifyCsrfToken: jest.fn(),
 }));
 
+jest.mock('@admin/lib/cms/repository', () => ({
+  getCmsContentForAdmin: jest.fn().mockResolvedValue({
+    data: { items: [] },
+    meta: { lastUpdated: new Date().toISOString() },
+  }),
+  saveCmsDraft: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe('Admin Advert Legal Approval API', () => {
   beforeEach(() => {
     jest.clearAllMocks();

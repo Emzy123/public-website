@@ -62,6 +62,8 @@ describe('Financial Risk Compliance Check', () => {
       body: 'Support agricultural cold storage with structured participation.',
       ctaLabel: 'Learn more',
       ctaHref: '/contact',
+      imageUrl: '/images/adverts/harvest.jpg',
+      flyerImage: '/images/flyers/harvest-poster.png',
       imageAlt: 'Farm harvest crates ready for distribution',
     };
 
@@ -72,7 +74,25 @@ describe('Financial Risk Compliance Check', () => {
       expect(hash1).toMatch(/^[a-f0-9]{64}$/);
     });
 
-    it('changes hash when any bound field is modified', () => {
+    it('proves hash stability across whitespace, newlines, and key ordering', () => {
+      const hash1 = computeAdvertContentHash(advert);
+
+      // Variation with leading/trailing whitespace, CRLF line endings, and different object key ordering
+      const stableVariation = {
+        imageAlt: '  Farm harvest crates ready for distribution  ',
+        title: '  Annual Harvest Partner Program  ',
+        body: 'Support agricultural cold storage with structured participation.\r\n',
+        ctaHref: '  /contact  ',
+        ctaLabel: '  Learn more  ',
+        flyerImage: '  /images/flyers/harvest-poster.png  ',
+        imageUrl: '  /images/adverts/harvest.jpg  ',
+      };
+
+      const hash2 = computeAdvertContentHash(stableVariation);
+      expect(hash2).toBe(hash1);
+    });
+
+    it('changes hash when any bound field is modified, including images', () => {
       const baseHash = computeAdvertContentHash(advert);
 
       expect(computeAdvertContentHash({ ...advert, title: 'Edited Title' })).not.toBe(baseHash);
@@ -80,6 +100,8 @@ describe('Financial Risk Compliance Check', () => {
       expect(computeAdvertContentHash({ ...advert, ctaLabel: 'Apply' })).not.toBe(baseHash);
       expect(computeAdvertContentHash({ ...advert, ctaHref: '/apply' })).not.toBe(baseHash);
       expect(computeAdvertContentHash({ ...advert, imageAlt: 'Different alt' })).not.toBe(baseHash);
+      expect(computeAdvertContentHash({ ...advert, imageUrl: '/images/different-image.jpg' })).not.toBe(baseHash);
+      expect(computeAdvertContentHash({ ...advert, flyerImage: '/images/different-flyer.png' })).not.toBe(baseHash);
     });
 
     it('validates legal approval only when hash matches current content', () => {
@@ -109,6 +131,14 @@ describe('Financial Risk Compliance Check', () => {
       expect(isAdvertApprovalValid({
         ...advert,
         title: 'Tampered Title with 40% Return',
+        legalApproval: true,
+        legalApprovalHash: hash,
+      })).toBe(false);
+
+      // Invalid: flyer image changed after approval
+      expect(isAdvertApprovalValid({
+        ...advert,
+        flyerImage: '/images/swapped-flyer.png',
         legalApproval: true,
         legalApprovalHash: hash,
       })).toBe(false);
@@ -154,7 +184,29 @@ describe('Financial Risk Compliance Check', () => {
       expect(result.matchedFields).toContain('imageAlt');
     });
 
-    it('passes clean advert without risk', () => {
+    it('flags flyerImage as compliance risk requiring legal approval because image text cannot be auto-checked', () => {
+      const result = checkAdvertRisk({
+        title: 'Campus Gathering',
+        flyerImage: '/posters/october-meetup.png',
+      });
+      expect(result.hasRisk).toBe(true);
+      expect(result.imageRisk).toBe(true);
+      expect(result.matchedFields).toContain('flyerImage');
+      expect(result.matchedTerms).toContain("Image content can't be auto-checked.");
+    });
+
+    it('flags showModal: true as compliance risk requiring legal approval because modal flyers cannot be auto-checked', () => {
+      const result = checkAdvertRisk({
+        title: 'Special Event',
+        showModal: true,
+      });
+      expect(result.hasRisk).toBe(true);
+      expect(result.imageRisk).toBe(true);
+      expect(result.matchedFields).toContain('showModal');
+      expect(result.matchedTerms).toContain("Image content can't be auto-checked.");
+    });
+
+    it('passes clean text-only advert without risk', () => {
       const result = checkAdvertRisk({
         title: 'Student Network Workshop',
         eyebrow: 'Campus Events',
@@ -162,6 +214,7 @@ describe('Financial Risk Compliance Check', () => {
         ctaLabel: 'Register now',
       });
       expect(result.hasRisk).toBe(false);
+      expect(result.imageRisk).toBe(false);
       expect(result.matchedFields).toHaveLength(0);
     });
   });

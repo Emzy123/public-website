@@ -196,9 +196,9 @@ check_otp_provider_error_leak "magic_link"
 check_adverts_suppressed() {
   local target_path="$1"
   local html
-  html=$(curl -s "${BASE_URL}${target_path}" 2>/dev/null || echo "")
-  if echo "$html" | grep -q "Featured announcements"; then
-    echo "✗ Advert announcement strip leaked onto suppressed route: ${target_path}"
+  html=$(curl -s -L "${BASE_URL}${target_path}" 2>/dev/null || echo "")
+  if echo "$html" | grep -q "Featured announcements" || echo "$html" | grep -q "flyer-modal-title" || echo "$html" | grep -q "sinet-advert-strip"; then
+    echo "✗ Advert spotlight strip or flyer modal leaked onto suppressed route: ${target_path}"
     FAIL=$((FAIL + 1))
   else
     echo "✓ Adverts and flyers correctly suppressed on ${target_path}"
@@ -208,6 +208,10 @@ check_adverts_suppressed() {
 check_adverts_suppressed "/sign-in"
 check_adverts_suppressed "/join"
 check_adverts_suppressed "/portal"
+check_adverts_suppressed "/verify"
+check_adverts_suppressed "/verify/sample-cert-001"
+check_adverts_suppressed "/dashboard"
+check_adverts_suppressed "/admin"
 
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"

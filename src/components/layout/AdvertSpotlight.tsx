@@ -49,7 +49,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
   );
 
   const flyer = useMemo(
-    () => items.find((item) => item.showModal !== false && isMediaUrl(item.imageUrl)) ?? null,
+    () => items.find((item) => item.showModal !== false && isMediaUrl(item.flyerImage || item.imageUrl)) ?? null,
     [items],
   );
 
@@ -140,7 +140,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
           }}
         >
           <div className="mx-auto flex max-w-[1220px] flex-col gap-3 px-4 py-3 xs:px-5 sm:flex-row sm:items-center sm:gap-5 lg:px-8">
-            {advert.imageUrl && isMediaUrl(advert.imageUrl) && (
+            {(advert.flyerImage || advert.imageUrl) && isMediaUrl(advert.flyerImage || advert.imageUrl) && (
               <button
                 type="button"
                 onClick={() => openFlyer(advert)}
@@ -150,7 +150,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   key={advert.id}
-                  src={advert.imageUrl}
+                  src={advert.flyerImage || advert.imageUrl}
                   alt=""
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
@@ -183,7 +183,7 @@ export function AdvertSpotlight({ adverts, stackOffset = false }: Props) {
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {advert.imageUrl && isMediaUrl(advert.imageUrl) && (
+              {(advert.flyerImage || advert.imageUrl) && isMediaUrl(advert.flyerImage || advert.imageUrl) && (
                 <button
                   type="button"
                   onClick={() => openFlyer(advert)}
@@ -300,10 +300,10 @@ function FlyerModal({ advert, onClose }: { advert: AdvertItem; onClose: () => vo
         </button>
 
         <div className="relative flex min-h-[280px] items-center justify-center bg-[#0d1a4a] p-3 sm:p-5 md:min-h-[520px]">
-          {advert.imageUrl && isMediaUrl(advert.imageUrl) ? (
+          {(advert.flyerImage || advert.imageUrl) && isMediaUrl(advert.flyerImage || advert.imageUrl) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={advert.imageUrl}
+              src={advert.flyerImage || advert.imageUrl}
               alt={advert.title}
               className="max-h-[70vh] w-full object-contain md:max-h-[480px]"
             />

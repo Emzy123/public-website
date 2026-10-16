@@ -15,24 +15,29 @@ export function containsFinancialRisk(text: string | null | undefined): boolean 
 }
 
 /**
- * Computes a SHA-256 hash binding approved content fields:
- * title, body, CTA (label & href), and image alt text.
+ * Computes a normalized SHA-256 hash binding approved content fields:
+ * title, body, CTA (label & href), advert image (imageUrl), flyer image (flyerImage),
+ * and image alt text (imageAlt).
+ * Normalizes whitespace and sorts keys alphabetically to ensure hash stability on no-op saves.
  */
-export function computeAdvertContentHash(item: {
-  title?: string;
-  body?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  imageAlt?: string;
-}): string {
-  const parts = [
-    item.title?.trim() ?? '',
-    item.body?.trim() ?? '',
-    item.ctaLabel?.trim() ?? '',
-    item.ctaHref?.trim() ?? '',
-    item.imageAlt?.trim() ?? '',
-  ];
-  return createHash('sha256').update(parts.join('||')).digest('hex');
+export function computeAdvertContentHash(item: Partial<AdvertItem>): string {
+  const normalized = {
+    body: (item.body ?? '').trim().replace(/\r\n/g, '\n'),
+    ctaHref: (item.ctaHref ?? '').trim(),
+    ctaLabel: (item.ctaLabel ?? '').trim(),
+    flyerImage: (item.flyerImage ?? '').trim(),
+    imageAlt: (item.imageAlt ?? '').trim(),
+    imageUrl: (item.imageUrl ?? '').trim(),
+    title: (item.title ?? '').trim(),
+  };
+
+  const keys = Object.keys(normalized).sort() as Array<keyof typeof normalized>;
+  const sortedObj: Record<string, string> = {};
+  for (const k of keys) {
+    sortedObj[k] = normalized[k];
+  }
+
+  return createHash('sha256').update(JSON.stringify(sortedObj)).digest('hex');
 }
 
 /**
@@ -48,11 +53,14 @@ export type RiskCheckResult = {
   hasRisk: boolean;
   matchedFields: string[];
   matchedTerms: string[];
+  imageRisk: boolean;
 };
 
 /**
  * Runs the compliance risk check on an advert / flyer item.
  * Checks title, eyebrow, body, ctaLabel, and imageAlt.
+ * Also checks if flyerImage or showModal is set: images cannot be auto-checked by regex,
+ * so any image-based advert/modal requires legal approval.
  */
 export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
   const fieldsToCheck: Array<[string, string | undefined]> = [
@@ -76,10 +84,21 @@ export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
     }
   }
 
+  // Any advert with flyerImage set or showModal: true requires legal approval
+  // because image content cannot be auto-checked by text regex.
+  const hasFlyerImage = Boolean(item.flyerImage && item.flyerImage.trim().length > 0);
+  const isImageFlyer = hasFlyerImage || Boolean(item.showModal);
+
+  if (isImageFlyer) {
+    matchedFields.push(hasFlyerImage ? 'flyerImage' : 'showModal');
+    matchedTermsSet.add("Image content can't be auto-checked.");
+  }
+
   return {
     hasRisk: matchedFields.length > 0,
     matchedFields,
     matchedTerms: Array.from(matchedTermsSet),
+    imageRisk: isImageFlyer,
   };
 }
 
@@ -111,5 +130,6 @@ export function checkNewsPostRisk(post: Partial<NewsPost>): RiskCheckResult {
     hasRisk: matchedFields.length > 0,
     matchedFields,
     matchedTerms: Array.from(matchedTermsSet),
+    imageRisk: false,
   };
 }
