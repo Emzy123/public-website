@@ -351,4 +351,265 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       })
     );
   });
+
+  describe('Server-side Link & Campaign status enforcement (closed, expired, full rejection)', () => {
+    it('rejects Mongo registration link when closed with 403', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const mockClosedLink = {
+        _id: 'link-mongo-closed-1',
+        slug: 'closed-drive',
+        name: 'Closed Drive',
+        roles: ['staff'],
+        isOpen: false,
+        status: 'closed',
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(mockClosedLink),
+      };
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/closed-drive/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'closed-drive' } });
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.error).toContain('closed');
+      expect(data.status).toBe('Closed');
+    });
+
+    it('rejects Mongo registration link when expired with 410', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const mockExpiredLink = {
+        _id: 'link-mongo-expired-1',
+        slug: 'expired-drive',
+        name: 'Expired Drive',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+        expiresAt: '2026-10-01T00:00:00Z',
+        quota: 100,
+        applicationCount: 5,
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(mockExpiredLink),
+      };
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/expired-drive/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'expired-drive' } });
+      expect(res.status).toBe(410);
+      const data = await res.json();
+      expect(data.error).toContain('passed');
+      expect(data.status).toBe('Expired');
+    });
+
+    it('rejects Mongo registration link when capacity is full with 409', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const mockFullLink = {
+        _id: 'link-mongo-full-1',
+        slug: 'full-drive',
+        name: 'Full Drive',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+        quota: 50,
+        applicationCount: 50,
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(mockFullLink),
+      };
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/full-drive/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'full-drive' } });
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.error).toContain('capacity');
+      expect(data.status).toBe('Full');
+    });
+
+    it('rejects Postgres campaign when closed with 403', async () => {
+      const mockClosedCampaign = {
+        campaign: {
+          id: 'camp-pg-closed',
+          slug: 'closed-cohort',
+          name: 'Closed Cohort',
+          targetRole: 'member',
+          status: 'closed',
+          applicationCount: 10,
+        },
+        isAccepting: false,
+      };
+
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(mockClosedCampaign as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/closed-cohort/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: 'Amina Sani',
+          email: 'amina.sani@fulokoja.edu.ng',
+          phone: '+2348011223344',
+          universityId: '550e8400-e29b-41d4-a716-446655440000',
+          programme: 'B.Sc Economics',
+          level: '300',
+          division: 'student_finance',
+          contributionPitch: 'Investment club pitch.',
+          codeOfConductAccepted: true,
+        }),
+      });
+
+      const res = await POST(req, { params: { slug: 'closed-cohort' } });
+      expect(res.status).toBe(403);
+      const data = await res.json();
+      expect(data.status).toBe('Closed');
+    });
+
+    it('rejects Postgres campaign when expired with 410', async () => {
+      const mockExpiredCampaign = {
+        campaign: {
+          id: 'camp-pg-expired',
+          slug: 'expired-cohort',
+          name: 'Expired Cohort',
+          targetRole: 'member',
+          status: 'active',
+          endsAt: new Date('2026-10-01T00:00:00Z'),
+          applicationCount: 10,
+        },
+        isAccepting: false,
+      };
+
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(mockExpiredCampaign as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/expired-cohort/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: 'Amina Sani',
+          email: 'amina.sani@fulokoja.edu.ng',
+          phone: '+2348011223344',
+          universityId: '550e8400-e29b-41d4-a716-446655440000',
+          programme: 'B.Sc Economics',
+          level: '300',
+          division: 'student_finance',
+          contributionPitch: 'Investment club pitch.',
+          codeOfConductAccepted: true,
+        }),
+      });
+
+      const res = await POST(req, { params: { slug: 'expired-cohort' } });
+      expect(res.status).toBe(410);
+      const data = await res.json();
+      expect(data.status).toBe('Expired');
+    });
+
+    it('rejects Postgres campaign when full with 409', async () => {
+      const mockFullCampaign = {
+        campaign: {
+          id: 'camp-pg-full',
+          slug: 'full-cohort',
+          name: 'Full Cohort',
+          targetRole: 'member',
+          status: 'active',
+          seatLimit: 100,
+          applicationCount: 100,
+        },
+        isAccepting: false,
+      };
+
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(mockFullCampaign as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/full-cohort/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: 'Amina Sani',
+          email: 'amina.sani@fulokoja.edu.ng',
+          phone: '+2348011223344',
+          universityId: '550e8400-e29b-41d4-a716-446655440000',
+          programme: 'B.Sc Economics',
+          level: '300',
+          division: 'student_finance',
+          contributionPitch: 'Investment club pitch.',
+          codeOfConductAccepted: true,
+        }),
+      });
+
+      const res = await POST(req, { params: { slug: 'full-cohort' } });
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.status).toBe('Full');
+    });
+
+    it('rejects with 409 when concurrent submit race exhausts remaining slot on Mongo', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const mockOpenAtReadTime = {
+        _id: 'link-mongo-race-1',
+        slug: 'race-link',
+        name: 'Race Link',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+        quota: 10,
+        applicationCount: 9, // looked open at read time
+      };
+
+      const mockFullAfterRace = {
+        ...mockOpenAtReadTime,
+        applicationCount: 10,
+      };
+
+      const mockCollection = {
+        findOne: jest
+          .fn()
+          .mockResolvedValueOnce(mockOpenAtReadTime) // initial read
+          .mockResolvedValueOnce(mockFullAfterRace), // re-read after race failure
+      };
+
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      // tryReserveApplicationSlot fails atomically due to race
+      jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(null);
+
+      const req = new NextRequest('http://localhost:3000/api/join/race-link/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'race-link' } });
+      expect(res.status).toBe(409);
+      const data = await res.json();
+      expect(data.status).toBe('Full');
+    });
+  });
 });

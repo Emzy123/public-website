@@ -14,7 +14,7 @@ import {
   type Campaign,
   type Application,
 } from '@/lib/db/schema';
-import { eq, and, sql, desc, count } from 'drizzle-orm';
+import { eq, and, sql, desc, count, or, isNull, lt } from 'drizzle-orm';
 import { MemberApplicationInput } from '@/lib/schemas/member-application.schema';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
@@ -151,10 +151,40 @@ export async function submitCampaignApplication(
     throw new Error(`Campaign '${campaignSlug}' not found.`);
   }
 
-  if (!campaignInfo.isAccepting) {
+  if (!isCampaignLinkOpen(campaignInfo.campaign)) {
+    const displayStatus = getCampaignLinkDisplayStatus(campaignInfo.campaign);
+    if (displayStatus === 'Full') {
+      throw new Error('Capacity limit reached for this cohort.');
+    }
+    if (displayStatus === 'Expired') {
+      throw new Error('The application deadline for this cohort has passed.');
+    }
     throw new Error(
       campaignInfo.statusReason || 'This campaign is not accepting new applications.'
     );
+  }
+
+  // Atomically increment campaign application count only if capacity remains and cohort is active
+  const updatedCampaigns = await db
+    .update(campaigns)
+    .set({
+      applicationCount: sql`${campaigns.applicationCount} + 1`,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(campaigns.id, campaignInfo.campaign.id),
+        eq(campaigns.status, 'active'),
+        or(
+          isNull(campaigns.seatLimit),
+          lt(campaigns.applicationCount, campaigns.seatLimit)
+        )
+      )
+    )
+    .returning();
+
+  if (!updatedCampaigns || updatedCampaigns.length === 0) {
+    throw new Error('Capacity limit reached for this cohort.');
   }
 
   const [uni] = await db
@@ -203,15 +233,6 @@ export async function submitCampaignApplication(
       });
     }
   }
-
-  // Atomically increment campaign application count
-  await db
-    .update(campaigns)
-    .set({
-      applicationCount: sql`${campaigns.applicationCount} + 1`,
-      updatedAt: new Date(),
-    })
-    .where(eq(campaigns.id, campaignInfo.campaign.id));
 
   // Insert application
   const [app] = await db

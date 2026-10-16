@@ -6,6 +6,9 @@ import {
   isLinkOpen,
   getCampaignLinkDisplayStatus,
   getLinkDisplayStatus,
+  normalizeStatus,
+  parseExpiryDate,
+  getEffectiveCapacityLimit,
 } from './link-status';
 
 describe('Shared Link & Campaign Status Engine (Single Source of Truth)', () => {
@@ -86,63 +89,155 @@ describe('Shared Link & Campaign Status Engine (Single Source of Truth)', () => 
     });
   });
 
-  describe('getCampaignLinkDisplayStatus calculation (Admin card status)', () => {
-    it('returns "Open" for active link under quota and within deadline', () => {
-      const status = getCampaignLinkDisplayStatus(
-        {
-          status: 'active',
-          expiresAt: '2026-11-01T00:00:00Z',
-          quota: 50,
-          applicationCount: 10,
-        },
-        baseNow
-      );
-      expect(status).toBe('Open');
-      expect(getLinkDisplayStatus({ status: 'open' }, baseNow)).toBe('Open');
+  describe('normalizeStatus (handling auto-closed and auto_closed spellings)', () => {
+    it('normalises both "auto-closed" and "auto_closed" to "auto_closed"', () => {
+      expect(normalizeStatus('auto-closed')).toBe('auto_closed');
+      expect(normalizeStatus('auto_closed')).toBe('auto_closed');
+      expect(normalizeStatus('Auto-Closed')).toBe('auto_closed');
+      expect(normalizeStatus('AUTO_CLOSED')).toBe('auto_closed');
     });
 
-    it('returns "Full" when application count equals or exceeds maxApplications / quota', () => {
-      const fullQuota = getCampaignLinkDisplayStatus(
-        {
-          isOpen: true,
-          status: 'open',
-          quota: 50,
-          applicationCount: 50,
-          expiresAt: '2026-11-01T00:00:00Z',
-        },
-        baseNow
-      );
-      expect(fullQuota).toBe('Full');
+    it('normalises open, closed, active, and pending consistently', () => {
+      expect(normalizeStatus('Open')).toBe('open');
+      expect(normalizeStatus('closed')).toBe('closed');
+      expect(normalizeStatus('under review')).toBe('under_review');
+      expect(normalizeStatus('under-review')).toBe('under_review');
+      expect(normalizeStatus('')).toBe('');
+      expect(normalizeStatus(null)).toBe('');
+    });
+  });
 
-      const overQuota = getCampaignLinkDisplayStatus(
-        {
-          status: 'active',
-          seatLimit: 50,
-          applicationCount: 55,
-        },
-        baseNow
-      );
-      expect(overQuota).toBe('Full');
+  describe('Capacity limit precedence (maxApplications > quota > seatLimit)', () => {
+    it('prefers maxApplications when all three are present', () => {
+      const limit = getEffectiveCapacityLimit({
+        maxApplications: 15,
+        quota: 25,
+        seatLimit: 50,
+      });
+      expect(limit).toBe(15);
     });
 
-    it('returns "Expired" when expiration date is in the past', () => {
-      const expiredLink = getCampaignLinkDisplayStatus(
-        {
-          isOpen: true,
-          status: 'open',
-          expiresAt: '2026-10-01T00:00:00Z',
-          quota: 100,
-          applicationCount: 5,
-        },
-        baseNow
-      );
-      expect(expiredLink).toBe('Expired');
+    it('prefers quota when maxApplications is null/undefined and seatLimit is present', () => {
+      const limit = getEffectiveCapacityLimit({
+        maxApplications: null,
+        quota: 25,
+        seatLimit: 50,
+      });
+      expect(limit).toBe(25);
     });
 
-    it('returns "Closed" when link is manually closed or inactive', () => {
-      expect(
-        getCampaignLinkDisplayStatus({ isOpen: false, status: 'closed' }, baseNow)
-      ).toBe('Closed');
+    it('falls back to seatLimit when maxApplications and quota are null/undefined', () => {
+      const limit = getEffectiveCapacityLimit({
+        maxApplications: null,
+        quota: undefined,
+        seatLimit: 50,
+      });
+      expect(limit).toBe(50);
+    });
+
+    it('returns null when no limit is defined', () => {
+      expect(getEffectiveCapacityLimit({})).toBeNull();
+      expect(getEffectiveCapacityLimit({ maxApplications: null, quota: null, seatLimit: null })).toBeNull();
+    });
+  });
+
+  describe('Expiry timezone handling (Africa/Lagos UTC+1 end-of-day for date-only)', () => {
+    it('parses date-only string "2026-10-20" as 23:59:59.999 in Africa/Lagos (22:59:59.999Z)', () => {
+      const parsed = parseExpiryDate('2026-10-20');
+      expect(parsed).not.toBeNull();
+      // In UTC, 23:59:59.999+01:00 is 22:59:59.999Z
+      expect(parsed?.toISOString()).toBe('2026-10-20T22:59:59.999Z');
+    });
+
+    it('keeps campaign open on 2026-10-20 at 22:59:59Z (Lagos 23:59:59)', () => {
+      const campaign = {
+        status: 'active',
+        expiresAt: '2026-10-20',
+        quota: 100,
+        applicationCount: 5,
+      };
+      const justBeforeMidnightLagos = new Date('2026-10-20T22:59:59.000Z');
+      expect(isCampaignLinkOpen(campaign, justBeforeMidnightLagos)).toBe(true);
+      expect(getCampaignLinkDisplayStatus(campaign, justBeforeMidnightLagos)).toBe('Open');
+    });
+
+    it('marks campaign expired on 2026-10-20 at 23:00:00Z (Lagos 00:00:00 next day)', () => {
+      const campaign = {
+        status: 'active',
+        expiresAt: '2026-10-20',
+        quota: 100,
+        applicationCount: 5,
+      };
+      const atMidnightLagos = new Date('2026-10-20T23:00:00.000Z');
+      expect(isCampaignLinkOpen(campaign, atMidnightLagos)).toBe(false);
+      expect(getCampaignLinkDisplayStatus(campaign, atMidnightLagos)).toBe('Expired');
+    });
+  });
+
+  describe('Display Status Precedence: Closed > Full > Expired > Open', () => {
+    it('returns Closed when manually closed even if full AND expired', () => {
+      const link = {
+        isOpen: false,
+        status: 'closed',
+        expiresAt: '2026-10-01T00:00:00Z', // past
+        quota: 50,
+        applicationCount: 50, // full
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Closed');
+    });
+
+    it('returns Closed when status is auto-closed even if full or expired', () => {
+      const link = {
+        status: 'auto-closed',
+        expiresAt: '2026-10-01T00:00:00Z',
+        quota: 50,
+        applicationCount: 50,
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Closed');
+    });
+
+    it('returns Full when active and both capacity is reached AND deadline has passed (Full > Expired)', () => {
+      const link = {
+        status: 'active',
+        isOpen: true,
+        expiresAt: '2026-10-01T00:00:00Z', // expired
+        quota: 50,
+        applicationCount: 50, // full
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Full');
+    });
+
+    it('returns Expired when active, deadline has passed, but capacity remains (Expired > Open)', () => {
+      const link = {
+        status: 'active',
+        isOpen: true,
+        expiresAt: '2026-10-01T00:00:00Z', // expired
+        quota: 50,
+        applicationCount: 20, // not full
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Expired');
+    });
+
+    it('returns Full when active, within deadline, but capacity reached', () => {
+      const link = {
+        status: 'active',
+        isOpen: true,
+        expiresAt: '2026-11-01T00:00:00Z', // future
+        quota: 50,
+        applicationCount: 50, // full
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Full');
+    });
+
+    it('returns Open when active, within deadline, and capacity remains', () => {
+      const link = {
+        status: 'active',
+        isOpen: true,
+        expiresAt: '2026-11-01T00:00:00Z',
+        quota: 50,
+        applicationCount: 20,
+      };
+      expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Open');
     });
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { normalizeStatus } from '@/lib/applications/link-status';
 
 export type BadgeVariant = 'neutral' | 'success' | 'warning' | 'error' | 'accent' | 'navy';
 
@@ -62,7 +63,7 @@ export function Badge({
  * - rejected / closed / archived (slate / red)
  */
 export function StatusPill({ status, className = '' }: { status: string; className?: string }) {
-  const normalized = status.toLowerCase().replace(/[\s-]/g, '_');
+  const normalized = normalizeStatus(status);
 
   if (['approved', 'active', 'published', 'verified', 'open', 'read'].includes(normalized)) {
     return (

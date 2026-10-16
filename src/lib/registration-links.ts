@@ -70,18 +70,47 @@ export async function maybeAutoCloseLink(
 export async function tryReserveApplicationSlot(
   db: Awaited<ReturnType<typeof import('@/lib/db/mongodb').getMongoDb>>,
   slug: string,
+  now: Date = new Date(),
 ): Promise<(LinkDoc & { _id: import('mongodb').ObjectId }) | null> {
-  const now = new Date();
+  const dateOnlyToday = now.toISOString().slice(0, 10);
   const filter: Record<string, unknown> = {
     slug,
-    isOpen: true,
+    isOpen: { $ne: false },
+    status: { $nin: ['closed', 'auto-closed', 'auto_closed', 'archived', 'draft'] },
     $and: [
-      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gt: now } }] },
       {
         $or: [
-          { quota: { $exists: false } },
-          { quota: null },
-          { $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$quota'] } },
+          { expiresAt: { $exists: false } },
+          { expiresAt: null },
+          { expiresAt: { $gt: now } },
+          { expiresAt: { $gte: dateOnlyToday } },
+        ],
+      },
+      {
+        $or: [
+          {
+            $and: [
+              { quota: { $in: [null, undefined] } },
+              { maxApplications: { $in: [null, undefined] } },
+              { seatLimit: { $in: [null, undefined] } },
+            ],
+          },
+          // Precedence: maxApplications > quota > seatLimit
+          {
+            maxApplications: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$maxApplications'] },
+          },
+          {
+            maxApplications: { $in: [null, undefined] },
+            quota: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$quota'] },
+          },
+          {
+            maxApplications: { $in: [null, undefined] },
+            quota: { $in: [null, undefined] },
+            seatLimit: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$seatLimit'] },
+          },
         ],
       },
     ],

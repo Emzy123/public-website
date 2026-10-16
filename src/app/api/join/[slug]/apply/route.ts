@@ -23,6 +23,10 @@ import {
   normalizeDivisionSlug,
 } from '@/lib/registration-links';
 import { isValidChapterSlug, validateChapterSlug } from '@/lib/chapters/chapters';
+import {
+  isCampaignLinkOpen,
+  getCampaignLinkDisplayStatus,
+} from '@/lib/applications/link-status';
 import type { ApplicationRole } from '@/lib/types/membership';
 import { ROLE_LABELS } from '@/lib/types/membership';
 
@@ -75,6 +79,32 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       }
 
       // Handle Application submission
+      if (!isCampaignLinkOpen(campaignInfo.campaign)) {
+        const displayStatus = getCampaignLinkDisplayStatus(campaignInfo.campaign);
+        if (displayStatus === 'Closed') {
+          return NextResponse.json(
+            { error: 'This campaign is closed and is not accepting applications.', status: 'Closed' },
+            { status: 403 }
+          );
+        }
+        if (displayStatus === 'Expired') {
+          return NextResponse.json(
+            { error: 'The application deadline for this cohort has passed.', status: 'Expired' },
+            { status: 410 }
+          );
+        }
+        if (displayStatus === 'Full') {
+          return NextResponse.json(
+            { error: 'Capacity limit reached for this cohort.', status: 'Full' },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { error: campaignInfo.statusReason || 'This campaign is not accepting applications.' },
+          { status: 403 }
+        );
+      }
+
       const parsed = memberApplicationSchema.safeParse(body);
       if (!parsed.success) {
         return NextResponse.json(
@@ -107,6 +137,12 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
         );
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Application submission failed';
+        if (msg.includes('Capacity limit')) {
+          return NextResponse.json({ error: msg, status: 'Full' }, { status: 409 });
+        }
+        if (msg.includes('deadline')) {
+          return NextResponse.json({ error: msg, status: 'Expired' }, { status: 410 });
+        }
         return NextResponse.json({ error: msg }, { status: 400 });
       }
     }
@@ -157,9 +193,49 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       return NextResponse.json({ error: 'This role is not accepted through this link.' }, { status: 400 });
     }
 
+    if (!isCampaignLinkOpen(existing)) {
+      const displayStatus = getCampaignLinkDisplayStatus(existing);
+      if (displayStatus === 'Closed') {
+        return NextResponse.json(
+          { error: 'This registration link is closed and is not accepting applications.', status: 'Closed' },
+          { status: 403 }
+        );
+      }
+      if (displayStatus === 'Expired') {
+        return NextResponse.json(
+          { error: 'The application deadline for this link has passed.', status: 'Expired' },
+          { status: 410 }
+        );
+      }
+      if (displayStatus === 'Full') {
+        return NextResponse.json(
+          { error: 'This registration link has reached its maximum capacity.', status: 'Full' },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'This application period has closed.' },
+        { status: 403 }
+      );
+    }
+
     const docIds = Object.values(data.documents).filter((id): id is string => Boolean(id));
     const reserved = await tryReserveApplicationSlot(db, params.slug);
     if (!reserved) {
+      const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
+      const refreshedStatus = refreshed ? getCampaignLinkDisplayStatus(refreshed) : 'Closed';
+      if (refreshedStatus === 'Full') {
+        return NextResponse.json(
+          { error: 'This registration link has reached its maximum capacity.', status: 'Full' },
+          { status: 409 }
+        );
+      }
+      if (refreshedStatus === 'Expired') {
+        return NextResponse.json(
+          { error: 'The application deadline for this link has passed.', status: 'Expired' },
+          { status: 410 }
+        );
+      }
       return NextResponse.json({ error: 'This application period has closed.' }, { status: 403 });
     }
 
