@@ -1,16 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAuthHealthDiagnostic } from '@/lib/auth/otp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/**
- * Public health check returns a minimal payload.
- * Detailed dependency status requires HEALTH_CHECK_TOKEN.
- */
-export async function GET(request: NextRequest) {
+async function isAuthorizedAdmin(request: NextRequest): Promise<boolean> {
   const token = request.headers.get('x-health-token') || request.nextUrl.searchParams.get('token');
   const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
-  const authorized = Boolean(expected && token && token === expected);
+  if (expected && token && token === expected) {
+    return true;
+  }
+
+  const adminCookie = request.cookies.get('sinet_admin_session')?.value;
+  if (adminCookie) {
+    try {
+      const { verifySession } = await import('@admin/lib/auth');
+      const session = await verifySession(adminCookie);
+      if (session?.email) {
+        return true;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Public health check returns a minimal payload.
+ * Detailed dependency status and OTP diagnostics require an admin session or HEALTH_CHECK_TOKEN.
+ */
+export async function GET(request: NextRequest) {
+  const authorized = await isAuthorizedAdmin(request);
 
   const emailMissingFrom = Boolean(
     process.env.RESEND_API_KEY?.trim() && !process.env.AUTH_FROM_EMAIL?.trim()
@@ -43,8 +65,10 @@ export async function GET(request: NextRequest) {
     : (process.env.RESEND_API_KEY?.trim() && process.env.AUTH_FROM_EMAIL?.trim())
       ? 'ok'
       : 'degraded';
-  const checks = { mongo, redis, email };
-  const hasError = Object.values(checks).includes('error');
+
+  const authOtp = getAuthHealthDiagnostic();
+  const checks = { mongo, redis, email, authOtp };
+  const hasError = mongo === 'error' || email === 'error' || authOtp.status === 'error';
 
   return NextResponse.json(
     {

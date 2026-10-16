@@ -6,6 +6,8 @@ import {
   sendOtpEmail,
   sendMagicLinkEmail,
   CLIENT_AUTH_ERROR_MESSAGE,
+  classifyAuthError,
+  recordAuthFailure,
 } from '@/lib/auth/otp';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
@@ -57,20 +59,36 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     const rawError = error instanceof Error ? error.message : String(error);
-    console.error('Request OTP/Magic Link provider error:', error);
+    const { reason, message: structuredMessage } = classifyAuthError(error);
+
+    recordAuthFailure({
+      reason,
+      message: structuredMessage,
+      error: rawError,
+      emailDomain: email.split('@')[1] || 'unknown',
+      mode,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.error('[Auth OTP] Structured delivery failure:', {
+      emailDomain: email.split('@')[1] || 'unknown',
+      mode,
+      reason,
+      error: rawError,
+    });
 
     await writeAuditLog({
       action: 'auth.otp_failed',
       actor: email,
       ip,
-      metadata: { mode, error: rawError },
+      metadata: { mode, reason, error: rawError },
     });
     await writeAdminAudit({
       actorEmail: email,
       action: 'auth.otp_failed',
       resource: 'auth',
       ipAddress: ip,
-      metadata: { mode, error: rawError },
+      metadata: { mode, reason, error: rawError },
     });
 
     return NextResponse.json(

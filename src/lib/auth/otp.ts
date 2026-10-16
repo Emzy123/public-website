@@ -11,6 +11,139 @@ const MONGO_TOKENS_COLLECTION = 'verification_tokens';
 export const CLIENT_AUTH_ERROR_MESSAGE =
   "We couldn't send your code right now. Please try again shortly or contact hello@sinet.africa.";
 
+export type AuthFailureReason =
+  | 'auth_from_email_missing'
+  | 'resend_domain_unverified'
+  | 'resend_api_key_missing'
+  | 'resend_rate_limited'
+  | 'database_unavailable'
+  | 'account_not_found'
+  | 'provider_delivery_failed';
+
+export type AuthFailureRecord = {
+  reason: AuthFailureReason;
+  message: string;
+  error: string;
+  emailDomain?: string;
+  mode?: string;
+  timestamp: string;
+};
+
+let lastAuthFailure: AuthFailureRecord | null = null;
+
+export function recordAuthFailure(record: AuthFailureRecord): void {
+  lastAuthFailure = record;
+}
+
+export function getLastAuthFailure(): AuthFailureRecord | null {
+  return lastAuthFailure;
+}
+
+export function resetLastAuthFailure(): void {
+  lastAuthFailure = null;
+}
+
+export function classifyAuthError(error: unknown): { reason: AuthFailureReason; message: string } {
+  const msg = error instanceof Error ? error.message : String(error);
+  const lower = msg.toLowerCase();
+
+  if (lower.includes('auth_from_email') || lower.includes('sender required')) {
+    return {
+      reason: 'auth_from_email_missing',
+      message: 'AUTH_FROM_EMAIL environment variable is missing or unconfigured in Vercel.',
+    };
+  }
+
+  if (
+    lower.includes('resend.com/domains') ||
+    lower.includes('only send testing emails') ||
+    lower.includes('domain_not_verified') ||
+    (lower.includes('domain') && (lower.includes('not verified') || lower.includes('unverified')))
+  ) {
+    return {
+      reason: 'resend_domain_unverified',
+      message: 'Resend domain unverified: sinet.africa domain is not verified in Resend dashboard.',
+    };
+  }
+
+  if (lower.includes('api key') || lower.includes('resend_api_key') || lower.includes('unauthorized') || lower.includes('api_key')) {
+    return {
+      reason: 'resend_api_key_missing',
+      message: 'RESEND_API_KEY is missing or invalid in Vercel.',
+    };
+  }
+
+  if (lower.includes('rate limit') || lower.includes('too many requests') || lower.includes('429')) {
+    return {
+      reason: 'resend_rate_limited',
+      message: 'Resend email delivery rate limit exceeded.',
+    };
+  }
+
+  if (lower.includes('database unavailable') || lower.includes('token store') || lower.includes('econnrefused')) {
+    return {
+      reason: 'database_unavailable',
+      message: 'Verification token database store (PostgreSQL/MongoDB) is unavailable.',
+    };
+  }
+
+  if (lower.includes('account not found') || lower.includes('no account')) {
+    return {
+      reason: 'account_not_found',
+      message: 'Requested email has no associated account.',
+    };
+  }
+
+  return {
+    reason: 'provider_delivery_failed',
+    message: msg,
+  };
+}
+
+export function getAuthHealthDiagnostic(): {
+  status: 'ok' | 'degraded' | 'error';
+  authFromEmail: 'configured' | 'missing';
+  senderEmail: string | null;
+  senderDomain: string | null;
+  resendApiKey: 'configured' | 'missing';
+  lastFailure: {
+    reason: AuthFailureReason;
+    message: string;
+    timestamp: string;
+  } | null;
+} {
+  const authFromEmail = process.env.AUTH_FROM_EMAIL?.trim() || null;
+  const resendApiKey = process.env.RESEND_API_KEY?.trim() || null;
+
+  let senderDomain: string | null = null;
+  if (authFromEmail) {
+    const match = authFromEmail.match(/@([^>]+)/);
+    if (match) senderDomain = match[1].trim();
+  }
+
+  const isEmailMissing = Boolean(resendApiKey && !authFromEmail);
+  const status: 'ok' | 'degraded' | 'error' = isEmailMissing
+    ? 'error'
+    : (resendApiKey && authFromEmail)
+      ? 'ok'
+      : 'degraded';
+
+  return {
+    status,
+    authFromEmail: authFromEmail ? 'configured' : 'missing',
+    senderEmail: authFromEmail,
+    senderDomain,
+    resendApiKey: resendApiKey ? 'configured' : 'missing',
+    lastFailure: lastAuthFailure
+      ? {
+          reason: lastAuthFailure.reason,
+          message: lastAuthFailure.message,
+          timestamp: lastAuthFailure.timestamp,
+        }
+      : null,
+  };
+}
+
 async function getMongoFallback() {
   try {
     const { getMongoDb } = await import('@/lib/db/mongodb');
