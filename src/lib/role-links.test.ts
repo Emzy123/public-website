@@ -8,6 +8,7 @@ import {
 } from './types/membership';
 import { createRegistrationLinkSchema } from './schemas/registration-link.schema';
 import { campaignApplicationSchema } from './schemas/application.schema';
+import { buildJoinRedirectUrl } from './registration-links';
 
 describe('Role Deep Links & Membership Names', () => {
   it('maps expected human-readable role labels', () => {
@@ -183,76 +184,53 @@ describe('Role Deep Links & Membership Names', () => {
   });
 
   describe('6. Redirection query parameter whitelisting', () => {
-    const ALLOWED_UTM_PARAMS = new Set([
-      'utm_source',
-      'utm_medium',
-      'utm_campaign',
-      'utm_term',
-      'utm_content',
-    ]);
-
-    function buildWhitelistedRedirect(
-      targetUrl: string,
-      searchParams?: Record<string, string | string[] | undefined>
-    ): string {
-      const rawRole =
-        typeof searchParams?.role === 'string'
-          ? searchParams.role
-          : Array.isArray(searchParams?.role)
-            ? searchParams.role[0]
-            : undefined;
-      const canonicalRole = normalizeRoleSlug(rawRole);
-      const isStaffRequested = canonicalRole === 'staff';
-      const publicRole = isStaffRequested ? null : canonicalRole;
-
-      const qs = new URLSearchParams();
-      if (publicRole) {
-        qs.set('role', publicRole);
-      }
-
-      if (searchParams) {
-        for (const [key, rawValue] of Object.entries(searchParams)) {
-          const val = typeof rawValue === 'string' ? rawValue : Array.isArray(rawValue) ? rawValue[0] : '';
-          if (!val) continue;
-
-          if (ALLOWED_UTM_PARAMS.has(key)) {
-            if (/^[a-zA-Z0-9_\-\.]{1,100}$/.test(val)) {
-              qs.set(key, val);
-            }
-          } else if (key === 'ref') {
-            if (/^[a-zA-Z0-9_-]{1,32}$/.test(val)) {
-              qs.set('ref', val);
-            }
-          }
-        }
-      }
-
-      const queryStr = qs.toString();
-      return queryStr ? `${targetUrl}?${queryStr}` : targetUrl;
-    }
-
     it('forwards canonical public role slug', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'ambassador' });
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', { role: 'ambassador' });
       expect(dest).toBe('/join/cohort-2026?role=ambassador');
     });
 
     it('normalizes alias on redirect (e.g. campus-ambassador -> ambassador)', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'campus-ambassador' });
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', { role: 'campus-ambassador' });
       expect(dest).toBe('/join/cohort-2026?role=ambassador');
     });
 
+    it('normalizes student and student-network aliases to community-member', () => {
+      const dest1 = buildJoinRedirectUrl('/join/cohort-2026', { role: 'student' });
+      expect(dest1).toBe('/join/cohort-2026?role=community-member');
+
+      const dest2 = buildJoinRedirectUrl('/join/cohort-2026', { role: 'student-network' });
+      expect(dest2).toBe('/join/cohort-2026?role=community-member');
+    });
+
     it('discards invite-only staff role on public redirect', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'staff' });
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', { role: 'staff' });
       expect(dest).toBe('/join/cohort-2026');
     });
 
     it('discards unknown or malicious role on redirect', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: '<script>alert(1)</script>' });
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', { role: '<script>alert(1)</script>' });
       expect(dest).toBe('/join/cohort-2026');
     });
 
+    it('forwards whitelisted chapter parameter (e.g. fulokoja)', () => {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'fulokoja',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja');
+    });
+
+    it('sanitizes and drops malicious chapter parameter', () => {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: '<script>alert(1)</script>',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member');
+      expect(dest).not.toContain('<script>');
+    });
+
     it('forwards whitelisted utm params and referral code', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
         role: 'volunteer',
         utm_source: 'twitter',
         utm_medium: 'social',
@@ -267,7 +245,7 @@ describe('Role Deep Links & Membership Names', () => {
     });
 
     it('drops arbitrary non-whitelisted query params', () => {
-      const dest = buildWhitelistedRedirect('/join/cohort-2026', {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
         role: 'volunteer',
         unauthorized_key: 'malicious_value',
         admin_preview: 'true',
@@ -373,7 +351,7 @@ describe('Role Deep Links & Membership Names', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.role).toBe('staff');
-        expect(result.data.education).toBe('B.Sc Economics');
+        expect((result.data as any).education).toBe('B.Sc Economics');
       }
     });
 

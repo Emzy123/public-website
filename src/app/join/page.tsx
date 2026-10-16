@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getActiveMembershipApplication } from '@/lib/applications/active-link';
 import { RegistrationClosedView } from '@/components/applications/RegistrationClosedView';
 import { normalizeRoleSlug } from '@/lib/types/membership';
+import { buildJoinRedirectUrl } from '@/lib/registration-links';
 
 export const metadata = {
   title: 'Join SINet | Admissions & Membership',
@@ -10,14 +11,6 @@ export const metadata = {
 };
 
 export const dynamic = 'force-dynamic';
-
-const ALLOWED_UTM_PARAMS = new Set([
-  'utm_source',
-  'utm_medium',
-  'utm_campaign',
-  'utm_term',
-  'utm_content',
-]);
 
 export default async function JoinIndexPage({
   searchParams,
@@ -39,35 +32,28 @@ export default async function JoinIndexPage({
     ? 'Staff positions are by invitation. Choose an open role below.'
     : undefined;
 
+  const rawChapter =
+    typeof searchParams?.chapter === 'string'
+      ? searchParams.chapter
+      : Array.isArray(searchParams?.chapter)
+        ? searchParams.chapter[0]
+        : undefined;
+  const validChapter =
+    rawChapter && /^[a-zA-Z0-9_-]{1,64}$/.test(rawChapter)
+      ? rawChapter.toLowerCase()
+      : undefined;
+
   if (target.status === 'open') {
-    const qs = new URLSearchParams();
-    // Only forward whitelisted, public canonical role slugs
-    if (publicRole) {
-      qs.set('role', publicRole);
-    }
-
-    // Whitelist utm_* attribution and referral parameters only
-    if (searchParams) {
-      for (const [key, rawValue] of Object.entries(searchParams)) {
-        const val = typeof rawValue === 'string' ? rawValue : Array.isArray(rawValue) ? rawValue[0] : '';
-        if (!val) continue;
-
-        if (ALLOWED_UTM_PARAMS.has(key)) {
-          if (/^[a-zA-Z0-9_\-\.]{1,100}$/.test(val)) {
-            qs.set(key, val);
-          }
-        } else if (key === 'ref') {
-          if (/^[a-zA-Z0-9_-]{1,32}$/.test(val)) {
-            qs.set('ref', val);
-          }
-        }
-      }
-    }
-
-    const queryStr = qs.toString();
-    const destination = queryStr ? `${target.url}?${queryStr}` : target.url;
+    const destination = buildJoinRedirectUrl(target.url, searchParams);
     redirect(destination);
   }
 
-  return <RegistrationClosedView role={publicRole} inviteNotice={staffNotice} />;
+  return (
+    <RegistrationClosedView
+      role={publicRole}
+      inviteNotice={staffNotice}
+      chapter={validChapter}
+    />
+  );
 }
+

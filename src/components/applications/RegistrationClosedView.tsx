@@ -8,9 +8,11 @@ import { type ApplicationRole, ROLE_LABELS } from '@/lib/types/membership';
 export function RegistrationClosedView({
   role,
   inviteNotice,
+  chapter,
 }: {
   role?: ApplicationRole | null;
   inviteNotice?: string;
+  chapter?: string | null;
 }) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -26,8 +28,15 @@ export function RegistrationClosedView({
     setSubmitting(true);
     setErrorMessage(null);
 
+    const notifySource = role
+      ? chapter
+        ? `join-${role}-${chapter}`
+        : `join-${role}`
+      : chapter
+        ? `join-${chapter}`
+        : 'join';
+
     try {
-      const notifySource = role ? `join-${role}` : 'join';
       const res = await fetch('/api/applications/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -47,8 +56,7 @@ export function RegistrationClosedView({
       // Offline fallback: store locally
       if (typeof window !== 'undefined') {
         const existing = JSON.parse(localStorage.getItem('sinet_offline_waitlist') || '[]');
-        const notifySource = role ? `join-${role}` : 'join';
-        existing.push({ email: email.trim(), role: role || undefined, source: notifySource, date: new Date().toISOString() });
+        existing.push({ email: email.trim(), role: role || undefined, chapter: chapter || undefined, source: notifySource, date: new Date().toISOString() });
         localStorage.setItem('sinet_offline_waitlist', JSON.stringify(existing));
       }
       setSubmitted(true);

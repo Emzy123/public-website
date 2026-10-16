@@ -288,6 +288,52 @@ check_join_staff_invitation_only
 check_join_neutral_picker "/join?role=garbage"
 check_join_neutral_picker "/join?role=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
 
+# 8e. Chapter Join Buttons & No "Campaign Not Found" Internal Resolution
+check_chapter_join_links() {
+  local chapters_html
+  chapters_html=$(curl -s -L "${BASE_URL}/chapters" 2>/dev/null || echo "")
+  local chapter_detail_html
+  chapter_detail_html=$(curl -s -L "${BASE_URL}/chapters/fulokoja" 2>/dev/null || echo "")
+
+  local broken_links_found=0
+  if echo "$chapters_html" | grep -q "/join/student-network" || echo "$chapter_detail_html" | grep -q "/join/student-network"; then
+    echo "✗ Hard-coded /join/student-network link found on chapter pages"
+    broken_links_found=1
+  fi
+  if echo "$chapters_html" | grep -q "/join/campus-ambassadors-2026" || echo "$chapter_detail_html" | grep -q "/join/campus-ambassadors-2026"; then
+    echo "✗ Hard-coded /join/campus-ambassadors-2026 link found on chapter pages"
+    broken_links_found=1
+  fi
+
+  if [ "$broken_links_found" -eq 0 ]; then
+    echo "✓ No hard-coded /join/<slug> broken paths found on /chapters or /chapters/[slug]"
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+  fi
+
+  # Check that role+chapter routed join targets resolve without "Campaign Not Found"
+  local test_paths=(
+    "/join?role=community-member&chapter=fulokoja"
+    "/join?role=ambassador&chapter=fulokoja"
+    "/join/student-network"
+    "/join/campus-ambassadors-2026"
+  )
+  for target_path in "${test_paths[@]}"; do
+    local res_html
+    res_html=$(curl -s -L "${BASE_URL}${target_path}" 2>/dev/null || echo "")
+    if echo "$res_html" | grep -qi "Campaign Not Found"; then
+      echo "✗ ${target_path} resolved to 'Campaign Not Found'!"
+      FAIL=$((FAIL + 1))
+    else
+      echo "✓ ${target_path} resolves without 'Campaign Not Found'"
+      PASS=$((PASS + 1))
+    fi
+  done
+}
+check_chapter_join_links
+
+
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
 check "Admin media API requires auth" "GET" "/api/admin/media" "401"

@@ -109,7 +109,7 @@ export default async function ChapterDetailPage({
               </div>
 
               <Link
-                href={`/join/student-network?campus=${chapter.campusCode}`}
+                href={`/join?role=community-member&chapter=${chapter.slug}`}
                 className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-[#071026] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800"
               >
                 Join {chapter.universityShortName} Chapter →
@@ -162,7 +162,7 @@ export default async function ChapterDetailPage({
 
                 <div className="mt-6 pt-4 border-t border-slate-100">
                   <Link
-                    href={`/join/student-network?campus=${chapter.campusCode}`}
+                    href={`/join?role=community-member&chapter=${chapter.slug}`}
                     className="text-xs font-bold text-amber-700 hover:text-amber-800"
                   >
                     Apply for this division →
@@ -214,7 +214,7 @@ export default async function ChapterDetailPage({
                   </p>
                 </div>
                 <Link
-                  href="/join/campus-ambassadors-2026"
+                  href={`/join?role=ambassador&chapter=${chapter.slug}`}
                   className="inline-flex min-h-[44px] items-center rounded-xl bg-amber-600 px-5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-700"
                 >
                   Apply as Campus Ambassador →
@@ -238,7 +238,7 @@ export default async function ChapterDetailPage({
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href={`/join/student-network?campus=${chapter.campusCode}`}
+              href={`/join?role=community-member&chapter=${chapter.slug}`}
               className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-amber-600 px-8 text-sm font-bold text-white shadow-sm transition hover:bg-amber-500"
             >
               Apply to Join Chapter →

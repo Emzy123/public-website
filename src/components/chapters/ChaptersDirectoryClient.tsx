@@ -201,7 +201,7 @@ export function ChaptersDirectoryClient({
                     View Chapter →
                   </Link>
                   <Link
-                    href={`/join/student-network?campus=${chapter.campusCode}`}
+                    href={`/join?role=community-member&chapter=${chapter.slug}`}
                     className="inline-flex min-h-[36px] items-center rounded-xl bg-brand-ink px-4 text-xs font-bold text-white transition hover:bg-brand-ink-navy active:scale-[0.98]"
                   >
                     Join

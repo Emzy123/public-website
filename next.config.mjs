@@ -53,6 +53,16 @@ const nextConfig = {
         destination: '/contact',
         permanent: true,
       },
+      {
+        source: '/join/student-network',
+        destination: '/join?role=community-member',
+        permanent: false,
+      },
+      {
+        source: '/join/campus-ambassadors-2026',
+        destination: '/join?role=ambassador',
+        permanent: false,
+      },
     ];
   },
   async headers() {

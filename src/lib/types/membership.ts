@@ -50,12 +50,15 @@ export const ROLE_ALIASES: Record<string, ApplicationRole> = {
   community: 'community-member',
   member: 'community-member',
   members: 'community-member',
+  student: 'community-member',
+  'student-network': 'community-member',
 
   // ambassador
   ambassador: 'ambassador',
   ambassadors: 'ambassador',
   'campus-ambassador': 'ambassador',
   'campus-ambassadors': 'ambassador',
+  'campus-ambassadors-2026': 'ambassador',
 
   // partnership-interest
   'partnership-interest': 'partnership-interest',

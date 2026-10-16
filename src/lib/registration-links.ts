@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Document } from 'mongodb';
-import type { ApplicationRole, RegistrationLinkStatus } from '@/lib/types/membership';
+import { type ApplicationRole, type RegistrationLinkStatus, normalizeRoleSlug } from '@/lib/types/membership';
 
 export const REGISTRATION_LINKS_COLLECTION = 'registration_links';
 export const LINK_WAITLIST_COLLECTION = 'registration_link_waitlist';
@@ -109,3 +109,73 @@ export function serialiseRegistrationLink(doc: Document) {
     url: registrationLinkUrl(link.slug),
   };
 }
+
+export const ALLOWED_UTM_PARAMS = new Set([
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+]);
+
+/**
+ * Builds a secure sanitized redirect URL for /join routing.
+ * Whitelists public canonical roles, chapter slug, referral code, and utm parameters.
+ * Staff is invite-only and stripped from public redirects.
+ */
+export function buildJoinRedirectUrl(
+  targetUrl: string,
+  searchParams?: Record<string, string | string[] | undefined>
+): string {
+  const rawRole =
+    typeof searchParams?.role === 'string'
+      ? searchParams.role
+      : Array.isArray(searchParams?.role)
+        ? searchParams.role[0]
+        : undefined;
+  const canonicalRole = normalizeRoleSlug(rawRole);
+  const isStaffRequested = canonicalRole === 'staff';
+  const publicRole = isStaffRequested ? null : canonicalRole;
+
+  const rawChapter =
+    typeof searchParams?.chapter === 'string'
+      ? searchParams.chapter
+      : Array.isArray(searchParams?.chapter)
+        ? searchParams.chapter[0]
+        : undefined;
+  const validChapter =
+    rawChapter && /^[a-zA-Z0-9_-]{1,64}$/.test(rawChapter)
+      ? rawChapter.toLowerCase()
+      : undefined;
+
+  const qs = new URLSearchParams();
+  if (publicRole) {
+    qs.set('role', publicRole);
+  }
+  if (validChapter) {
+    qs.set('chapter', validChapter);
+  }
+
+  if (searchParams) {
+    for (const [key, rawValue] of Object.entries(searchParams)) {
+      const val = typeof rawValue === 'string' ? rawValue : Array.isArray(rawValue) ? rawValue[0] : '';
+      if (!val) continue;
+
+      if (ALLOWED_UTM_PARAMS.has(key)) {
+        if (/^[a-zA-Z0-9_\-\.]{1,100}$/.test(val)) {
+          qs.set(key, val);
+        }
+      } else if (key === 'ref') {
+        if (/^[a-zA-Z0-9_-]{1,32}$/.test(val)) {
+          qs.set('ref', val);
+        }
+      }
+    }
+  }
+
+  const queryStr = qs.toString();
+  if (!queryStr) return targetUrl;
+  const separator = targetUrl.includes('?') ? '&' : '?';
+  return `${targetUrl}${separator}${queryStr}`;
+}
+
