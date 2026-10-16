@@ -24,18 +24,52 @@ export const ROLE_LABELS: Record<ApplicationRole, string> = {
 };
 
 /**
+ * Canonical mapping of all accepted role aliases, query string variants,
+ * and pluralizations to their canonical ApplicationRole.
+ */
+export const ROLE_ALIASES: Record<string, ApplicationRole> = {
+  // volunteer
+  volunteer: 'volunteer',
+  volunteers: 'volunteer',
+
+  // staff
+  staff: 'staff',
+
+  // community-member
+  'community-member': 'community-member',
+  'community-members': 'community-member',
+  community: 'community-member',
+  member: 'community-member',
+  members: 'community-member',
+
+  // ambassador
+  ambassador: 'ambassador',
+  ambassadors: 'ambassador',
+  'campus-ambassador': 'ambassador',
+  'campus-ambassadors': 'ambassador',
+
+  // partnership-interest
+  'partnership-interest': 'partnership-interest',
+  partnership: 'partnership-interest',
+  partnerships: 'partnership-interest',
+  partner: 'partnership-interest',
+  partners: 'partnership-interest',
+  enterprise: 'partnership-interest',
+  enterprises: 'partnership-interest',
+  'partnership-enterprise': 'partnership-interest',
+};
+
+/**
  * Normalizes query string role parameters into a canonical ApplicationRole.
- * Handles common aliases, hyphens, underscores, and plural variations.
+ * Rejects any malicious input (e.g. <script>, non-slug characters) and returns
+ * null for unknown or unmapped slugs.
  */
 export function normalizeRoleSlug(raw?: string | null): ApplicationRole | null {
   if (!raw) return null;
-  const lower = raw.toLowerCase().trim().replace(/_/g, '-');
-  if (lower === 'volunteer' || lower === 'volunteers') return 'volunteer';
-  if (lower === 'staff') return 'staff';
-  if (lower.includes('ambassador')) return 'ambassador';
-  if (lower.includes('community') || lower === 'member' || lower === 'members') return 'community-member';
-  if (lower.includes('partner') || lower.includes('enterprise')) return 'partnership-interest';
-  return null;
+  // Discard any input with tags, quotes, code, or dangerous characters
+  if (/[<>"'`\\${}]/.test(raw)) return null;
+  const cleaned = raw.toLowerCase().trim().replace(/[_ ]+/g, '-');
+  return ROLE_ALIASES[cleaned] ?? null;
 }
 
 export const PILLARS = ['agriculture', 'trade-distribution', 'real-estate'] as const;

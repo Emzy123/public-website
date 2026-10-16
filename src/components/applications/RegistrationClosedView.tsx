@@ -21,12 +21,13 @@ export function RegistrationClosedView({ role }: { role?: ApplicationRole | null
     setErrorMessage(null);
 
     try {
+      const notifySource = role ? `join-${role}` : 'join';
       const res = await fetch('/api/applications/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
-          source: role ? `join-${role}` : 'join-closed',
+          source: notifySource,
         }),
       });
 
@@ -40,7 +41,8 @@ export function RegistrationClosedView({ role }: { role?: ApplicationRole | null
       // Offline fallback: store locally
       if (typeof window !== 'undefined') {
         const existing = JSON.parse(localStorage.getItem('sinet_offline_waitlist') || '[]');
-        existing.push({ email: email.trim(), role: role || undefined, date: new Date().toISOString() });
+        const notifySource = role ? `join-${role}` : 'join';
+        existing.push({ email: email.trim(), role: role || undefined, source: notifySource, date: new Date().toISOString() });
         localStorage.setItem('sinet_offline_waitlist', JSON.stringify(existing));
       }
       setSubmitted(true);

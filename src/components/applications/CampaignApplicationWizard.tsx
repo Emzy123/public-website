@@ -141,9 +141,13 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       ? APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
       : [...APPLICATION_ROLES];
   const roles = availableRoles.length > 0 ? availableRoles : [...APPLICATION_ROLES];
-  const defaultRole = roles[0] || 'volunteer';
   const queryRole = normalizeRoleSlug(searchParams?.get('role'));
-  const effectiveRole = queryRole && roles.includes(queryRole) ? queryRole : defaultRole;
+  const isConflict = Boolean(queryRole && !roles.includes(queryRole));
+  // Only preselect if the normalized query role is explicitly permitted for this campaign
+  const effectiveRole: ApplicationRole | '' = queryRole && roles.includes(queryRole) ? queryRole : '';
+  const conflictMessage = isConflict && queryRole
+    ? `The requested role (${ROLE_LABELS[queryRole] || queryRole}) is not available for this campaign. Please select an open role below:`
+    : null;
   const steps = [...WIZARD_STEP_LABELS];
 
   const [form, setForm] = useState<FormState>(() => ({
@@ -153,9 +157,9 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
     phone: '',
     website: '',
     codeOfConductAccepted: false,
-    documents: emptyDocuments(effectiveRole),
+    documents: effectiveRole ? emptyDocuments(effectiveRole) : {},
     documentNames: {},
-    ...emptyRoleFields(effectiveRole),
+    ...(effectiveRole ? emptyRoleFields(effectiveRole) : {}),
   }));
   const [step, setStep] = useState(0);
   const [csrfToken, setCsrfToken] = useState('');
@@ -170,13 +174,14 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       .catch(() => undefined);
   }, [slug]);
 
-  const role = String(form.role) as ApplicationRole;
-  const definition = ROLE_DEFINITIONS[role];
-  const selectedRoleLabel = ROLE_LABELS[role] || role;
+  const role = (form.role ? String(form.role) : '') as ApplicationRole | '';
+  const definition = role ? ROLE_DEFINITIONS[role] : null;
+  const selectedRoleLabel = role ? ROLE_LABELS[role] || role : '';
 
   const set = (key: string, value: FormState[string]) => setForm((c) => ({ ...c, [key]: value }));
 
   const selectRole = (next: ApplicationRole) => {
+    setError('');
     setForm({
       role: next,
       fullName: form.fullName,
@@ -211,6 +216,12 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
   );
 
   const validateStep = () => {
+    if (step === 0) {
+      if (!role || !roles.includes(role)) {
+        setError('Please select a membership role to proceed.');
+        return false;
+      }
+    }
     if (step === 1) {
       if (!String(form.fullName || '').trim() || !String(form.email || '').trim() || !String(form.phone || '').trim()) {
         setError('Complete all contact details.');
@@ -221,7 +232,7 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
         return false;
       }
     }
-    if (step === 2) {
+    if (step === 2 && definition) {
       for (const field of definition.fields) {
         if (field.required === false) continue;
         const val = form[field.key];
@@ -239,7 +250,7 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
         }
       }
     }
-    if (step === 3) {
+    if (step === 3 && definition) {
       for (const doc of definition.documents) {
         if (!doc.required) continue;
         if (!documents[doc.key]) {
@@ -265,6 +276,7 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
   };
 
   const uploadDocument = async (doc: RoleDocumentDef, file: File) => {
+    if (!role) return;
     setUploading(doc.key);
     setError('');
     try {
@@ -292,6 +304,10 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
   };
 
   const submit = async () => {
+    if (!role || !definition) {
+      setError('Please select a membership role before submitting.');
+      return;
+    }
     if (!validateStep()) return;
     setSubmitting(true);
     setError('');
@@ -335,12 +351,14 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       ['Email', String(form.email || '—')],
       ['Phone', String(form.phone || '—')],
     ];
-    for (const field of definition.fields) {
-      const val = form[field.key];
-      rows.push([field.label, Array.isArray(val) ? val.join(', ') : String(val || '—')]);
-    }
-    for (const doc of definition.documents) {
-      rows.push([doc.label, documentNames[doc.key] || (documents[doc.key] ? 'Uploaded' : '—')]);
+    if (definition) {
+      for (const field of definition.fields) {
+        const val = form[field.key];
+        rows.push([field.label, Array.isArray(val) ? val.join(', ') : String(val || '—')]);
+      }
+      for (const doc of definition.documents) {
+        rows.push([doc.label, documentNames[doc.key] || (documents[doc.key] ? 'Uploaded' : '—')]);
+      }
     }
     return rows;
   }, [definition, form, selectedRoleLabel, documents, documentNames]);
@@ -430,24 +448,43 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
 
           <div className="p-5 xs:p-7 sm:p-9">
             {step === 0 && (
-              <div className="grid gap-4 xs:grid-cols-2">
-                {roles.map((r) => {
-                  const d = ROLE_DEFINITIONS[r];
-                  return (
-                    <button
-                      type="button"
-                      key={r}
-                      onClick={() => selectRole(r)}
-                      className={`relative min-h-[130px] border p-5 text-left ${
-                        form.role === r ? 'border-[#0d1a4a] bg-[#f6f2e8]' : 'border-[#0d1a4a]/15 bg-white hover:border-[#0d1a4a]/55'
-                      }`}
-                    >
-                      <p className="font-data text-[10px] uppercase tracking-[.14em] text-[#716959]">{d.tag}</p>
-                      <h2 className="mt-2 font-editorial text-2xl">{d.label}</h2>
-                      <p className="mt-2 text-sm leading-5 text-[#5b5448]">{d.detail}</p>
-                    </button>
-                  );
-                })}
+              <div>
+                {conflictMessage && (
+                  <div
+                    data-testid="role-conflict-notice"
+                    className="mb-6 border-l-4 border-[#d9711b] bg-[#fbf4e9] p-4 text-sm text-[#8b3e09]"
+                  >
+                    <p className="font-semibold">{conflictMessage}</p>
+                  </div>
+                )}
+                {!form.role && (
+                  <p
+                    data-testid="neutral-role-picker-prompt"
+                    className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#716959]"
+                  >
+                    Choose an available role below:
+                  </p>
+                )}
+                <div className="grid gap-4 xs:grid-cols-2">
+                  {roles.map((r) => {
+                    const d = ROLE_DEFINITIONS[r];
+                    return (
+                      <button
+                        type="button"
+                        key={r}
+                        data-testid={`role-card-${r}`}
+                        onClick={() => selectRole(r)}
+                        className={`relative min-h-[130px] border p-5 text-left transition-all ${
+                          form.role === r ? 'border-[#0d1a4a] bg-[#f6f2e8] shadow-xs' : 'border-[#0d1a4a]/15 bg-white hover:border-[#0d1a4a]/55'
+                        }`}
+                      >
+                        <p className="font-data text-[10px] uppercase tracking-[.14em] text-[#716959]">{d.tag}</p>
+                        <h2 className="mt-2 font-editorial text-2xl">{d.label}</h2>
+                        <p className="mt-2 text-sm leading-5 text-[#5b5448]">{d.detail}</p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -465,7 +502,7 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
               </div>
             )}
 
-            {step === 2 && (
+            {step === 2 && definition && (
               <div className="space-y-6">
                 {definition.fields.map((field) => (
                   <RoleFieldInput
@@ -479,7 +516,7 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
               </div>
             )}
 
-            {step === 3 && (
+            {step === 3 && definition && (
               <div className="space-y-6">
                 <p className="text-sm leading-6 text-[#5b5448]">
                   Upload the documents required for the <strong>{selectedRoleLabel}</strong> role. PDF is preferred where possible.

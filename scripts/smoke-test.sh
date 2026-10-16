@@ -213,22 +213,51 @@ check_adverts_suppressed "/verify/sample-cert-001"
 check_adverts_suppressed "/dashboard"
 check_adverts_suppressed "/admin"
 
-# 8d. Join Role Deep Links Check
+# 8d. Join Role Deep Links Check (Content & Neutral Picker Assertions)
 check_join_role_deep_link() {
   local role="$1"
-  local status
-  status=$(curl -s -L -o /dev/null -w "%{http_code}" "${BASE_URL}/join?role=${role}" 2>/dev/null || echo "000")
-  if [ "$status" = "200" ]; then
-    echo "✓ /join?role=${role} deep link resolves cleanly (HTTP 200)"
+  local expected_text="$2"
+  local html
+  html=$(curl -s -L "${BASE_URL}/join?role=${role}" 2>/dev/null || echo "")
+
+  local decoded_html
+  decoded_html=$(echo "$html" | sed 's/&amp;/\&/g')
+
+  if echo "$decoded_html" | grep -qi "$expected_text"; then
+    echo "✓ /join?role=${role} displays expected role content ('${expected_text}')"
     PASS=$((PASS + 1))
   else
-    echo "✗ /join?role=${role} returned HTTP ${status} (expected 200)"
+    echo "✗ /join?role=${role} missing expected role content ('${expected_text}')"
     FAIL=$((FAIL + 1))
   fi
 }
-check_join_role_deep_link "ambassador"
-check_join_role_deep_link "volunteer"
-check_join_role_deep_link "community-member"
+
+check_join_neutral_picker() {
+  local target_path="$1"
+  local html
+  html=$(curl -s -L "${BASE_URL}${target_path}" 2>/dev/null || echo "")
+
+  if echo "$html" | grep -qi "Registration is Closed at the Moment" || echo "$html" | grep -qi "neutral-role-picker-prompt" || echo "$html" | grep -qi "Choose an available role"; then
+    echo "✓ ${target_path} renders neutral role picker / generic view (no auto-preselection)"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ ${target_path} failed to render neutral role picker / generic view"
+    FAIL=$((FAIL + 1))
+  fi
+
+  if echo "$html" | grep -qi "Volunteer Applications are Closed" || echo "$html" | grep -qi "<script>"; then
+    echo "✗ ${target_path} leaked volunteer preselection or malicious script tag!"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
+check_join_role_deep_link "ambassador" "Campus Ambassador"
+check_join_role_deep_link "volunteer" "Volunteer"
+check_join_role_deep_link "community-member" "Community Member"
+check_join_role_deep_link "staff" "Staff"
+check_join_role_deep_link "partnership-interest" "Partnership & Enterprise"
+check_join_neutral_picker "/join?role=garbage"
+check_join_neutral_picker "/join?role=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
 
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
