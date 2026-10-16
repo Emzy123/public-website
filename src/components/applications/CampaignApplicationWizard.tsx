@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole } from '@/lib/types/membership';
+import { APPLICATION_ROLES, ROLE_LABELS, normalizeRoleSlug, type ApplicationRole } from '@/lib/types/membership';
 import {
   ROLE_DEFINITIONS,
   WIZARD_STEP_LABELS,
@@ -134,20 +134,13 @@ function emptyRoleFields(role: ApplicationRole): Record<string, string | string[
   return out;
 }
 
-function normalizeRoleSlug(raw?: string | null): ApplicationRole | null {
-  if (!raw) return null;
-  const lower = raw.toLowerCase().trim();
-  if (lower === 'volunteer') return 'volunteer';
-  if (lower === 'staff') return 'staff';
-  if (lower.includes('ambassador')) return 'ambassador';
-  if (lower.includes('community') || lower === 'member') return 'community-member';
-  if (lower.includes('partner') || lower.includes('enterprise')) return 'partnership-interest';
-  return null;
-}
-
 export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string; allowedRoles: ApplicationRole[] }) {
   const searchParams = useSearchParams();
-  const roles = APPLICATION_ROLES.filter((r) => allowedRoles.includes(r));
+  const availableRoles =
+    allowedRoles && allowedRoles.length > 0
+      ? APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
+      : [...APPLICATION_ROLES];
+  const roles = availableRoles.length > 0 ? availableRoles : [...APPLICATION_ROLES];
   const defaultRole = roles[0] || 'volunteer';
   const queryRole = normalizeRoleSlug(searchParams?.get('role'));
   const effectiveRole = queryRole && roles.includes(queryRole) ? queryRole : defaultRole;
@@ -196,6 +189,12 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       ...emptyRoleFields(next),
     });
   };
+
+  useEffect(() => {
+    if (queryRole && roles.includes(queryRole) && form.role !== queryRole && step === 0) {
+      selectRole(queryRole);
+    }
+  }, [queryRole, roles, step]);
 
   const toggleArray = (key: string, value: string) => {
     const values = (form[key] as string[]) || [];

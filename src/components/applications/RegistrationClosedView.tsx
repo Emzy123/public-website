@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-export function RegistrationClosedView() {
+import { type ApplicationRole, ROLE_LABELS } from '@/lib/types/membership';
+
+export function RegistrationClosedView({ role }: { role?: ApplicationRole | null }) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const roleTitle = role ? ROLE_LABELS[role] : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,10 +21,13 @@ export function RegistrationClosedView() {
     setErrorMessage(null);
 
     try {
-      const res = await fetch('/api/waitlist', {
+      const res = await fetch('/api/applications/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          email: email.trim(),
+          source: role ? `join-${role}` : 'join-closed',
+        }),
       });
 
       if (res.ok) {
@@ -33,7 +40,7 @@ export function RegistrationClosedView() {
       // Offline fallback: store locally
       if (typeof window !== 'undefined') {
         const existing = JSON.parse(localStorage.getItem('sinet_offline_waitlist') || '[]');
-        existing.push({ email: email.trim(), date: new Date().toISOString() });
+        existing.push({ email: email.trim(), role: role || undefined, date: new Date().toISOString() });
         localStorage.setItem('sinet_offline_waitlist', JSON.stringify(existing));
       }
       setSubmitted(true);
@@ -48,16 +55,18 @@ export function RegistrationClosedView() {
         {/* Status Pill */}
         <div className="inline-flex items-center gap-2 rounded-full border border-[#0d1a4a]/20 bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-widest text-amber-700 shadow-sm">
           <span className="h-2 w-2 rounded-full bg-amber-500" />
-          Applications Closed
+          {roleTitle ? `${roleTitle} Admissions Closed` : 'Applications Closed'}
         </div>
 
         {/* Heading */}
         <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-[#0d1a4a] sm:text-4xl">
-          Registration is Closed at the Moment
+          {roleTitle ? `${roleTitle} Applications are Closed` : 'Registration is Closed at the Moment'}
         </h1>
 
         <p className="mt-3 text-sm leading-relaxed text-[#554e43] sm:text-base">
-          SINet membership and cohort admissions open periodically through admin-controlled application periods. There is currently no active registration window open.
+          {roleTitle
+            ? `Cohort admissions for ${roleTitle} open periodically through admin-controlled application periods. Leave your email below to receive priority notification when the next ${roleTitle} cohort opens.`
+            : 'SINet membership and cohort admissions open periodically through admin-controlled application periods. There is currently no active registration window open.'}
         </p>
 
         {/* Waitlist Form Card */}
@@ -71,17 +80,21 @@ export function RegistrationClosedView() {
               </div>
               <h3 className="mt-3 text-sm font-bold text-emerald-950">You&apos;re on the Priority List</h3>
               <p className="mt-1 text-xs text-emerald-800">
-                We have recorded your email. As soon as the next application cohort or link opens, you will receive an invitation directly.
+                {roleTitle
+                  ? `We have recorded your email. As soon as ${roleTitle} applications open, you will receive an invitation directly.`
+                  : 'We have recorded your email. As soon as the next application cohort or link opens, you will receive an invitation directly.'}
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="text-left">
                 <label htmlFor="closed-email" className="block text-xs font-bold uppercase tracking-wider text-[#0d1a4a]">
-                  Get Notified for Next Cohort
+                  {roleTitle ? `Get Notified for ${roleTitle}` : 'Get Notified for Next Cohort'}
                 </label>
                 <p className="mt-1 text-xs text-[#554e43]">
-                  Leave your email address to receive priority notification when new roles or chapters open.
+                  {roleTitle
+                    ? `Leave your email to receive priority notice when ${roleTitle} positions open.`
+                    : 'Leave your email address to receive priority notification when new roles or chapters open.'}
                 </p>
               </div>
 

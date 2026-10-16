@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getActiveMembershipApplication } from '@/lib/applications/active-link';
 import { RegistrationClosedView } from '@/components/applications/RegistrationClosedView';
+import { normalizeRoleSlug } from '@/lib/types/membership';
 
 export const metadata = {
   title: 'Join SINet | Admissions & Membership',
@@ -33,5 +34,13 @@ export default async function JoinIndexPage({
     redirect(destination);
   }
 
-  return <RegistrationClosedView />;
+  const rawRole =
+    typeof searchParams?.role === 'string'
+      ? searchParams.role
+      : Array.isArray(searchParams?.role)
+        ? searchParams.role[0]
+        : undefined;
+  const role = normalizeRoleSlug(rawRole);
+
+  return <RegistrationClosedView role={role} />;
 }

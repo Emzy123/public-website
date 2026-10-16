@@ -23,6 +23,21 @@ export const ROLE_LABELS: Record<ApplicationRole, string> = {
   'partnership-interest': 'Partnership & Enterprise',
 };
 
+/**
+ * Normalizes query string role parameters into a canonical ApplicationRole.
+ * Handles common aliases, hyphens, underscores, and plural variations.
+ */
+export function normalizeRoleSlug(raw?: string | null): ApplicationRole | null {
+  if (!raw) return null;
+  const lower = raw.toLowerCase().trim().replace(/_/g, '-');
+  if (lower === 'volunteer' || lower === 'volunteers') return 'volunteer';
+  if (lower === 'staff') return 'staff';
+  if (lower.includes('ambassador')) return 'ambassador';
+  if (lower.includes('community') || lower === 'member' || lower === 'members') return 'community-member';
+  if (lower.includes('partner') || lower.includes('enterprise')) return 'partnership-interest';
+  return null;
+}
+
 export const PILLARS = ['agriculture', 'trade-distribution', 'real-estate'] as const;
 export type Pillar = (typeof PILLARS)[number];
 
