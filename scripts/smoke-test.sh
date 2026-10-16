@@ -251,11 +251,40 @@ check_join_neutral_picker() {
   fi
 }
 
+check_join_staff_invitation_only() {
+  local html
+  html=$(curl -s -L "${BASE_URL}/join?role=staff" 2>/dev/null || echo "")
+
+  local has_neutral=0
+  local has_note=0
+  local leaks_staff_closed=0
+
+  if echo "$html" | grep -qi "Registration is Closed at the Moment" || echo "$html" | grep -qi "neutral-role-picker-prompt" || echo "$html" | grep -qi "Applications Closed"; then
+    has_neutral=1
+  fi
+
+  if echo "$html" | grep -qi "Staff positions are by invitation. Choose an open role below."; then
+    has_note=1
+  fi
+
+  if echo "$html" | grep -qi "Staff Applications are Closed" || echo "$html" | grep -qi "Staff Admissions Closed"; then
+    leaks_staff_closed=1
+  fi
+
+  if [ "$has_neutral" -eq 1 ] && [ "$has_note" -eq 1 ] && [ "$leaks_staff_closed" -eq 0 ]; then
+    echo "✓ /join?role=staff renders neutral picker with invitation note without staff preselection"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ /join?role=staff failed invitation-only assertion (neutral: $has_neutral, note: $has_note, leaks_staff_closed: $leaks_staff_closed)"
+    FAIL=$((FAIL + 1))
+  fi
+}
+
 check_join_role_deep_link "ambassador" "Campus Ambassador"
 check_join_role_deep_link "volunteer" "Volunteer"
 check_join_role_deep_link "community-member" "Community Member"
-check_join_role_deep_link "staff" "Staff"
 check_join_role_deep_link "partnership-interest" "Partnership & Enterprise"
+check_join_staff_invitation_only
 check_join_neutral_picker "/join?role=garbage"
 check_join_neutral_picker "/join?role=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
 

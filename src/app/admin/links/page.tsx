@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import QRCode from 'qrcode';
 import { AdminShell, AdminCard } from '@admin/components/AdminShell';
-import { APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole, type RegistrationLink } from '@/lib/types/membership';
+import { ALL_APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole, type RegistrationLink } from '@/lib/types/membership';
 import { StatusPill } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { formatWatDate } from '@/lib/date';
@@ -188,7 +188,7 @@ export default function RegistrationLinksPage() {
             <div>
               <span className="mb-2 block text-xs font-semibold uppercase text-[#7b7263]">Role scope</span>
               <div className="flex flex-wrap gap-2">
-                {APPLICATION_ROLES.map((role) => (
+                {ALL_APPLICATION_ROLES.map((role) => (
                   <button key={role} type="button" onClick={() => toggleRole(role)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${form.roles.includes(role) ? 'border-[#0d1a4a] bg-[#0d1a4a] text-white' : 'border-[#e4dcc9] text-[#7b7263]'}`}>
                     {ROLE_LABELS[role]}
                   </button>

@@ -5,7 +5,13 @@ import Link from 'next/link';
 
 import { type ApplicationRole, ROLE_LABELS } from '@/lib/types/membership';
 
-export function RegistrationClosedView({ role }: { role?: ApplicationRole | null }) {
+export function RegistrationClosedView({
+  role,
+  inviteNotice,
+}: {
+  role?: ApplicationRole | null;
+  inviteNotice?: string;
+}) {
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -54,6 +60,15 @@ export function RegistrationClosedView({ role }: { role?: ApplicationRole | null
   return (
     <div className="min-h-screen bg-[#f6f2e8] px-4 py-16 text-[#0d1a4a] sm:px-6 lg:py-24">
       <div className="mx-auto max-w-xl text-center">
+        {inviteNotice && (
+          <div
+            data-testid="staff-invitation-notice"
+            className="mb-6 rounded-xl border border-amber-500/30 bg-amber-50/80 p-4 text-center text-sm font-semibold text-amber-900 shadow-sm"
+          >
+            {inviteNotice}
+          </div>
+        )}
+
         {/* Status Pill */}
         <div className="inline-flex items-center gap-2 rounded-full border border-[#0d1a4a]/20 bg-white px-3.5 py-1 text-xs font-bold uppercase tracking-widest text-amber-700 shadow-sm">
           <span className="h-2 w-2 rounded-full bg-amber-500" />

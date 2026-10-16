@@ -1,10 +1,13 @@
 import {
   APPLICATION_ROLES,
+  ALL_APPLICATION_ROLES,
   ROLE_LABELS,
   ROLE_ALIASES,
   normalizeRoleSlug,
   type ApplicationRole,
 } from './types/membership';
+import { createRegistrationLinkSchema } from './schemas/registration-link.schema';
+import { campaignApplicationSchema } from './schemas/application.schema';
 
 describe('Role Deep Links & Membership Names', () => {
   it('maps expected human-readable role labels', () => {
@@ -15,8 +18,19 @@ describe('Role Deep Links & Membership Names', () => {
     expect(ROLE_LABELS['partnership-interest']).toBe('Partnership & Enterprise');
   });
 
-  describe('1. Each of the 5 canonical slugs preselects its role', () => {
-    it.each(APPLICATION_ROLES)('preselects canonical role "%s"', (role) => {
+  it('maintains staff as invite-only, excluded from public APPLICATION_ROLES', () => {
+    expect(APPLICATION_ROLES).not.toContain('staff');
+    expect(APPLICATION_ROLES).toEqual([
+      'volunteer',
+      'community-member',
+      'ambassador',
+      'partnership-interest',
+    ]);
+    expect(ALL_APPLICATION_ROLES).toContain('staff');
+  });
+
+  describe('1. Each of the 5 canonical slugs resolves to its canonical role', () => {
+    it.each(ALL_APPLICATION_ROLES)('resolves canonical role "%s"', (role) => {
       const normalized = normalizeRoleSlug(role);
       expect(normalized).toBe(role);
     });
@@ -105,18 +119,20 @@ describe('Role Deep Links & Membership Names', () => {
     ) {
       const availableRoles =
         allowedRoles && allowedRoles.length > 0
-          ? APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
+          ? ALL_APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
           : [...APPLICATION_ROLES];
       const roles = availableRoles.length > 0 ? availableRoles : [...APPLICATION_ROLES];
       const queryRole = normalizeRoleSlug(rawQueryRole);
+      const isStaffRequested = queryRole === 'staff' && !roles.includes('staff');
       const isConflict = Boolean(queryRole && !roles.includes(queryRole));
       const effectiveRole = queryRole && roles.includes(queryRole) ? queryRole : '';
-      const conflictMessage =
-        isConflict && queryRole
+      const conflictMessage = isStaffRequested
+        ? 'Staff positions are by invitation. Choose an open role below.'
+        : isConflict && queryRole
           ? `The requested role (${ROLE_LABELS[queryRole] || queryRole}) is not available for this campaign. Please select an open role below:`
           : null;
 
-      return { roles, queryRole, effectiveRole, isConflict, conflictMessage };
+      return { roles, queryRole, effectiveRole, isStaffRequested, isConflict, conflictMessage };
     }
 
     it('preselects valid allowed role', () => {
@@ -127,22 +143,39 @@ describe('Role Deep Links & Membership Names', () => {
     });
 
     it('does NOT preselect when role is outside allowedRoles, and sets conflict note', () => {
-      // Campaign only accepts volunteer & staff; user arrives via /join?role=ambassador
-      const res = evaluateWizardRoleResolution(['volunteer', 'staff'], 'ambassador');
+      const res = evaluateWizardRoleResolution(['volunteer', 'community-member'], 'ambassador');
       expect(res.effectiveRole).toBe('');
       expect(res.isConflict).toBe(true);
       expect(res.conflictMessage).toContain('Campus Ambassador');
       expect(res.conflictMessage).toContain('not available for this campaign');
     });
 
+    it('shows invitation note and neutral picker for /join?role=staff on public campaign', () => {
+      // Default public campaign has allowedRoles empty -> resolves to public APPLICATION_ROLES (no staff)
+      const res = evaluateWizardRoleResolution([], 'staff');
+      expect(res.roles).not.toContain('staff');
+      expect(res.effectiveRole).toBe('');
+      expect(res.isStaffRequested).toBe(true);
+      expect(res.conflictMessage).toBe('Staff positions are by invitation. Choose an open role below.');
+    });
+
+    it('enables staff selection and preselection on admin-created staff link', () => {
+      // Admin created a link via /admin/links with roles: ['staff']
+      const res = evaluateWizardRoleResolution(['staff'], 'staff');
+      expect(res.roles).toEqual(['staff']);
+      expect(res.effectiveRole).toBe('staff');
+      expect(res.isStaffRequested).toBe(false);
+      expect(res.conflictMessage).toBeNull();
+    });
+
     it('does NOT set conflict note for random/unknown slugs (renders clean neutral picker)', () => {
-      const res = evaluateWizardRoleResolution(['volunteer', 'staff'], 'unknown-garbage');
+      const res = evaluateWizardRoleResolution(['volunteer', 'community-member'], 'unknown-garbage');
       expect(res.effectiveRole).toBe('');
       expect(res.isConflict).toBe(false);
       expect(res.conflictMessage).toBeNull();
     });
 
-    it('defaults allowedRoles to all APPLICATION_ROLES when empty, permitting any valid role', () => {
+    it('defaults allowedRoles to all public APPLICATION_ROLES when empty, permitting any valid public role', () => {
       const res = evaluateWizardRoleResolution([], 'partnership-interest');
       expect(res.effectiveRole).toBe('partnership-interest');
       expect(res.isConflict).toBe(false);
@@ -169,10 +202,12 @@ describe('Role Deep Links & Membership Names', () => {
             ? searchParams.role[0]
             : undefined;
       const canonicalRole = normalizeRoleSlug(rawRole);
+      const isStaffRequested = canonicalRole === 'staff';
+      const publicRole = isStaffRequested ? null : canonicalRole;
 
       const qs = new URLSearchParams();
-      if (canonicalRole) {
-        qs.set('role', canonicalRole);
+      if (publicRole) {
+        qs.set('role', publicRole);
       }
 
       if (searchParams) {
@@ -196,7 +231,7 @@ describe('Role Deep Links & Membership Names', () => {
       return queryStr ? `${targetUrl}?${queryStr}` : targetUrl;
     }
 
-    it('forwards canonical role slug', () => {
+    it('forwards canonical public role slug', () => {
       const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'ambassador' });
       expect(dest).toBe('/join/cohort-2026?role=ambassador');
     });
@@ -204,6 +239,11 @@ describe('Role Deep Links & Membership Names', () => {
     it('normalizes alias on redirect (e.g. campus-ambassador -> ambassador)', () => {
       const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'campus-ambassador' });
       expect(dest).toBe('/join/cohort-2026?role=ambassador');
+    });
+
+    it('discards invite-only staff role on public redirect', () => {
+      const dest = buildWhitelistedRedirect('/join/cohort-2026', { role: 'staff' });
+      expect(dest).toBe('/join/cohort-2026');
     });
 
     it('discards unknown or malicious role on redirect', () => {
@@ -228,12 +268,12 @@ describe('Role Deep Links & Membership Names', () => {
 
     it('drops arbitrary non-whitelisted query params', () => {
       const dest = buildWhitelistedRedirect('/join/cohort-2026', {
-        role: 'staff',
+        role: 'volunteer',
         unauthorized_key: 'malicious_value',
         admin_preview: 'true',
         session: 'secret_leak',
       });
-      expect(dest).toBe('/join/cohort-2026?role=staff');
+      expect(dest).toBe('/join/cohort-2026?role=volunteer');
       expect(dest).not.toContain('unauthorized_key');
       expect(dest).not.toContain('admin_preview');
       expect(dest).not.toContain('session');
@@ -241,13 +281,13 @@ describe('Role Deep Links & Membership Names', () => {
   });
 
   describe('7. Closed-state view & notify payload per role', () => {
-    function resolveClosedViewContent(role: ApplicationRole | null | undefined) {
+    function resolveClosedViewContent(role: ApplicationRole | null | undefined, inviteNotice?: string) {
       const roleTitle = role ? ROLE_LABELS[role] : null;
       const notifySource = role ? `join-${role}` : 'join';
       const pill = roleTitle ? `${roleTitle} Admissions Closed` : 'Applications Closed';
       const heading = roleTitle ? `${roleTitle} Applications are Closed` : 'Registration is Closed at the Moment';
 
-      return { roleTitle, notifySource, pill, heading };
+      return { roleTitle, notifySource, pill, heading, inviteNotice };
     }
 
     it.each(APPLICATION_ROLES)('generates correct closed view & notify payload for canonical role "%s"', (role) => {
@@ -256,6 +296,21 @@ describe('Role Deep Links & Membership Names', () => {
       expect(res.heading).toBe(`${title} Applications are Closed`);
       expect(res.pill).toBe(`${title} Admissions Closed`);
       expect(res.notifySource).toBe(`join-${role}`);
+    });
+
+    it('generates neutral closed view with invitation notice and source: "join" for /join?role=staff', () => {
+      const rawRole = normalizeRoleSlug('staff');
+      expect(rawRole).toBe('staff');
+      const isStaff = rawRole === 'staff';
+      const effectiveRole = isStaff ? null : rawRole;
+      const notice = isStaff ? 'Staff positions are by invitation. Choose an open role below.' : undefined;
+
+      const res = resolveClosedViewContent(effectiveRole, notice);
+      expect(res.roleTitle).toBeNull();
+      expect(res.heading).toBe('Registration is Closed at the Moment');
+      expect(res.pill).toBe('Applications Closed');
+      expect(res.notifySource).toBe('join');
+      expect(res.inviteNotice).toBe('Staff positions are by invitation. Choose an open role below.');
     });
 
     it('generates generic closed view and source: "join" for unknown/null role', () => {
@@ -275,6 +330,73 @@ describe('Role Deep Links & Membership Names', () => {
       const res = resolveClosedViewContent(unknownSlug);
       expect(res.notifySource).toBe('join');
       expect(res.heading).not.toContain('<script>');
+    });
+  });
+
+  describe('8. Admin staff link works end-to-end', () => {
+    it('successfully creates an admin registration link scoped to roles: ["staff"]', () => {
+      const linkInput = {
+        name: 'SINet HQ Operations Staff Onboarding',
+        roles: ['staff'],
+        quota: 5,
+        expiresAt: new Date(Date.now() + 7 * 86400 * 1000).toISOString(),
+      };
+      const parseResult = createRegistrationLinkSchema.safeParse(linkInput);
+      expect(parseResult.success).toBe(true);
+      if (parseResult.success) {
+        expect(parseResult.data.roles).toEqual(['staff']);
+      }
+    });
+
+    it('validates a complete staff application payload against campaignApplicationSchema', () => {
+      const staffApplicationPayload = {
+        role: 'staff',
+        fullName: 'Amina Bello',
+        email: 'amina.bello@sinet.africa',
+        phone: '+2348098765432',
+        location: 'Abuja, FCT',
+        education: 'B.Sc Economics',
+        experienceYears: '3–5 years',
+        skills: ['Operations', 'Logistics'],
+        availability: ['Flexible / on-call'],
+        emergencyContact: 'Mr. Bello, +2348011122233',
+        motivation: 'I want to bring my operational background to scale agricultural supply chains with SINet across Nigeria.',
+        hearAbout: 'SINet website',
+        documents: {
+          resume: '507f1f77bcf86cd799439011',
+          coverLetter: '507f1f77bcf86cd799439022',
+        },
+        codeOfConductAccepted: true,
+      };
+
+      const result = campaignApplicationSchema.safeParse(staffApplicationPayload);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.role).toBe('staff');
+        expect(result.data.education).toBe('B.Sc Economics');
+      }
+    });
+
+    it('rejects invalid or missing documents on staff application payload', () => {
+      const invalidStaffPayload = {
+        role: 'staff',
+        fullName: 'Amina Bello',
+        email: 'amina.bello@sinet.africa',
+        phone: '+2348098765432',
+        location: 'Abuja',
+        education: 'B.Sc',
+        experienceYears: '3–5 years',
+        skills: ['Operations'],
+        availability: ['Flexible / on-call'],
+        emergencyContact: 'Bello',
+        motivation: 'Short', // minLength 40
+        hearAbout: 'SINet website',
+        documents: {}, // resume missing
+        codeOfConductAccepted: true,
+      };
+
+      const result = campaignApplicationSchema.safeParse(invalidStaffPayload);
+      expect(result.success).toBe(false);
     });
   });
 });

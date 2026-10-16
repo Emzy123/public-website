@@ -33,12 +33,17 @@ export default async function JoinIndexPage({
         ? searchParams.role[0]
         : undefined;
   const canonicalRole = normalizeRoleSlug(rawRole);
+  const isStaffRequested = canonicalRole === 'staff';
+  const publicRole = isStaffRequested ? null : canonicalRole;
+  const staffNotice = isStaffRequested
+    ? 'Staff positions are by invitation. Choose an open role below.'
+    : undefined;
 
   if (target.status === 'open') {
     const qs = new URLSearchParams();
-    // Only forward whitelisted, canonical role slugs
-    if (canonicalRole) {
-      qs.set('role', canonicalRole);
+    // Only forward whitelisted, public canonical role slugs
+    if (publicRole) {
+      qs.set('role', publicRole);
     }
 
     // Whitelist utm_* attribution and referral parameters only
@@ -64,5 +69,5 @@ export default async function JoinIndexPage({
     redirect(destination);
   }
 
-  return <RegistrationClosedView role={canonicalRole} />;
+  return <RegistrationClosedView role={publicRole} inviteNotice={staffNotice} />;
 }

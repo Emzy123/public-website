@@ -1,5 +1,13 @@
-/** Membership roles available on campaign-link applications */
+/** Public membership roles available on general public application pages */
 export const APPLICATION_ROLES = [
+  'volunteer',
+  'community-member',
+  'ambassador',
+  'partnership-interest',
+] as const;
+
+/** All application roles recognized by the platform, including invite-only staff */
+export const ALL_APPLICATION_ROLES = [
   'volunteer',
   'staff',
   'community-member',
@@ -7,7 +15,8 @@ export const APPLICATION_ROLES = [
   'partnership-interest',
 ] as const;
 
-export type ApplicationRole = (typeof APPLICATION_ROLES)[number];
+export type PublicApplicationRole = (typeof APPLICATION_ROLES)[number];
+export type ApplicationRole = (typeof ALL_APPLICATION_ROLES)[number];
 
 /** Legacy pathway values retained for existing records */
 export type LegacyPathway = 'investment' | 'get-involved';

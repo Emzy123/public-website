@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { APPLICATION_ROLES, ROLE_LABELS, normalizeRoleSlug, type ApplicationRole } from '@/lib/types/membership';
+import { APPLICATION_ROLES, ALL_APPLICATION_ROLES, ROLE_LABELS, normalizeRoleSlug, type ApplicationRole } from '@/lib/types/membership';
 import {
   ROLE_DEFINITIONS,
   WIZARD_STEP_LABELS,
@@ -138,16 +138,19 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
   const searchParams = useSearchParams();
   const availableRoles =
     allowedRoles && allowedRoles.length > 0
-      ? APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
+      ? ALL_APPLICATION_ROLES.filter((r) => allowedRoles.includes(r))
       : [...APPLICATION_ROLES];
   const roles = availableRoles.length > 0 ? availableRoles : [...APPLICATION_ROLES];
   const queryRole = normalizeRoleSlug(searchParams?.get('role'));
+  const isStaffRequested = queryRole === 'staff' && !roles.includes('staff');
   const isConflict = Boolean(queryRole && !roles.includes(queryRole));
   // Only preselect if the normalized query role is explicitly permitted for this campaign
   const effectiveRole: ApplicationRole | '' = queryRole && roles.includes(queryRole) ? queryRole : '';
-  const conflictMessage = isConflict && queryRole
-    ? `The requested role (${ROLE_LABELS[queryRole] || queryRole}) is not available for this campaign. Please select an open role below:`
-    : null;
+  const conflictMessage = isStaffRequested
+    ? 'Staff positions are by invitation. Choose an open role below.'
+    : isConflict && queryRole
+      ? `The requested role (${ROLE_LABELS[queryRole] || queryRole}) is not available for this campaign. Please select an open role below:`
+      : null;
   const steps = [...WIZARD_STEP_LABELS];
 
   const [form, setForm] = useState<FormState>(() => ({

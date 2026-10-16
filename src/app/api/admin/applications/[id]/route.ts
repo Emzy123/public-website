@@ -9,7 +9,7 @@ import {
   documentLabelFor,
   getRoleDefinition,
 } from '@/lib/applications/role-definitions';
-import { APPLICATION_ROLES } from '@/lib/types/membership';
+import { ALL_APPLICATION_ROLES } from '@/lib/types/membership';
 
 import { requireRole, AuthError, ForbiddenError } from '@/lib/auth/guards';
 import { db, isPostgresConfigured } from '@/lib/db';
@@ -48,7 +48,7 @@ export async function GET(
       if (doc) {
         const data = (doc.data || {}) as Record<string, unknown>;
         const roleRaw = String(doc.role || doc.pathway || data.role || '');
-        const isKnownRole = APPLICATION_ROLES.includes(roleRaw as ApplicationRole);
+        const isKnownRole = ALL_APPLICATION_ROLES.includes(roleRaw as ApplicationRole);
         const role = isKnownRole ? (roleRaw as ApplicationRole) : null;
 
         const documents: { key: string; label: string; id: string; downloadUrl: string }[] = [];

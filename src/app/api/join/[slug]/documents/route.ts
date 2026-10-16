@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { APPLICATION_ROLES, type ApplicationRole } from '@/lib/types/membership';
+import { ALL_APPLICATION_ROLES, type ApplicationRole } from '@/lib/types/membership';
 import { getRoleDefinition } from '@/lib/applications/role-definitions';
 import { uploadApplicationDocument } from '@/lib/applications/document-storage';
 import { validateApplicationDocUpload } from '@/lib/applications/document-validation';
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     if (!(file instanceof File)) {
       return NextResponse.json({ error: 'File is required.' }, { status: 400 });
     }
-    if (!APPLICATION_ROLES.includes(role as ApplicationRole)) {
+    if (!ALL_APPLICATION_ROLES.includes(role as ApplicationRole)) {
       return NextResponse.json({ error: 'Invalid role.' }, { status: 400 });
     }
     if (!link.roles.includes(role)) {
