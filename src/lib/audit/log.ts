@@ -16,7 +16,8 @@ export type AuditAction =
   | 'registration_link.create'
   | 'registration_link.update'
   | 'auth.otp_failed'
-  | 'cms.advert_legal_approval';
+  | 'cms.advert_legal_approval'
+  | 'cms.advert_legal_approval_revoked';
 
 export type AuditEntry = {
   action: AuditAction;

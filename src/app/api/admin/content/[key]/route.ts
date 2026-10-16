@@ -50,8 +50,30 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     }
 
     if (key === 'adverts' && data && Array.isArray((data as any).items)) {
-      const { checkAdvertRisk } = await import('@/lib/compliance/risk-check');
+      const { checkAdvertRisk, computeAdvertContentHash } = await import('@/lib/compliance/risk-check');
       for (const item of (data as any).items) {
+        // If content was edited after legal approval, revoke approval and re-lock Enabled
+        if (item.legalApproval) {
+          const currentHash = computeAdvertContentHash(item);
+          if (item.legalApprovalHash && item.legalApprovalHash !== currentHash) {
+            item.legalApproval = false;
+            item.legalApprovalHash = undefined;
+            item.enabled = false;
+
+            await writeAuditLog({
+              action: 'cms.advert_legal_approval_revoked',
+              actor: session.email,
+              resource: `adverts/${item.id}`,
+              metadata: {
+                advertId: item.id,
+                title: item.title,
+                reason: 'Content modified after legal approval',
+              },
+            });
+          }
+        }
+
+        // Only enabling without approval returns 400. Saving a draft with risk terms while disabled is allowed.
         if (item.enabled && checkAdvertRisk(item).hasRisk && !item.legalApproval) {
           return NextResponse.json(
             {

@@ -399,6 +399,7 @@ export type AdvertItem = {
   eyebrow: string;
   body: string;
   imageUrl: string;
+  imageAlt?: string;
   ctaLabel: string;
   ctaHref: string;
   enabled: boolean;
@@ -416,6 +417,7 @@ export type AdvertItem = {
   legalApproval?: boolean;
   legalApprovedAt?: string;
   legalApprovedBy?: string;
+  legalApprovalHash?: string;
 };
 
 export type AdvertsContent = {

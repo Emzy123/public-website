@@ -5,7 +5,11 @@ import type { AdvertItem, AdvertsContent } from '@admin/types/content';
 import { AdminCard } from '../AdminShell';
 import { AdminField, AdminInput, AdminTextarea } from '../ui/AdminField';
 import { ImageUploadField } from '../ui/ImageUploadField';
-import { checkAdvertRisk } from '@/lib/compliance/risk-check';
+import {
+  checkAdvertRisk,
+  computeAdvertContentHash,
+  isAdvertApprovalValid,
+} from '@/lib/compliance/risk-check';
 
 function newAdvert(sortOrder: number): AdvertItem {
   return {
@@ -14,6 +18,7 @@ function newAdvert(sortOrder: number): AdvertItem {
     eyebrow: 'Special event',
     body: '',
     imageUrl: '',
+    imageAlt: '',
     ctaLabel: 'Learn more',
     ctaHref: '/contact',
     enabled: false,
@@ -32,7 +37,21 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
 
   const update = (id: string, patch: Partial<AdvertItem>) => {
     onChange({
-      items: data.items.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+      items: data.items.map((item) => {
+        if (item.id !== id) return item;
+        const updated = { ...item, ...patch };
+
+        // If content is modified after legal approval, revoke approval and re-lock Enabled
+        if (item.legalApproval && item.legalApprovalHash) {
+          const newHash = computeAdvertContentHash(updated);
+          if (newHash !== item.legalApprovalHash) {
+            updated.legalApproval = false;
+            updated.legalApprovalHash = undefined;
+            updated.enabled = false;
+          }
+        }
+        return updated;
+      }),
     });
   };
 
@@ -70,6 +89,10 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
         body: JSON.stringify({
           advertId: item.id,
           title: item.title,
+          body: item.body,
+          ctaLabel: item.ctaLabel,
+          ctaHref: item.ctaHref,
+          imageAlt: item.imageAlt,
           approved,
         }),
       });
@@ -78,8 +101,9 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
 
       update(item.id, {
         legalApproval: approved,
-        legalApprovedAt: approved ? (json.legalApprovedAt || new Date().toISOString()) : undefined,
-        legalApprovedBy: approved ? (json.legalApprovedBy || 'Admin') : undefined,
+        legalApprovedAt: approved ? json.legalApprovedAt : undefined,
+        legalApprovedBy: approved ? json.legalApprovedBy : undefined,
+        legalApprovalHash: approved ? json.legalApprovalHash : undefined,
         // If revoking approval, disable the advert immediately
         ...(approved ? {} : { enabled: false }),
       });
@@ -126,7 +150,7 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
         sorted.map((item) => {
           const risk = checkAdvertRisk(item);
           const requiresLegal = risk.hasRisk;
-          const isApproved = Boolean(item.legalApproval);
+          const isApproved = isAdvertApprovalValid(item);
           const isEnabledDisabled = requiresLegal && !isApproved;
 
           return (
@@ -269,13 +293,20 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                     <AdminInput type="date" value={item.endsAt.slice(0, 10)} onChange={(e) => update(item.id, { endsAt: e.target.value })} />
                   </AdminField>
                 </div>
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 space-y-4">
                   <ImageUploadField
                     label="Flyer / poster image"
                     value={item.imageUrl}
                     onChange={(imageUrl) => update(item.id, { imageUrl })}
                     previewClassName="h-64"
                   />
+                  <AdminField label="Flyer image alt text (for accessibility & compliance binding)">
+                    <AdminInput
+                      value={item.imageAlt || ''}
+                      onChange={(e) => update(item.id, { imageAlt: e.target.value })}
+                      placeholder="Descriptive alt text for the flyer"
+                    />
+                  </AdminField>
                 </div>
               </div>
             </AdminCard>

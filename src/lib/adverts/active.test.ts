@@ -89,16 +89,30 @@ describe('getActiveAdverts', () => {
     expect(active.map((a) => a.id)).toEqual(['safe']);
   });
 
-  it('includes adverts matching financial risk if legal approval is obtained', () => {
-    const items = [
-      advert({
-        id: 'risky-approved',
-        title: 'Earn 40% Return in 3 Months with SINet Private Capital Partnership, 30 slots only',
-        enabled: true,
-        legalApproval: true,
-      }),
-    ];
-    const active = getActiveAdverts({ items }, now);
+  it('includes adverts matching financial risk only when legal approval and valid content hash match', () => {
+    const { computeAdvertContentHash } = require('@/lib/compliance/risk-check');
+    const riskyAdvert = advert({
+      id: 'risky-approved',
+      title: 'Earn 40% Return in 3 Months with SINet Private Capital Partnership, 30 slots only',
+      body: 'Body text',
+      ctaLabel: 'Learn more',
+      ctaHref: '/contact',
+      enabled: true,
+      legalApproval: true,
+    });
+    riskyAdvert.legalApprovalHash = computeAdvertContentHash(riskyAdvert);
+
+    // Mismatched hash advert
+    const tamperedAdvert = advert({
+      id: 'risky-tampered',
+      title: 'Guaranteed 50% ROI',
+      body: 'Body text',
+      enabled: true,
+      legalApproval: true,
+      legalApprovalHash: 'invalid-stale-hash',
+    });
+
+    const active = getActiveAdverts({ items: [riskyAdvert, tamperedAdvert] }, now);
     expect(active.map((a) => a.id)).toEqual(['risky-approved']);
   });
 });

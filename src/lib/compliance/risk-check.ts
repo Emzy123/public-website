@@ -1,16 +1,47 @@
+import { createHash } from 'crypto';
 import type { AdvertItem, NewsPost } from '@admin/types/content';
 
 /**
- * Widen risk regex for investment / financial promotions:
- * Matches any percentage return, return/ROI claims, profit/yield,
- * guarantees, per annum, interest rates, urgency slots, and investment language.
+ * Widened risk regex for investment / financial promotions with strict word boundaries
+ * to prevent false positives (e.g. "Learn more", "Android app", "heroic", "return to dashboard")
+ * while matching financial claims ("15% returns", "earn monthly", "ROI", "guaranteed", "invest now", "only 5 slots left").
  */
 export const FINANCIAL_RISK_REGEX =
-  /\d+\s*%|return|ROI|profit|guarantee|earn|yield|per annum|interest rate|slots? (only|left)|invest/i;
+  /\d+\s*%|\breturns\b|\breturn\b(?!\s+to\b)|\bROI\b|\bprofits?\b|\bguarantee(?:d|s)?\b|\bearn(?:s|ed|ing|ings)?\b|\byields?\b|per annum|interest rate|\bslots? (?:only|left)\b|\binvest\w*/i;
 
 export function containsFinancialRisk(text: string | null | undefined): boolean {
   if (!text) return false;
   return FINANCIAL_RISK_REGEX.test(text);
+}
+
+/**
+ * Computes a SHA-256 hash binding approved content fields:
+ * title, body, CTA (label & href), and image alt text.
+ */
+export function computeAdvertContentHash(item: {
+  title?: string;
+  body?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  imageAlt?: string;
+}): string {
+  const parts = [
+    item.title?.trim() ?? '',
+    item.body?.trim() ?? '',
+    item.ctaLabel?.trim() ?? '',
+    item.ctaHref?.trim() ?? '',
+    item.imageAlt?.trim() ?? '',
+  ];
+  return createHash('sha256').update(parts.join('||')).digest('hex');
+}
+
+/**
+ * Verifies if an advert's legal approval is valid and matches the current content hash.
+ */
+export function isAdvertApprovalValid(item: Partial<AdvertItem>): boolean {
+  if (!item.legalApproval) return false;
+  if (!item.legalApprovalHash) return false;
+  return item.legalApprovalHash === computeAdvertContentHash(item);
 }
 
 export type RiskCheckResult = {
@@ -21,7 +52,7 @@ export type RiskCheckResult = {
 
 /**
  * Runs the compliance risk check on an advert / flyer item.
- * Checks title, eyebrow, body, and ctaLabel.
+ * Checks title, eyebrow, body, ctaLabel, and imageAlt.
  */
 export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
   const fieldsToCheck: Array<[string, string | undefined]> = [
@@ -29,6 +60,7 @@ export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
     ['eyebrow', item.eyebrow],
     ['body', item.body],
     ['ctaLabel', item.ctaLabel],
+    ['imageAlt', item.imageAlt],
   ];
 
   const matchedFields: string[] = [];

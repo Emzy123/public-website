@@ -12,8 +12,15 @@ export async function GET(request: NextRequest) {
   const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
   const authorized = Boolean(expected && token && token === expected);
 
+  const emailMissingFrom = Boolean(
+    process.env.RESEND_API_KEY?.trim() && !process.env.AUTH_FROM_EMAIL?.trim()
+  );
+
   if (!authorized) {
-    return NextResponse.json({ ok: true }, { status: 200 });
+    if (emailMissingFrom) {
+      return NextResponse.json({ status: 'unhealthy' }, { status: 503 });
+    }
+    return NextResponse.json({ ok: true, status: 'healthy' }, { status: 200 });
   }
 
   const { getMongoDb } = await import('@/lib/db/mongodb');
@@ -31,9 +38,6 @@ export async function GET(request: NextRequest) {
 
   const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? 'ok' : 'degraded';
-  const emailMissingFrom = Boolean(
-    process.env.RESEND_API_KEY?.trim() && !process.env.AUTH_FROM_EMAIL?.trim()
-  );
   const email = emailMissingFrom
     ? 'error'
     : (process.env.RESEND_API_KEY?.trim() && process.env.AUTH_FROM_EMAIL?.trim())

@@ -165,4 +165,19 @@ describe('Auth Request-OTP & Magic Link Provider Error Masking', () => {
     expect(body.status).toBe('unhealthy');
     expect(body.checks.email).toBe('error');
   });
+
+  it('unauthenticated health check returns 503 (status only, no details) when email is enabled but AUTH_FROM_EMAIL is missing', async () => {
+    process.env.RESEND_API_KEY = 're_test_key_123';
+    delete process.env.AUTH_FROM_EMAIL;
+
+    const req = new NextRequest('http://localhost:3000/api/health');
+
+    const res = await healthGet(req);
+    expect(res.status).toBe(503);
+
+    const body = await res.json();
+    expect(body.status).toBe('unhealthy');
+    // Ensure no internal details/checks are leaked to unauthenticated callers
+    expect(body.checks).toBeUndefined();
+  });
 });
