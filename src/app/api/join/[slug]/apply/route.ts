@@ -175,7 +175,20 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     };
 
     const rawChapter = data.chapter || (typeof body?.chapter === 'string' ? body.chapter.toLowerCase().trim() : undefined);
-    const validChapter = (await validateChapterSlug(rawChapter)) ? rawChapter!.toLowerCase().trim() : null;
+    let validChapter: string | null = null;
+    if (rawChapter) {
+      const chapterValidation = await validateChapterSlug(rawChapter);
+      if (chapterValidation.status === 'unreachable') {
+        return NextResponse.json(
+          {
+            error: 'Campus chapter verification is temporarily unavailable. Please try again shortly.',
+            retryable: true,
+          },
+          { status: 503 }
+        );
+      }
+      validChapter = chapterValidation.valid ? (chapterValidation.slug ?? rawChapter.toLowerCase().trim()) : null;
+    }
 
     const rawDivision = data.division || (typeof body?.division === 'string' ? body.division.toLowerCase().trim() : undefined);
     const validDivision = normalizeDivisionSlug(rawDivision);

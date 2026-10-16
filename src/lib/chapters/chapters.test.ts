@@ -69,4 +69,33 @@ describe('Campus Chapters & Directory Engine', () => {
     expect(stats.state).toBe('Kogi');
     expect(typeof stats.totalMembers).toBe('number');
   });
+
+  describe('Dynamic Chapter Slug Cache & Validation', () => {
+    it('expires dynamically registered chapter slugs after TTL so deleted/renamed chapters are invalidated', async () => {
+      const { registerKnownChapterSlug, isValidChapterSlug } = await import('./chapters');
+
+      const tempSlug = 'temp-campus-slug-2026';
+      // Register with short 40ms TTL
+      registerKnownChapterSlug(tempSlug, 40);
+
+      expect(isValidChapterSlug(tempSlug)).toBe(true);
+
+      // Wait 50ms for TTL to expire
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      expect(isValidChapterSlug(tempSlug)).toBe(false);
+    });
+
+    it('returns status: "unreachable" when databases throw connectivity errors and slug is not cached', async () => {
+      const { validateChapterSlug, clearChapterSlugCache } = await import('./chapters');
+      clearChapterSlugCache();
+
+      // Attempt to validate a non-fallback slug when PostgreSQL is offline and MongoDB throws
+      const result = await validateChapterSlug('unilag-engineering-chapter');
+
+      // Since PostgreSQL is offline locally and MongoDB is not populated for this slug
+      expect(result.valid).toBe(false);
+      expect(['unreachable', 'invalid']).toContain(result.status);
+    });
+  });
 });

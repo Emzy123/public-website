@@ -67,6 +67,8 @@ npx vercel env pull .env.local
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Distributed sliding-window rate limiting | (empty locally) | **Forms fail closed (503)** in production |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 stream ID | (empty) | Analytics disabled |
 
+> **Super Admin Auto-Provisioning**: On first OTP verification, the account matching `ADMIN_EMAIL` (matched case-insensitively) is automatically provisioned as `super_admin`. This event is permanently recorded in the audit log as `admin.provision_super_admin`.
+
 ---
 
 ## 4. Database Setup & Seeding

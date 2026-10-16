@@ -253,6 +253,53 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
     );
   });
 
+  it('rejects with retryable 503 error when chapter verification data sources are unreachable and chapter is supplied', async () => {
+    jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+    const mockStaffLink = {
+      _id: 'link-mongo-staff-005',
+      slug: 'hq-staff-anywhere',
+      name: 'HQ Operations Anywhere',
+      roles: ['staff'],
+      isOpen: true,
+    };
+
+    const mockCollection = {
+      findOne: jest.fn().mockImplementation((query: any) => {
+        if (query?.slug === 'hq-staff-anywhere') return Promise.resolve(mockStaffLink);
+        // Mongo query for chapter throws simulating DB network failure
+        return Promise.reject(new Error('MongoNetworkError: connection timed out'));
+      }),
+      insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-staff-005' }),
+      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+    };
+
+    jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+      collection: jest.fn().mockReturnValue(mockCollection),
+    } as any);
+
+    jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(mockStaffLink as any);
+
+    const req = new NextRequest('http://localhost:3000/api/join/hq-staff-anywhere/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validStaffBody,
+        chapter: 'unilag-engineering-chapter',
+        division: 'finance',
+      }),
+    });
+
+    const res = await POST(req, { params: { slug: 'hq-staff-anywhere' } });
+    expect(res.status).toBe(503);
+    const json = await res.json();
+    expect(json.retryable).toBe(true);
+    expect(json.error).toContain('Campus chapter verification is temporarily unavailable');
+
+    // Crucially: no application is inserted with chapter: null
+    expect(mockCollection.insertOne).not.toHaveBeenCalled();
+  });
+
   it('persists chapter and division to submitCampaignApplication on Postgres campaign link', async () => {
     const mockPostgresCampaign = {
       campaign: {

@@ -213,7 +213,7 @@ export async function submitCampaignApplication(
     .where(eq(memberProfiles.userId, user.id));
 
   let resolvedChapterId: string | null = null;
-  if (input.chapter && (await validateChapterSlug(input.chapter))) {
+  if (input.chapter && (await validateChapterSlug(input.chapter)).valid) {
     const [matchedChapter] = await db
       .select({ id: chapters.id })
       .from(chapters)

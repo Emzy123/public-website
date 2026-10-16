@@ -126,52 +126,92 @@ export const FALLBACK_KOGI_CHAPTERS: ChapterListItem[] = [
   },
 ];
 
-const dynamicChapterSlugs = new Set<string>(
-  FALLBACK_KOGI_CHAPTERS.map((c) => c.slug.toLowerCase())
-);
+export type ChapterValidationStatus = 'valid' | 'invalid' | 'unreachable';
 
-export function registerKnownChapterSlug(slug: string): void {
-  if (slug) dynamicChapterSlugs.add(slug.toLowerCase().trim());
+export interface ChapterValidationResult {
+  valid: boolean;
+  status: ChapterValidationStatus;
+  slug?: string;
+  error?: string;
+}
+
+const CHAPTER_SLUG_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL
+
+// Cache mapping slug -> expiration timestamp (ms)
+const dynamicChapterSlugs = new Map<string, number>();
+const FALLBACK_SLUGS = new Set(FALLBACK_KOGI_CHAPTERS.map((c) => c.slug.toLowerCase()));
+
+export function registerKnownChapterSlug(slug: string, ttlMs: number = CHAPTER_SLUG_TTL_MS): void {
+  if (slug) {
+    dynamicChapterSlugs.set(slug.toLowerCase().trim(), Date.now() + ttlMs);
+  }
+}
+
+export function clearChapterSlugCache(): void {
+  dynamicChapterSlugs.clear();
 }
 
 /**
- * Synchronous check against known chapters (fallback + dynamically fetched from DB).
+ * Synchronous check against known chapters (fallback + dynamically fetched from DB within TTL).
  */
 export function isValidChapterSlug(slug?: string | null): boolean {
   if (!slug) return false;
-  return dynamicChapterSlugs.has(slug.toLowerCase().trim());
+  const normalized = slug.toLowerCase().trim();
+  if (FALLBACK_SLUGS.has(normalized)) return true;
+
+  const expiry = dynamicChapterSlugs.get(normalized);
+  if (!expiry) return false;
+  if (Date.now() > expiry) {
+    dynamicChapterSlugs.delete(normalized);
+    return false;
+  }
+  return true;
 }
 
 /**
  * Validates a chapter slug directly against the chapter data source (PostgreSQL/MongoDB + catalog),
- * registering newly discovered slugs into the active set so subsequent lookups succeed.
+ * registering newly discovered slugs into the active set with a TTL so subsequent lookups succeed.
+ *
+ * If both Postgres and Mongo are unreachable, returns status: 'unreachable' so callers can reject
+ * with a retryable error rather than silently saving chapter as null.
  */
-export async function validateChapterSlug(slug?: string | null): Promise<boolean> {
-  if (!slug) return false;
+export async function validateChapterSlug(slug?: string | null): Promise<ChapterValidationResult> {
+  if (!slug) {
+    return { valid: false, status: 'invalid' };
+  }
   const normalized = slug.toLowerCase().trim();
 
-  if (dynamicChapterSlugs.has(normalized)) {
-    return true;
+  // 1. Check fallback and valid active TTL cache
+  if (isValidChapterSlug(normalized)) {
+    return { valid: true, status: 'valid', slug: normalized };
   }
 
-  // Check PostgreSQL chapters table
+  let postgresAttempted = false;
+  let postgresOk = false;
+  let mongoAttempted = false;
+  let mongoOk = false;
+
+  // 2. Check PostgreSQL chapters table
   try {
+    postgresAttempted = true;
     const [record] = await db
       .select({ slug: chapters.slug })
       .from(chapters)
       .where(and(eq(chapters.slug, normalized), eq(chapters.isActive, true)))
       .limit(1);
 
+    postgresOk = true;
     if (record?.slug && record.slug.toLowerCase().trim() === normalized) {
-      dynamicChapterSlugs.add(normalized);
-      return true;
+      registerKnownChapterSlug(normalized);
+      return { valid: true, status: 'valid', slug: normalized };
     }
   } catch {
     /* Postgres query failed/offline, proceed to Mongo check */
   }
 
-  // Check MongoDB chapters collection
+  // 3. Check MongoDB chapters collection
   try {
+    mongoAttempted = true;
     const { getMongoDb } = await import('@/lib/db/mongodb');
     const mongo = await getMongoDb();
     if (mongo) {
@@ -179,20 +219,30 @@ export async function validateChapterSlug(slug?: string | null): Promise<boolean
         $or: [{ slug: normalized }, { chapterSlug: normalized }],
         isActive: { $ne: false },
       });
+      mongoOk = true;
       if (
         doc &&
         (doc.slug?.toLowerCase?.() === normalized ||
           doc.chapterSlug?.toLowerCase?.() === normalized)
       ) {
-        dynamicChapterSlugs.add(normalized);
-        return true;
+        registerKnownChapterSlug(normalized);
+        return { valid: true, status: 'valid', slug: normalized };
       }
     }
   } catch {
-    /* Mongo check skipped */
+    /* Mongo check failed or database offline */
   }
 
-  return false;
+  // 4. If both data sources were attempted and both failed, data sources are unreachable
+  if (postgresAttempted && !postgresOk && mongoAttempted && !mongoOk) {
+    return {
+      valid: false,
+      status: 'unreachable',
+      error: 'Chapter validation data sources (PostgreSQL and MongoDB) are both unreachable.',
+    };
+  }
+
+  return { valid: false, status: 'invalid' };
 }
 
 function filterChaptersList(
@@ -253,7 +303,7 @@ export async function listChapters(opts?: {
     const results = await query;
     if (results && results.length > 0) {
       for (const r of results) {
-        if (r.slug) dynamicChapterSlugs.add(r.slug.toLowerCase().trim());
+        if (r.slug) registerKnownChapterSlug(r.slug);
       }
       return filterChaptersList(results, opts);
     }
@@ -292,7 +342,7 @@ export async function getChapterBySlug(slug: string): Promise<ChapterDetails | n
       .limit(1);
 
     if (chapterRecord) {
-      dynamicChapterSlugs.add(chapterRecord.slug.toLowerCase().trim());
+      registerKnownChapterSlug(chapterRecord.slug);
       const divisionCounts = {
         student_finance: 0,
         student_enterprise: 0,
