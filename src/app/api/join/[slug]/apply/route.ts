@@ -48,6 +48,13 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     const campaignInfo = await getCampaignBySlug(params.slug);
 
     if (campaignInfo) {
+      if (body?.role && body.role !== campaignInfo.campaign.targetRole) {
+        return NextResponse.json(
+          { error: 'This role is not accepted through this campaign link.' },
+          { status: 400 }
+        );
+      }
+
       // Handle Waitlist submission for closed/active Postgres campaigns
       if (body?.waitlist === true) {
         const parsed = waitlistSchema.safeParse(body);
