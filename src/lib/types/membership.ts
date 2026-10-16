@@ -93,7 +93,14 @@ export const PILLAR_LABELS: Record<Pillar, string> = {
   'real-estate': 'Real Estate',
 };
 
-export type RegistrationLinkStatus = 'open' | 'closed' | 'auto-closed';
+export type RegistrationLinkStatus =
+  | 'Open'
+  | 'Expired'
+  | 'Full'
+  | 'Closed'
+  | 'open'
+  | 'closed'
+  | 'auto-closed';
 
 export type RegistrationLink = {
   _id: string;

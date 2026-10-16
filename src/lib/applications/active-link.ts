@@ -4,6 +4,7 @@ import {
   isLinkAcceptingApplications,
   maybeAutoCloseLink,
   serialiseRegistrationLink,
+  isCampaignLinkOpen,
 } from '@/lib/registration-links';
 import { db } from '@/lib/db';
 import { campaigns } from '@/lib/db/schema';
@@ -74,7 +75,7 @@ export async function getActiveMembershipApplication(): Promise<ActiveApplicatio
       .orderBy(sql`starts_at DESC`)
       .limit(1);
 
-    if (pgCampaign) {
+    if (pgCampaign && isCampaignLinkOpen(pgCampaign, now)) {
       return {
         status: 'open',
         source: 'postgres',

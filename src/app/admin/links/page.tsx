@@ -8,6 +8,7 @@ import { ALL_APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole, type Registra
 import { StatusPill } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { formatWatDate } from '@/lib/date';
+import { getCampaignLinkDisplayStatus, isCampaignLinkOpen } from '@/lib/applications/link-status';
 
 function shareableLinkUrl(link: RegistrationLink): string {
   if (link.url) return link.url;
@@ -250,7 +251,7 @@ export default function RegistrationLinksPage() {
                         {link.roles.map((r) => ROLE_LABELS[r]).join(', ')}
                       </td>
                       <td className="px-5 py-4">
-                        <StatusPill status={link.status} />
+                        <StatusPill status={getCampaignLinkDisplayStatus(link)} />
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-baseline gap-1 font-semibold text-slate-900">
@@ -308,7 +309,7 @@ export default function RegistrationLinksPage() {
           <div className="space-y-4">
             <AdminCard title={selected.name}>
               <div className="mb-3 flex items-center justify-between">
-                <StatusPill status={selected.status} />
+                <StatusPill status={getCampaignLinkDisplayStatus(selected)} />
                 <button
                   type="button"
                   onClick={() => setQrModalLink(selected)}
@@ -369,7 +370,7 @@ export default function RegistrationLinksPage() {
               </div>
 
               <div className="mt-4 flex gap-2">
-                {selected.isOpen ? (
+                {isCampaignLinkOpen(selected) ? (
                   <button
                     onClick={() => toggleLink(selected, false)}
                     className="flex-1 rounded-lg border border-red-200 py-2 text-xs font-bold text-red-600 hover:bg-red-50"

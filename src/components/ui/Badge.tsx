@@ -80,9 +80,17 @@ export function StatusPill({ status, className = '' }: { status: string; classNa
     );
   }
 
-  if (['rejected', 'declined', 'failed'].includes(normalized)) {
+  if (['rejected', 'declined', 'failed', 'full'].includes(normalized)) {
     return (
       <Badge variant="error" dot className={className}>
+        {status.replace(/_/g, ' ')}
+      </Badge>
+    );
+  }
+
+  if (['expired', 'auto_closed'].includes(normalized)) {
+    return (
+      <Badge variant="warning" dot className={className}>
         {status.replace(/_/g, ' ')}
       </Badge>
     );

@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             slug: campaign.slug,
             roles: [campaign.targetRole],
             accepting: isAccepting,
-            status: campaign.status,
+            status: campaignInfo.displayStatus ?? campaign.status,
           },
         });
         await csrfProtect(request, response);

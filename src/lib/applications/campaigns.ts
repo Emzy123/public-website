@@ -20,12 +20,18 @@ import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
 import { mintMemberId } from '@/lib/members/member-id';
 import { isValidChapterSlug, validateChapterSlug } from '@/lib/chapters/chapters';
+import {
+  isCampaignLinkOpen,
+  getCampaignLinkDisplayStatus,
+  type LinkDisplayStatus,
+} from '@/lib/applications/link-status';
 
 export type CampaignStatusInfo = {
   campaign: Campaign;
   isAccepting: boolean;
   statusReason?: string;
   seatsRemaining?: number | null;
+  displayStatus?: LinkDisplayStatus;
 };
 
 export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInfo | null> {
@@ -46,7 +52,26 @@ export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInf
   }
 
   const now = new Date();
-  let isAccepting = campaign.status === 'active';
+  const isOpen = isCampaignLinkOpen(
+    {
+      status: campaign.status,
+      endsAt: campaign.endsAt,
+      seatLimit: campaign.seatLimit,
+      applicationCount: campaign.applicationCount,
+    },
+    now
+  );
+  const displayStatus = getCampaignLinkDisplayStatus(
+    {
+      status: campaign.status,
+      endsAt: campaign.endsAt,
+      seatLimit: campaign.seatLimit,
+      applicationCount: campaign.applicationCount,
+    },
+    now
+  );
+
+  let isAccepting = isOpen;
   let statusReason: string | undefined;
 
   if (campaign.status === 'closed') {
@@ -76,6 +101,7 @@ export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInf
     isAccepting,
     statusReason,
     seatsRemaining,
+    displayStatus,
   };
 }
 

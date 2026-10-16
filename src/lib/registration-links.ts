@@ -15,35 +15,43 @@ export function registrationLinkUrl(slug: string): string {
   return `${base}/join/${slug}`;
 }
 
+import {
+  isCampaignLinkOpen,
+  isLinkOpen,
+  getCampaignLinkDisplayStatus,
+  getLinkDisplayStatus,
+  type LinkDisplayStatus,
+} from '@/lib/applications/link-status';
+
+export {
+  isCampaignLinkOpen,
+  isLinkOpen,
+  getCampaignLinkDisplayStatus,
+  getLinkDisplayStatus,
+  type LinkDisplayStatus,
+};
+
 type LinkDoc = Document & {
   isOpen?: boolean;
   status?: RegistrationLinkStatus;
-  expiresAt?: Date;
+  expiresAt?: Date | string;
   quota?: number;
   applicationCount?: number;
 };
 
 export function resolveLinkStatus(link: LinkDoc): RegistrationLinkStatus {
-  if (link.status === 'auto-closed') return 'auto-closed';
-  if (!link.isOpen) return 'closed';
-  return 'open';
+  return getCampaignLinkDisplayStatus(link);
 }
 
 export function isLinkAcceptingApplications(link: LinkDoc): boolean {
-  const status = resolveLinkStatus(link);
-  if (status !== 'open') return false;
-  if (link.expiresAt && new Date(link.expiresAt) <= new Date()) return false;
-  if (link.quota != null && (link.applicationCount ?? 0) >= link.quota) return false;
-  return true;
+  return isCampaignLinkOpen(link);
 }
 
 export async function maybeAutoCloseLink(
   db: Awaited<ReturnType<typeof import('@/lib/db/mongodb').getMongoDb>>,
   link: LinkDoc & { _id: import('mongodb').ObjectId },
 ): Promise<boolean> {
-  const shouldClose =
-    (link.expiresAt && new Date(link.expiresAt) <= new Date()) ||
-    (link.quota != null && (link.applicationCount ?? 0) >= link.quota);
+  const shouldClose = !isCampaignLinkOpen(link);
 
   if (!shouldClose || !link.isOpen) return false;
 
@@ -99,7 +107,7 @@ export function serialiseRegistrationLink(doc: Document) {
     name: link.name,
     slug: link.slug,
     roles: link.roles,
-    isOpen: Boolean(link.isOpen),
+    isOpen: isCampaignLinkOpen(link),
     status: resolveLinkStatus(link),
     expiresAt: link.expiresAt instanceof Date ? link.expiresAt.toISOString() : link.expiresAt,
     quota: link.quota,
