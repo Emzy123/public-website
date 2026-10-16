@@ -90,7 +90,7 @@ describe('validateRouteSecurityConfig', () => {
         MONGODB_URI: 'mongodb://localhost:27017',
         MONGODB_DB: 'sinet',
         RESEND_API_KEY: 'key',
-        RESEND_FROM_EMAIL: 'SINet <noreply@sinet.africa>',
+        RESEND_FROM_EMAIL: 'SINet <no-reply@sinet.africa>',
       });
       const result = validateRouteSecurityConfig('contact');
       expect(result.ok).toBe(true);
@@ -118,7 +118,7 @@ describe('validateRouteSecurityConfig', () => {
         MONGODB_URI: 'mongodb://localhost:27017',
         MONGODB_DB: 'sinet',
         RESEND_API_KEY: 'key',
-        RESEND_FROM_EMAIL: 'SINet <noreply@sinet.africa>',
+        RESEND_FROM_EMAIL: 'SINet <no-reply@sinet.africa>',
       });
       expect(validateRouteSecurityConfig('applications').ok).toBe(true);
     });

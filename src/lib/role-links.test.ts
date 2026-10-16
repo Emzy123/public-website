@@ -9,6 +9,7 @@ import {
 import { createRegistrationLinkSchema, isReservedLinkSlug } from './schemas/registration-link.schema';
 import { campaignApplicationSchema } from './schemas/application.schema';
 import { buildJoinRedirectUrl, normalizeDivisionSlug } from './registration-links';
+import { registerKnownChapterSlug } from './chapters/chapters';
 
 describe('Role Deep Links & Membership Names', () => {
   it('maps expected human-readable role labels', () => {
@@ -235,6 +236,15 @@ describe('Role Deep Links & Membership Names', () => {
       });
       expect(dest).toBe('/join/cohort-2026?role=community-member');
       expect(dest).not.toContain('unknown-campus-999');
+    });
+
+    it('recognizes dynamically registered chapters from data source without dropping to null', () => {
+      registerKnownChapterSlug('abu-zaria');
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'abu-zaria',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member&chapter=abu-zaria');
     });
 
     it('sanitizes and drops malicious chapter parameter', () => {

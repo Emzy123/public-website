@@ -21,7 +21,7 @@ export async function sendApplicationStatusEmail(data: {
   reviewNote?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
+  const from = process.env.RESEND_FROM_EMAIL || 'SINet <no-reply@sinet.africa>';
 
   if (!data.email) return;
 
@@ -70,7 +70,7 @@ export async function sendApplicationReceivedEmail(data: {
   role?: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
+  const from = process.env.RESEND_FROM_EMAIL || 'SINet <no-reply@sinet.africa>';
 
   if (!data.email) return;
 
@@ -99,7 +99,7 @@ export async function sendCustomApplicantEmail(data: {
   applicantName: string;
 }): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
+  const from = process.env.RESEND_FROM_EMAIL || 'SINet <no-reply@sinet.africa>';
 
   if (!apiKey || !data.to) return;
 

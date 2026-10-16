@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { db } from '@/lib/db';
-import { verificationTokens } from '@/lib/db/schema';
+import { db, isPostgresConfigured } from '@/lib/db';
+import { verificationTokens, auditLog } from '@/lib/db/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
@@ -100,7 +100,69 @@ export function classifyAuthError(error: unknown): { reason: AuthFailureReason; 
   };
 }
 
-export function getAuthHealthDiagnostic(): {
+export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRecord | null> {
+  // 1. Try reading from MongoDB auditLogs collection
+  try {
+    const mongo = await getMongoFallback();
+    if (mongo) {
+      const doc = await mongo
+        .collection('auditLogs')
+        .find({ action: 'auth.otp_failed' })
+        .sort({ createdAt: -1 })
+        .limit(1)
+        .toArray();
+
+      if (doc && doc.length > 0) {
+        const meta = (doc[0].metadata as Record<string, unknown>) || {};
+        const failureReason = (meta.reason as AuthFailureReason) || 'provider_delivery_failed';
+        return {
+          reason: failureReason,
+          message: String(meta.error || 'Authentication OTP delivery failed.'),
+          error: String(meta.error || ''),
+          emailDomain: doc[0].actor ? String(doc[0].actor).split('@')[1] : undefined,
+          mode: meta.mode ? String(meta.mode) : undefined,
+          timestamp:
+            doc[0].createdAt instanceof Date
+              ? doc[0].createdAt.toISOString()
+              : String(doc[0].createdAt || new Date().toISOString()),
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[Auth] Failed to read last failure from Mongo audit logs:', err);
+  }
+
+  // 2. Try reading from PostgreSQL audit_log table
+  if (isPostgresConfigured()) {
+    try {
+      const [record] = await db
+        .select()
+        .from(auditLog)
+        .where(eq(auditLog.action, 'auth.otp_failed'))
+        .orderBy(desc(auditLog.createdAt))
+        .limit(1);
+
+      if (record) {
+        const meta = (record.metadata as Record<string, unknown>) || {};
+        const failureReason = (meta.reason as AuthFailureReason) || 'provider_delivery_failed';
+        return {
+          reason: failureReason,
+          message: String(meta.error || 'Authentication OTP delivery failed.'),
+          error: String(meta.error || ''),
+          emailDomain: record.actorEmail ? record.actorEmail.split('@')[1] : undefined,
+          timestamp: record.createdAt.toISOString(),
+        };
+      }
+    } catch (pgErr) {
+      console.warn('[Auth] Failed to read last failure from Postgres audit log:', pgErr);
+    }
+  }
+
+  // 3. Fallback to in-memory record (e.g. during immediate test execution)
+  return getLastAuthFailure();
+}
+
+export async function getAuthHealthDiagnostic(): Promise<{
   status: 'ok' | 'degraded' | 'error';
   authFromEmail: 'configured' | 'missing';
   senderEmail: string | null;
@@ -111,7 +173,7 @@ export function getAuthHealthDiagnostic(): {
     message: string;
     timestamp: string;
   } | null;
-} {
+}> {
   const authFromEmail = process.env.AUTH_FROM_EMAIL?.trim() || null;
   const resendApiKey = process.env.RESEND_API_KEY?.trim() || null;
 
@@ -128,17 +190,19 @@ export function getAuthHealthDiagnostic(): {
       ? 'ok'
       : 'degraded';
 
+  const lastFailure = await getLatestAuthFailureFromAuditLog();
+
   return {
     status,
     authFromEmail: authFromEmail ? 'configured' : 'missing',
     senderEmail: authFromEmail,
     senderDomain,
     resendApiKey: resendApiKey ? 'configured' : 'missing',
-    lastFailure: lastAuthFailure
+    lastFailure: lastFailure
       ? {
-          reason: lastAuthFailure.reason,
-          message: lastAuthFailure.message,
-          timestamp: lastAuthFailure.timestamp,
+          reason: lastFailure.reason,
+          message: lastFailure.message,
+          timestamp: lastFailure.timestamp,
         }
       : null,
   };

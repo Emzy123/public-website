@@ -126,13 +126,73 @@ export const FALLBACK_KOGI_CHAPTERS: ChapterListItem[] = [
   },
 ];
 
-export const VALID_CHAPTER_SLUGS = new Set(
+const dynamicChapterSlugs = new Set<string>(
   FALLBACK_KOGI_CHAPTERS.map((c) => c.slug.toLowerCase())
 );
 
+export function registerKnownChapterSlug(slug: string): void {
+  if (slug) dynamicChapterSlugs.add(slug.toLowerCase().trim());
+}
+
+/**
+ * Synchronous check against known chapters (fallback + dynamically fetched from DB).
+ */
 export function isValidChapterSlug(slug?: string | null): boolean {
   if (!slug) return false;
-  return VALID_CHAPTER_SLUGS.has(slug.toLowerCase().trim());
+  return dynamicChapterSlugs.has(slug.toLowerCase().trim());
+}
+
+/**
+ * Validates a chapter slug directly against the chapter data source (PostgreSQL/MongoDB + catalog),
+ * registering newly discovered slugs into the active set so subsequent lookups succeed.
+ */
+export async function validateChapterSlug(slug?: string | null): Promise<boolean> {
+  if (!slug) return false;
+  const normalized = slug.toLowerCase().trim();
+
+  if (dynamicChapterSlugs.has(normalized)) {
+    return true;
+  }
+
+  // Check PostgreSQL chapters table
+  try {
+    const [record] = await db
+      .select({ slug: chapters.slug })
+      .from(chapters)
+      .where(and(eq(chapters.slug, normalized), eq(chapters.isActive, true)))
+      .limit(1);
+
+    if (record?.slug && record.slug.toLowerCase().trim() === normalized) {
+      dynamicChapterSlugs.add(normalized);
+      return true;
+    }
+  } catch {
+    /* Postgres query failed/offline, proceed to Mongo check */
+  }
+
+  // Check MongoDB chapters collection
+  try {
+    const { getMongoDb } = await import('@/lib/db/mongodb');
+    const mongo = await getMongoDb();
+    if (mongo) {
+      const doc = await mongo.collection('chapters').findOne({
+        $or: [{ slug: normalized }, { chapterSlug: normalized }],
+        isActive: { $ne: false },
+      });
+      if (
+        doc &&
+        (doc.slug?.toLowerCase?.() === normalized ||
+          doc.chapterSlug?.toLowerCase?.() === normalized)
+      ) {
+        dynamicChapterSlugs.add(normalized);
+        return true;
+      }
+    }
+  } catch {
+    /* Mongo check skipped */
+  }
+
+  return false;
 }
 
 function filterChaptersList(
@@ -192,6 +252,9 @@ export async function listChapters(opts?: {
 
     const results = await query;
     if (results && results.length > 0) {
+      for (const r of results) {
+        if (r.slug) dynamicChapterSlugs.add(r.slug.toLowerCase().trim());
+      }
       return filterChaptersList(results, opts);
     }
   } catch (error) {
@@ -229,6 +292,7 @@ export async function getChapterBySlug(slug: string): Promise<ChapterDetails | n
       .limit(1);
 
     if (chapterRecord) {
+      dynamicChapterSlugs.add(chapterRecord.slug.toLowerCase().trim());
       const divisionCounts = {
         student_finance: 0,
         student_enterprise: 0,

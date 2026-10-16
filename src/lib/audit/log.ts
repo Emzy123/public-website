@@ -4,6 +4,7 @@ export type AuditAction =
   | 'admin.login'
   | 'admin.login_failed'
   | 'admin.logout'
+  | 'admin.provision_super_admin'
   | 'cms.draft_save'
   | 'cms.publish'
   | 'media.upload'

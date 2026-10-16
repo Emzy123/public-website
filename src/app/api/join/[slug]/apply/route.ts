@@ -22,7 +22,7 @@ import {
   tryReserveApplicationSlot,
   normalizeDivisionSlug,
 } from '@/lib/registration-links';
-import { isValidChapterSlug } from '@/lib/chapters/chapters';
+import { isValidChapterSlug, validateChapterSlug } from '@/lib/chapters/chapters';
 import type { ApplicationRole } from '@/lib/types/membership';
 import { ROLE_LABELS } from '@/lib/types/membership';
 
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     };
 
     const rawChapter = data.chapter || (typeof body?.chapter === 'string' ? body.chapter.toLowerCase().trim() : undefined);
-    const validChapter = isValidChapterSlug(rawChapter) ? rawChapter!.toLowerCase().trim() : null;
+    const validChapter = (await validateChapterSlug(rawChapter)) ? rawChapter!.toLowerCase().trim() : null;
 
     const rawDivision = data.division || (typeof body?.division === 'string' ? body.division.toLowerCase().trim() : undefined);
     const validDivision = normalizeDivisionSlug(rawDivision);

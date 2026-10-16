@@ -4,6 +4,8 @@ import { NextRequest } from 'next/server';
 import { GET } from './route';
 import { recordAuthFailure, resetLastAuthFailure } from '@/lib/auth/otp';
 import { createSession } from '@admin/lib/auth';
+import { SignJWT } from 'jose';
+import { getAdminSessionSecret } from '@/lib/runtime/secrets';
 
 describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
   const originalEnv = process.env;
@@ -12,6 +14,7 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
     resetLastAuthFailure();
     process.env = {
       ...originalEnv,
+      ADMIN_EMAIL: 'admin@sinet.africa',
       HEALTH_CHECK_TOKEN: 'health-secret-token-xyz',
       ADMIN_SESSION_SECRET: 'test_admin_session_secret_32_characters_long_min',
       AUTH_FROM_EMAIL: 'SINet <no-reply@sinet.africa>',
@@ -35,7 +38,17 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
     expect(body.timestamp).toBeUndefined();
   });
 
-  it('authorized admin via HEALTH_CHECK_TOKEN receives complete dependency and auth diagnostics', async () => {
+  it('ignores ?token= in query string to prevent token leakage in access logs', async () => {
+    const req = new NextRequest('http://localhost:3000/api/health?token=health-secret-token-xyz');
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    // Must be treated as unauthenticated
+    expect(body.checks).toBeUndefined();
+  });
+
+  it('authorized admin via x-health-token header receives complete dependency and auth diagnostics', async () => {
     const req = new NextRequest('http://localhost:3000/api/health', {
       headers: { 'x-health-token': 'health-secret-token-xyz' },
     });
@@ -51,7 +64,7 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
     expect(body.checks.authOtp.resendApiKey).toBe('configured');
   });
 
-  it('authorized admin via sinet_admin_session cookie receives complete diagnostics', async () => {
+  it('authorized admin via live, non-expired sinet_admin_session cookie receives complete diagnostics', async () => {
     const adminToken = await createSession('admin@sinet.africa');
 
     const req = new NextRequest('http://localhost:3000/api/health', {
@@ -68,6 +81,59 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
     expect(body.checks.authOtp.senderDomain).toBe('sinet.africa');
   });
 
+  it('rejects forged sinet_admin_session cookie (invalid signature)', async () => {
+    const req = new NextRequest('http://localhost:3000/api/health', {
+      headers: {
+        cookie: 'sinet_admin_session=eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImFkbWluQHNpbmV0LmFmcmljYSJ9.invalidSignature',
+      },
+    });
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.checks).toBeUndefined();
+  });
+
+  it('rejects expired sinet_admin_session cookie', async () => {
+    const expiredTimestamp = Math.floor(Date.now() / 1000) - 30; // 30 seconds ago
+    const expiredToken = await new SignJWT({
+      email: 'admin@sinet.africa',
+      lastActivity: expiredTimestamp,
+    })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt(expiredTimestamp - 3600)
+      .setIssuer('sinet-admin')
+      .setAudience('sinet-admin')
+      .setExpirationTime(expiredTimestamp)
+      .sign(getAdminSessionSecret());
+
+    const req = new NextRequest('http://localhost:3000/api/health', {
+      headers: {
+        cookie: `sinet_admin_session=${expiredToken}`,
+      },
+    });
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.checks).toBeUndefined();
+  });
+
+  it('rejects session cookie for non-admin user email', async () => {
+    const nonAdminToken = await createSession('hacker@unauthorized-domain.com');
+
+    const req = new NextRequest('http://localhost:3000/api/health', {
+      headers: {
+        cookie: `sinet_admin_session=${nonAdminToken}`,
+      },
+    });
+    const res = await GET(req);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.checks).toBeUndefined();
+  });
+
   it('exposes structured OTP failure reason to authorized admin', async () => {
     recordAuthFailure({
       reason: 'resend_domain_unverified',
@@ -78,7 +144,9 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
       timestamp: new Date().toISOString(),
     });
 
-    const req = new NextRequest('http://localhost:3000/api/health?token=health-secret-token-xyz');
+    const req = new NextRequest('http://localhost:3000/api/health', {
+      headers: { 'x-health-token': 'health-secret-token-xyz' },
+    });
     const res = await GET(req);
 
     expect(res.status).toBe(200);

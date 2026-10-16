@@ -107,7 +107,7 @@ export class ResendAdapter implements EmailServiceAdapter {
   async addSubscriber(data: WaitlistPayload): Promise<void> {
     const apiKey = process.env.RESEND_API_KEY;
     const audienceId = process.env.RESEND_AUDIENCE_ID;
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'SINet <noreply@sinet.africa>';
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'SINet <no-reply@sinet.africa>';
 
     if (!apiKey || !audienceId) {
       const message = 'RESEND_API_KEY or RESEND_AUDIENCE_ID not provided.';

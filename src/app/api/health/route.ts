@@ -5,7 +5,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function isAuthorizedAdmin(request: NextRequest): Promise<boolean> {
-  const token = request.headers.get('x-health-token') || request.nextUrl.searchParams.get('token');
+  const token = request.headers.get('x-health-token')?.trim();
   const expected = process.env.HEALTH_CHECK_TOKEN?.trim();
   if (expected && token && token === expected) {
     return true;
@@ -17,7 +17,10 @@ async function isAuthorizedAdmin(request: NextRequest): Promise<boolean> {
       const { verifySession } = await import('@admin/lib/auth');
       const session = await verifySession(adminCookie);
       if (session?.email) {
-        return true;
+        const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+        if (adminEmail && session.email.toLowerCase() === adminEmail) {
+          return true;
+        }
       }
     } catch {
       /* ignore */
@@ -66,7 +69,7 @@ export async function GET(request: NextRequest) {
       ? 'ok'
       : 'degraded';
 
-  const authOtp = getAuthHealthDiagnostic();
+  const authOtp = await getAuthHealthDiagnostic();
   const checks = { mongo, redis, email, authOtp };
   const hasError = mongo === 'error' || email === 'error' || authOtp.status === 'error';
 

@@ -84,6 +84,13 @@ for (const { label, missing, missingAnyOf, ready } of results) {
   }
 }
 
+if (isSet('AUTH_FROM_EMAIL') && isSet('RESEND_FROM_EMAIL')) {
+  if (process.env.AUTH_FROM_EMAIL?.trim() !== process.env.RESEND_FROM_EMAIL?.trim()) {
+    console.warn('\nNotice: AUTH_FROM_EMAIL and RESEND_FROM_EMAIL differ.');
+    console.warn('Standardize on: "SINet <no-reply@sinet.africa>" for both.');
+  }
+}
+
 const optionalSet = optional.filter(isSet);
 const optionalUnset = optional.filter((v) => !isSet(v));
 console.log('\nOptional:');

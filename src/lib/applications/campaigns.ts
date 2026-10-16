@@ -19,7 +19,7 @@ import { MemberApplicationInput } from '@/lib/schemas/member-application.schema'
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
 import { mintMemberId } from '@/lib/members/member-id';
-import { isValidChapterSlug } from '@/lib/chapters/chapters';
+import { isValidChapterSlug, validateChapterSlug } from '@/lib/chapters/chapters';
 
 export type CampaignStatusInfo = {
   campaign: Campaign;
@@ -213,7 +213,7 @@ export async function submitCampaignApplication(
     .where(eq(memberProfiles.userId, user.id));
 
   let resolvedChapterId: string | null = null;
-  if (input.chapter && isValidChapterSlug(input.chapter)) {
+  if (input.chapter && (await validateChapterSlug(input.chapter))) {
     const [matchedChapter] = await db
       .select({ id: chapters.id })
       .from(chapters)

@@ -125,6 +125,25 @@ export async function POST(request: NextRequest) {
             role: initialRole,
           });
 
+          if (isConfiguredAdmin) {
+            await writeAdminAudit({
+              actorId: user.id,
+              actorEmail: user.email,
+              action: 'admin.provision_super_admin',
+              resource: 'auth',
+              metadata: { reason: 'Initial OTP verification for configured ADMIN_EMAIL' },
+              ipAddress: ip,
+            }).catch(() => null);
+
+            const { writeAuditLog } = await import('@/lib/audit/log');
+            await writeAuditLog({
+              action: 'admin.provision_super_admin',
+              actor: normalizedEmail,
+              ip,
+              metadata: { reason: 'Initial OTP verification for configured ADMIN_EMAIL' },
+            }).catch(() => null);
+          }
+
           // Initialize member profile
           const randomReferralCode = `SIN${Date.now().toString(36).toUpperCase().slice(-6)}`;
           await db.insert(memberProfiles).values({
