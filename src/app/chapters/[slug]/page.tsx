@@ -37,6 +37,7 @@ export default async function ChapterDetailPage({
   const divisionStats = [
     {
       key: 'student_finance',
+      divisionSlug: 'finance',
       ...STUDENT_DIVISION_INFO.student_finance,
       count: chapter.divisionCounts.student_finance,
       accent: 'from-amber-600 to-amber-500',
@@ -44,6 +45,7 @@ export default async function ChapterDetailPage({
     },
     {
       key: 'student_enterprise',
+      divisionSlug: 'enterprise',
       ...STUDENT_DIVISION_INFO.student_enterprise,
       count: chapter.divisionCounts.student_enterprise,
       accent: 'from-sky-600 to-sky-500',
@@ -51,6 +53,7 @@ export default async function ChapterDetailPage({
     },
     {
       key: 'governance_records',
+      divisionSlug: 'governance',
       ...STUDENT_DIVISION_INFO.governance_records,
       count: chapter.divisionCounts.governance_records,
       accent: 'from-purple-600 to-purple-500',
@@ -162,7 +165,7 @@ export default async function ChapterDetailPage({
 
                 <div className="mt-6 pt-4 border-t border-slate-100">
                   <Link
-                    href={`/join?role=community-member&chapter=${chapter.slug}`}
+                    href={`/join?role=community-member&chapter=${chapter.slug}&division=${div.divisionSlug}`}
                     className="text-xs font-bold text-amber-700 hover:text-amber-800"
                   >
                     Apply for this division →

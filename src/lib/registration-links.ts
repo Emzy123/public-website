@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { Document } from 'mongodb';
 import { type ApplicationRole, type RegistrationLinkStatus, normalizeRoleSlug } from '@/lib/types/membership';
+import { isValidChapterSlug } from '@/lib/chapters/chapters';
 
 export const REGISTRATION_LINKS_COLLECTION = 'registration_links';
 export const LINK_WAITLIST_COLLECTION = 'registration_link_waitlist';
@@ -118,10 +119,23 @@ export const ALLOWED_UTM_PARAMS = new Set([
   'utm_content',
 ]);
 
+export const VALID_DIVISIONS = ['finance', 'enterprise', 'governance'] as const;
+export type DivisionSlug = (typeof VALID_DIVISIONS)[number];
+
+export function normalizeDivisionSlug(raw?: string | null): DivisionSlug | null {
+  if (!raw) return null;
+  const cleaned = raw.toLowerCase().trim().replace(/[_ ]+/g, '-');
+  if (cleaned === 'finance' || cleaned === 'student-finance') return 'finance';
+  if (cleaned === 'enterprise' || cleaned === 'student-enterprise') return 'enterprise';
+  if (cleaned === 'governance' || cleaned === 'governance-records') return 'governance';
+  return null;
+}
+
 /**
  * Builds a secure sanitized redirect URL for /join routing.
- * Whitelists public canonical roles, chapter slug, referral code, and utm parameters.
+ * Whitelists public canonical roles, validated chapter slug, division context, referral code, and utm parameters.
  * Staff is invite-only and stripped from public redirects.
+ * Unknown chapter values are dropped.
  */
 export function buildJoinRedirectUrl(
   targetUrl: string,
@@ -144,9 +158,17 @@ export function buildJoinRedirectUrl(
         ? searchParams.chapter[0]
         : undefined;
   const validChapter =
-    rawChapter && /^[a-zA-Z0-9_-]{1,64}$/.test(rawChapter)
-      ? rawChapter.toLowerCase()
+    rawChapter && isValidChapterSlug(rawChapter)
+      ? rawChapter.toLowerCase().trim()
       : undefined;
+
+  const rawDivision =
+    typeof searchParams?.division === 'string'
+      ? searchParams.division
+      : Array.isArray(searchParams?.division)
+        ? searchParams.division[0]
+        : undefined;
+  const validDivision = normalizeDivisionSlug(rawDivision);
 
   const qs = new URLSearchParams();
   if (publicRole) {
@@ -154,6 +176,9 @@ export function buildJoinRedirectUrl(
   }
   if (validChapter) {
     qs.set('chapter', validChapter);
+  }
+  if (validDivision) {
+    qs.set('division', validDivision);
   }
 
   if (searchParams) {

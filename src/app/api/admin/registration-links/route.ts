@@ -6,7 +6,11 @@ import { csrfProtect } from '@/lib/csrf';
 import { verifyCsrfToken } from '@/lib/security/csrf-handler';
 import { writeAuditLog } from '@/lib/audit/log';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
-import { createRegistrationLinkSchema, updateRegistrationLinkSchema } from '@/lib/schemas/registration-link.schema';
+import {
+  createRegistrationLinkSchema,
+  updateRegistrationLinkSchema,
+  isReservedLinkSlug,
+} from '@/lib/schemas/registration-link.schema';
 import {
   REGISTRATION_LINKS_COLLECTION,
   generateLinkSlug,
@@ -58,11 +62,18 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const db = await getMongoDb();
 
-    let slug = generateLinkSlug();
+    let slug = parsed.data.slug || generateLinkSlug();
+    if (isReservedLinkSlug(slug)) {
+      return NextResponse.json({ error: 'This slug is reserved and cannot be created.' }, { status: 400 });
+    }
+
     for (let attempt = 0; attempt < 5; attempt++) {
       const existing = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug });
       if (!existing) break;
       slug = generateLinkSlug();
+      while (isReservedLinkSlug(slug)) {
+        slug = generateLinkSlug();
+      }
     }
 
     const doc = {

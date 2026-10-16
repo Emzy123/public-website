@@ -95,6 +95,8 @@ function buildRoleSchema(role: ApplicationRole) {
     ...contactFields,
     ...roleFields,
     documents: documentsSchema(def.documents),
+    chapter: z.string().trim().max(64).optional(),
+    division: z.string().trim().max(64).optional(),
     codeOfConductAccepted: z.literal(true),
     website: z.string().max(0).optional(),
   });

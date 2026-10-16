@@ -19,6 +19,7 @@ import { MemberApplicationInput } from '@/lib/schemas/member-application.schema'
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
 import { mintMemberId } from '@/lib/members/member-id';
+import { isValidChapterSlug } from '@/lib/chapters/chapters';
 
 export type CampaignStatusInfo = {
   campaign: Campaign;
@@ -211,9 +212,26 @@ export async function submitCampaignApplication(
     .from(memberProfiles)
     .where(eq(memberProfiles.userId, user.id));
 
+  let resolvedChapterId: string | null = null;
+  if (input.chapter && isValidChapterSlug(input.chapter)) {
+    const [matchedChapter] = await db
+      .select({ id: chapters.id })
+      .from(chapters)
+      .where(eq(chapters.slug, input.chapter.toLowerCase().trim()));
+    if (matchedChapter) resolvedChapterId = matchedChapter.id;
+  }
+  if (!resolvedChapterId && input.universityId) {
+    const [uniChapter] = await db
+      .select({ id: chapters.id })
+      .from(chapters)
+      .where(eq(chapters.universityId, input.universityId));
+    if (uniChapter) resolvedChapterId = uniChapter.id;
+  }
+
   if (!profile) {
     await db.insert(memberProfiles).values({
       userId: user.id,
+      chapterId: resolvedChapterId,
       fullName: input.fullName.trim(),
       programme: input.programme.trim(),
       level: input.level,
@@ -223,6 +241,11 @@ export async function submitCampaignApplication(
       referredByCode: input.referredByCode?.trim() || null,
       profileCompletenessPct: 50,
     });
+  } else if (resolvedChapterId && !profile.chapterId) {
+    await db
+      .update(memberProfiles)
+      .set({ chapterId: resolvedChapterId, division: input.division, updatedAt: new Date() })
+      .where(eq(memberProfiles.id, profile.id));
   }
 
   // Send transactional email notice

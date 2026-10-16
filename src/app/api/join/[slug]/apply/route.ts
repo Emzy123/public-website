@@ -20,7 +20,9 @@ import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
   tryReserveApplicationSlot,
+  normalizeDivisionSlug,
 } from '@/lib/registration-links';
+import { isValidChapterSlug } from '@/lib/chapters/chapters';
 import type { ApplicationRole } from '@/lib/types/membership';
 import { ROLE_LABELS } from '@/lib/types/membership';
 
@@ -172,9 +174,17 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       userAgent: request.headers.get('user-agent') || 'unknown',
     };
 
+    const rawChapter = data.chapter || (typeof body?.chapter === 'string' ? body.chapter.toLowerCase().trim() : undefined);
+    const validChapter = isValidChapterSlug(rawChapter) ? rawChapter!.toLowerCase().trim() : null;
+
+    const rawDivision = data.division || (typeof body?.division === 'string' ? body.division.toLowerCase().trim() : undefined);
+    const validDivision = normalizeDivisionSlug(rawDivision);
+
     const application = {
       pathway: role,
       role,
+      chapter: validChapter,
+      division: validDivision,
       status: 'pending',
       data,
       agreementMeta,
@@ -202,6 +212,8 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
           phone: data.phone,
           pathway: role,
           sourceLink: reserved.name,
+          ...(validChapter ? { chapter: validChapter } : {}),
+          ...(validDivision ? { division: validDivision } : {}),
           updatedAt: submittedAt,
         },
         $setOnInsert: { createdAt: submittedAt, status: 'pending' },

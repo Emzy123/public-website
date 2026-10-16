@@ -47,6 +47,7 @@ export function StudentCampaignApplicationForm({
   const [division, setDivision] = useState<StudentDivision>('student_finance');
   const [contributionPitch, setContributionPitch] = useState('');
   const [referredByCode, setReferredByCode] = useState('');
+  const [chapter, setChapter] = useState('');
   const [codeOfConduct, setCodeOfConduct] = useState(false);
 
   // UI state
@@ -74,11 +75,25 @@ export function StudentCampaignApplicationForm({
         if (data.universities) {
           setUniversities(data.universities);
           const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-          const campusParam = params?.get('campus')?.trim().toUpperCase();
+          const chapterParam = params?.get('chapter')?.trim().toLowerCase() || '';
+          if (chapterParam) setChapter(chapterParam);
+
+          const divParam = params?.get('division')?.trim().toLowerCase();
+          if (divParam === 'finance' || divParam === 'student_finance') {
+            setDivision('student_finance');
+          } else if (divParam === 'enterprise' || divParam === 'student_enterprise') {
+            setDivision('student_enterprise');
+          } else if (divParam === 'governance' || divParam === 'governance_records') {
+            setDivision('governance_records');
+          }
+
+          const campusParam = (chapterParam || params?.get('campus') || '').trim().toUpperCase();
           const matched = campusParam
             ? data.universities.find(
                 (u: UniversityOption) =>
-                  u.campusCode === campusParam || u.shortName.toUpperCase() === campusParam
+                  u.campusCode.toUpperCase() === campusParam ||
+                  u.shortName.toUpperCase() === campusParam ||
+                  u.name.toUpperCase().includes(campusParam)
               )
             : null;
 
@@ -130,6 +145,7 @@ export function StudentCampaignApplicationForm({
         division,
         contributionPitch: contributionPitch.trim(),
         referredByCode: referredByCode.trim() || undefined,
+        chapter: chapter || undefined,
         codeOfConductAccepted: true,
       };
 

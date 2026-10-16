@@ -78,6 +78,7 @@ export const memberApplicationSchema = z.object({
     .max(32)
     .optional()
     .or(z.literal('')),
+  chapter: z.string().trim().max(64).optional(),
   codeOfConductAccepted: z.literal(true, {
     message: 'You must accept the SINet Community Code of Conduct',
   }),

@@ -332,6 +332,11 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       }
       payload.documents = docsPayload;
 
+      const queryChapter = searchParams?.get('chapter')?.trim().toLowerCase();
+      const queryDivision = searchParams?.get('division')?.trim().toLowerCase();
+      if (queryChapter) payload.chapter = queryChapter;
+      if (queryDivision) payload.division = queryDivision;
+
       const res = await fetch(`/api/join/${slug}/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },

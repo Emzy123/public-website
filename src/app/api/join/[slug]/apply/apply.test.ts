@@ -154,4 +154,154 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
     const body = await res.json();
     expect(body.error).toBe('This role is not accepted through this campaign link.');
   });
+
+  it('persists validated chapter and division on MongoDB application and member records', async () => {
+    jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+    const mockStaffLink = {
+      _id: 'link-mongo-staff-003',
+      slug: 'hq-staff-kogi',
+      name: 'HQ Operations Kogi Staff',
+      roles: ['staff'],
+      isOpen: true,
+    };
+
+    const mockCollection = {
+      findOne: jest.fn().mockResolvedValue(mockStaffLink),
+      insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-staff-003' }),
+      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+    };
+
+    jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+      collection: jest.fn().mockReturnValue(mockCollection),
+    } as any);
+
+    jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(mockStaffLink as any);
+
+    const req = new NextRequest('http://localhost:3000/api/join/hq-staff-kogi/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validStaffBody,
+        chapter: 'fulokoja',
+        division: 'finance',
+      }),
+    });
+
+    const res = await POST(req, { params: { slug: 'hq-staff-kogi' } });
+    expect(res.status).toBe(201);
+
+    expect(mockCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chapter: 'fulokoja',
+        division: 'finance',
+      })
+    );
+    expect(mockCollection.updateOne).toHaveBeenCalledWith(
+      { email: 'david@sinet.africa' },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          chapter: 'fulokoja',
+          division: 'finance',
+        }),
+      }),
+      { upsert: true }
+    );
+  });
+
+  it('drops unknown chapter slug and invalid division on MongoDB path', async () => {
+    jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+    const mockStaffLink = {
+      _id: 'link-mongo-staff-004',
+      slug: 'hq-staff-anywhere',
+      name: 'HQ Operations Anywhere',
+      roles: ['staff'],
+      isOpen: true,
+    };
+
+    const mockCollection = {
+      findOne: jest.fn().mockResolvedValue(mockStaffLink),
+      insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-staff-004' }),
+      updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+    };
+
+    jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+      collection: jest.fn().mockReturnValue(mockCollection),
+    } as any);
+
+    jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(mockStaffLink as any);
+
+    const req = new NextRequest('http://localhost:3000/api/join/hq-staff-anywhere/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...validStaffBody,
+        chapter: 'unknown-fake-chapter',
+        division: 'crypto_arbitrage',
+      }),
+    });
+
+    const res = await POST(req, { params: { slug: 'hq-staff-anywhere' } });
+    expect(res.status).toBe(201);
+
+    expect(mockCollection.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chapter: null,
+        division: null,
+      })
+    );
+  });
+
+  it('persists chapter and division to submitCampaignApplication on Postgres campaign link', async () => {
+    const mockPostgresCampaign = {
+      campaign: {
+        id: 'camp-pg-002',
+        slug: 'student-network',
+        name: 'Student Network Cohort',
+        description: 'University campus members',
+        targetRole: 'member',
+        isAccepting: true,
+        status: 'active',
+        applicationCount: 10,
+      },
+      isAccepting: true,
+      seatsRemaining: 50,
+    };
+
+    jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(mockPostgresCampaign as any);
+    const submitSpy = jest.spyOn(campaignsModule, 'submitCampaignApplication').mockResolvedValue({
+      applicationId: 'app-pg-123',
+      campaignName: 'Student Network Cohort',
+    });
+
+    const validStudentPayload = {
+      fullName: 'Amina Sani',
+      email: 'amina.sani@fulokoja.edu.ng',
+      phone: '+2348011223344',
+      universityId: '550e8400-e29b-41d4-a716-446655440000',
+      programme: 'B.Sc Economics',
+      level: '300',
+      division: 'student_finance',
+      contributionPitch: 'I want to build a campus student investment club at FULOKOJA.',
+      codeOfConductAccepted: true,
+      chapter: 'fulokoja',
+    };
+
+    const req = new NextRequest('http://localhost:3000/api/join/student-network/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(validStudentPayload),
+    });
+
+    const res = await POST(req, { params: { slug: 'student-network' } });
+    expect(res.status).toBe(201);
+    expect(submitSpy).toHaveBeenCalledWith(
+      'student-network',
+      expect.objectContaining({
+        chapter: 'fulokoja',
+        division: 'student_finance',
+      })
+    );
+  });
 });

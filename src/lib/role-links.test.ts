@@ -6,9 +6,9 @@ import {
   normalizeRoleSlug,
   type ApplicationRole,
 } from './types/membership';
-import { createRegistrationLinkSchema } from './schemas/registration-link.schema';
+import { createRegistrationLinkSchema, isReservedLinkSlug } from './schemas/registration-link.schema';
 import { campaignApplicationSchema } from './schemas/application.schema';
-import { buildJoinRedirectUrl } from './registration-links';
+import { buildJoinRedirectUrl, normalizeDivisionSlug } from './registration-links';
 
 describe('Role Deep Links & Membership Names', () => {
   it('maps expected human-readable role labels', () => {
@@ -212,12 +212,29 @@ describe('Role Deep Links & Membership Names', () => {
       expect(dest).toBe('/join/cohort-2026');
     });
 
-    it('forwards whitelisted chapter parameter (e.g. fulokoja)', () => {
+    it('forwards whitelisted real chapter parameter (e.g. fulokoja)', () => {
       const dest = buildJoinRedirectUrl('/join/cohort-2026', {
         role: 'community-member',
         chapter: 'fulokoja',
       });
       expect(dest).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja');
+    });
+
+    it('normalizes uppercase real chapter parameter to lowercase', () => {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'FULOKOJA',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja');
+    });
+
+    it('drops unknown chapter parameter not in real chapter slugs', () => {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'unknown-campus-999',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member');
+      expect(dest).not.toContain('unknown-campus-999');
     });
 
     it('sanitizes and drops malicious chapter parameter', () => {
@@ -227,6 +244,39 @@ describe('Role Deep Links & Membership Names', () => {
       });
       expect(dest).toBe('/join/cohort-2026?role=community-member');
       expect(dest).not.toContain('<script>');
+    });
+
+    it('forwards whitelisted division parameter (finance, enterprise, governance)', () => {
+      const dest1 = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'fulokoja',
+        division: 'finance',
+      });
+      expect(dest1).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja&division=finance');
+
+      const dest2 = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'fulokoja',
+        division: 'student-enterprise',
+      });
+      expect(dest2).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja&division=enterprise');
+
+      const dest3 = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'fulokoja',
+        division: 'governance_records',
+      });
+      expect(dest3).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja&division=governance');
+    });
+
+    it('drops invalid division parameter', () => {
+      const dest = buildJoinRedirectUrl('/join/cohort-2026', {
+        role: 'community-member',
+        chapter: 'fulokoja',
+        division: 'crypto_trading',
+      });
+      expect(dest).toBe('/join/cohort-2026?role=community-member&chapter=fulokoja');
+      expect(dest).not.toContain('crypto_trading');
     });
 
     it('forwards whitelisted utm params and referral code', () => {
@@ -355,7 +405,21 @@ describe('Role Deep Links & Membership Names', () => {
       }
     });
 
-    it('rejects invalid or missing documents on staff application payload', () => {
+    it('rejects reserved link slugs in schema to prevent shadowing redirects', () => {
+      expect(isReservedLinkSlug('student-network')).toBe(true);
+      expect(isReservedLinkSlug('campus-ambassadors-2026')).toBe(true);
+      expect(isReservedLinkSlug('legitimate-cohort')).toBe(false);
+
+      const reservedInput = {
+        name: 'Shadowing Link Attempt',
+        slug: 'student-network',
+        roles: ['community-member'],
+      };
+      const result = createRegistrationLinkSchema.safeParse(reservedInput);
+      expect(result.success).toBe(false);
+    });
+
+    it('rejects invalid staff application payload', () => {
       const invalidStaffPayload = {
         role: 'staff',
         fullName: 'Amina Bello',

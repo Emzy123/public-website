@@ -126,6 +126,15 @@ export const FALLBACK_KOGI_CHAPTERS: ChapterListItem[] = [
   },
 ];
 
+export const VALID_CHAPTER_SLUGS = new Set(
+  FALLBACK_KOGI_CHAPTERS.map((c) => c.slug.toLowerCase())
+);
+
+export function isValidChapterSlug(slug?: string | null): boolean {
+  if (!slug) return false;
+  return VALID_CHAPTER_SLUGS.has(slug.toLowerCase().trim());
+}
+
 function filterChaptersList(
   items: ChapterListItem[],
   opts?: { state?: string; search?: string }

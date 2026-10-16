@@ -45,3 +45,7 @@ next-env.d.ts
 sinet-*-prompt*.md
 *-master-*-prompt*.md
 *-refining-prompt*.md
+
+# generated sitemaps
+/public/sitemap*.xml
+
