@@ -5,10 +5,12 @@
  * Calls updatePulseAnnouncement(), which internally runs checkAnnouncementRisk()
  * and logs a compliance warning (warning only — does not gate editing).
  *
- * Requires super_admin or admin role.
+ * Auth: env-based admin session (sinet_admin_session cookie), same as all other
+ * /api/admin/* routes. A dashboard member holding a user_roles 'admin' or 'super_admin'
+ * value does NOT satisfy this guard — only the env-configured admin console session does.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole } from '@/lib/auth/guards';
+import { getSession } from '@admin/lib/auth';
 import { validateOrigin } from '@/lib/security/origin';
 import { updatePulseAnnouncement } from '@/lib/pulse/pulse';
 import { z } from 'zod';
@@ -24,13 +26,16 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
   }
 
   try {
-    await requireRole(['super_admin', 'admin'], request);
-
     const { id } = params;
     if (!id) {
       return NextResponse.json({ error: 'Announcement ID is required.' }, { status: 400 });
@@ -57,8 +62,8 @@ export async function PATCH(
       },
     });
   } catch (err: unknown) {
-    const status = (err as { status?: number })?.status || 401;
-    const message = (err as { message?: string })?.message || 'Unauthorized';
+    const status = (err as { status?: number })?.status || 500;
+    const message = (err as { message?: string })?.message || 'Failed to update announcement';
     return NextResponse.json({ error: message }, { status });
   }
 }

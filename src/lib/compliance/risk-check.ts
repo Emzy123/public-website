@@ -58,9 +58,10 @@ export type RiskCheckResult = {
 
 /**
  * Runs the compliance risk check on an advert / flyer item.
- * Checks title, eyebrow, body, ctaLabel, and imageAlt.
- * Also checks if flyerImage or showModal is set: images cannot be auto-checked by regex,
- * so any image-based advert/modal requires legal approval.
+ * Checks title, eyebrow, body, ctaLabel, and imageAlt for financial promotion terms.
+ * Also checks if imageUrl, flyerImage or showModal is set: images cannot be auto-checked by regex,
+ * so any advert with a banner image, flyer, or modal requires legal approval — a banner
+ * image (imageUrl) can carry visual financial claims just as easily as a full-page flyer.
  */
 export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
   const fieldsToCheck: Array<[string, string | undefined]> = [
@@ -84,13 +85,17 @@ export function checkAdvertRisk(item: Partial<AdvertItem>): RiskCheckResult {
     }
   }
 
-  // Any advert with flyerImage set or showModal: true requires legal approval
+  // Any advert with imageUrl, flyerImage, or showModal: true requires legal approval
   // because image content cannot be auto-checked by text regex.
+  const hasImageUrl = Boolean(item.imageUrl && item.imageUrl.trim().length > 0);
   const hasFlyerImage = Boolean(item.flyerImage && item.flyerImage.trim().length > 0);
-  const isImageFlyer = hasFlyerImage || Boolean(item.showModal);
+  const isImageFlyer = hasImageUrl || hasFlyerImage || Boolean(item.showModal);
 
   if (isImageFlyer) {
-    matchedFields.push(hasFlyerImage ? 'flyerImage' : 'showModal');
+    // Report the most-specific field that triggered image risk
+    if (hasFlyerImage) matchedFields.push('flyerImage');
+    else if (hasImageUrl) matchedFields.push('imageUrl');
+    else matchedFields.push('showModal');
     matchedTermsSet.add("Image content can't be auto-checked.");
   }
 

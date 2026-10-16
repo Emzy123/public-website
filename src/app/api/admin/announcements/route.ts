@@ -5,10 +5,12 @@
  * Calls createPulseAnnouncement(), which internally runs checkAnnouncementRisk()
  * and logs a compliance warning (warning only — does not gate creation).
  *
- * Requires super_admin or admin role.
+ * Auth: env-based admin session (sinet_admin_session cookie), same as all other
+ * /api/admin/* routes. A dashboard member holding a user_roles 'admin' or 'super_admin'
+ * value does NOT satisfy this guard — only the env-configured admin console session does.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRole } from '@/lib/auth/guards';
+import { getSession } from '@admin/lib/auth';
 import { validateOrigin } from '@/lib/security/origin';
 import { createPulseAnnouncement } from '@/lib/pulse/pulse';
 import { z } from 'zod';
@@ -22,13 +24,16 @@ const createAnnouncementSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
   }
 
   try {
-    const session = await requireRole(['super_admin', 'admin'], request);
-
     const body = await request.json().catch(() => ({}));
     const parsed = createAnnouncementSchema.safeParse(body);
     if (!parsed.success) {
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const { announcement, complianceRisk } = await createPulseAnnouncement({
       ...parsed.data,
-      authorId: session.userId,
+      authorId: 'admin-' + session.email,
     });
 
     return NextResponse.json(
@@ -56,8 +61,8 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (err: unknown) {
-    const status = (err as { status?: number })?.status || 401;
-    const message = (err as { message?: string })?.message || 'Unauthorized';
+    const status = (err as { status?: number })?.status || 500;
+    const message = (err as { message?: string })?.message || 'Failed to create announcement';
     return NextResponse.json({ error: message }, { status });
   }
 }

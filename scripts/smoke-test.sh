@@ -221,6 +221,8 @@ check "Admin applications API requires auth" "GET" "/api/admin/applications" "40
 check "Admin posts API requires auth" "GET" "/api/admin/posts" "401"
 check "Admin audit API requires auth" "GET" "/api/admin/audit" "401"
 check "Admin adverts legal approval requires auth" "POST" "/api/admin/content/adverts/legal-approval" "401"
+check "Admin announcements POST requires auth" "POST" "/api/admin/announcements" "401"
+check "Admin announcements PATCH requires auth" "PATCH" "/api/admin/announcements/ann-smoke-test-id" "401"
 
 echo ""
 echo "=========================================================="

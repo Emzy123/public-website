@@ -58,14 +58,23 @@ describe('checkAnnouncementRisk (pure, no DB)', () => {
     }
   });
 
-  it('flags announcements with imageUrl set (imageRisk path)', () => {
+  it('flags announcements with imageUrl set (imageRisk triggered — imageUrl can carry visual claims)', () => {
     const result = checkAnnouncementRisk({
       title: 'Campus Flyer',
       body: 'See you there!',
       imageUrl: '/images/flyers/campus-event.png',
     });
-    // imageUrl alone doesn't trigger imageRisk (no flyerImage/showModal path)
-    // but body/title should be checked — no financial terms here, so no risk
+    // imageUrl triggers imageRisk because banner images can carry visual financial claims
+    expect(result.imageRisk).toBe(true);
+    expect(result.hasRisk).toBe(true);
+    expect(result.matchedFields).toContain('imageUrl');
+  });
+
+  it('does not flag announcements with no image fields and clean text', () => {
+    const result = checkAnnouncementRisk({
+      title: 'Campus Event',
+      body: 'See you there!',
+    });
     expect(result.imageRisk).toBe(false);
     expect(result.hasRisk).toBe(false);
   });

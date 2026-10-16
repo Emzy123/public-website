@@ -230,7 +230,7 @@ export function AdvertsEditor({ data, onChange }: { data: AdvertsContent; onChan
                       </p>
                       <p className="mt-1 text-xs text-amber-700">
                         {risk.imageRisk
-                          ? "Image content can't be auto-checked by text scanning. Any advert with a flyer image or modal promo requires explicit legal sign-off before being enabled."
+                          ? "Image content can't be auto-checked by text scanning. Any advert with a banner image, flyer, or modal promo requires explicit legal sign-off before being enabled."
                           : 'Under regulatory compliance standards, adverts containing return, profit, or investment claims cannot be enabled on the website without explicit legal sign-off.'}
                       </p>
 

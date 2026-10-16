@@ -247,16 +247,17 @@ describe('Financial Risk Compliance Check', () => {
      *
      *   imageUrl   — the primary banner/card thumbnail; present on all records
      *                since the first CMS schema (normalizeAdvertsContent line ~754, 833, 898).
+     *                Now triggers imageRisk because a banner can carry visual financial claims.
      *   flyerImage — added in Phase 0.2 (AdvertItem type + computeAdvertContentHash).
      *                May be absent on pre-Phase-0.2 records ("legacy shape").
      *   imageAlt   — optional accessibility label; also normalized and hashed.
      *
      * No field named `modalImage` or `image` (bare) was ever used in the schema.
      * Both imageUrl and flyerImage are included in computeAdvertContentHash().
-     * flyerImage (or showModal: true) triggers imageRisk in checkAdvertRisk().
+     * imageUrl, flyerImage, and showModal: true all trigger imageRisk in checkAdvertRisk().
      */
 
-    it('legacy record with imageUrl only: hash is stable and no imageRisk is raised', () => {
+    it('legacy record with imageUrl only: hash stable and imageRisk IS raised (banner can carry visual claims)', () => {
       const legacyAdvert = {
         id: 'advert-legacy-001',
         title: 'Harvest Season Commodity Offer',
@@ -282,27 +283,39 @@ describe('Financial Risk Compliance Check', () => {
       // Changing imageUrl must change the hash
       expect(computeAdvertContentHash({ ...legacyAdvert, imageUrl: '/images/adverts/different.jpg' })).not.toBe(hash1);
 
-      // No flyerImage + showModal: false → no imageRisk
+      // imageUrl is set → imageRisk (banner can carry visual financial claims)
       const risk = checkAdvertRisk(legacyAdvert);
+      expect(risk.imageRisk).toBe(true);
+      expect(risk.matchedFields).toContain('imageUrl');
+      expect(risk.matchedTerms).toContain("Image content can't be auto-checked.");
+    });
+
+    it('advert with no image fields at all has no imageRisk', () => {
+      const textOnly = {
+        title: 'Trade Update',
+        body: 'Seasonal overview of commodity trades. No image attached.',
+      };
+      const risk = checkAdvertRisk(textOnly);
       expect(risk.imageRisk).toBe(false);
       expect(risk.hasRisk).toBe(false);
     });
 
-    it('legacy record gains imageRisk once flyerImage is set (e.g. after CMS edit)', () => {
-      const legacyAdvert = {
+    it('record with flyerImage: matchedFields reports flyerImage (most specific)', () => {
+      const withBoth = {
         title: 'Trade Update',
         body: 'Seasonal overview of commodity trades.',
         imageUrl: '/images/adverts/trade-update.jpg',
+        flyerImage: '/images/flyers/trade-flyer.png',
       };
 
-      const upgraded = { ...legacyAdvert, flyerImage: '/images/flyers/trade-flyer.png' };
-
-      expect(checkAdvertRisk(legacyAdvert).imageRisk).toBe(false);
-      expect(checkAdvertRisk(upgraded).imageRisk).toBe(true);
-      expect(checkAdvertRisk(upgraded).matchedFields).toContain('flyerImage');
+      const risk = checkAdvertRisk(withBoth);
+      expect(risk.imageRisk).toBe(true);
+      // flyerImage takes priority in matchedFields reporting
+      expect(risk.matchedFields).toContain('flyerImage');
 
       // Hash changes when flyerImage is added
-      expect(computeAdvertContentHash(upgraded)).not.toBe(computeAdvertContentHash(legacyAdvert));
+      const withoutFlyer = { title: withBoth.title, body: withBoth.body, imageUrl: withBoth.imageUrl };
+      expect(computeAdvertContentHash(withBoth)).not.toBe(computeAdvertContentHash(withoutFlyer));
     });
 
     it('legacy record with showModal: true triggers imageRisk even without flyerImage', () => {
@@ -315,8 +328,21 @@ describe('Financial Risk Compliance Check', () => {
 
       const risk = checkAdvertRisk(modalAdvert);
       expect(risk.imageRisk).toBe(true);
-      expect(risk.matchedFields).toContain('showModal');
+      // imageUrl is present so imageUrl wins in field priority over showModal
+      expect(risk.matchedFields).toContain('imageUrl');
       expect(risk.matchedTerms).toContain("Image content can't be auto-checked.");
+    });
+
+    it('advert with showModal: true and no image fields: matchedField is showModal', () => {
+      const modalOnly = {
+        title: 'Campus Brief',
+        body: 'No image attached.',
+        showModal: true,
+      };
+
+      const risk = checkAdvertRisk(modalOnly);
+      expect(risk.imageRisk).toBe(true);
+      expect(risk.matchedFields).toContain('showModal');
     });
   });
 });
