@@ -896,6 +896,10 @@ export function normalizeAdvertsContent(data: Partial<AdvertsContent> | undefine
           eyebrow: String(item.eyebrow || ''),
           body: String(item.body || ''),
           imageUrl: String(item.imageUrl || ''),
+          // Legacy fields: imageAlt and flyerImage may be present on older Mongo records.
+          // They must be preserved so computeAdvertContentHash() and checkAdvertRisk() see them.
+          imageAlt: item.imageAlt ? String(item.imageAlt) : undefined,
+          flyerImage: item.flyerImage ? String(item.flyerImage) : undefined,
           ctaLabel: String(item.ctaLabel || ''),
           ctaHref: String(item.ctaHref || ''),
           enabled: Boolean(item.enabled),
@@ -907,6 +911,8 @@ export function normalizeAdvertsContent(data: Partial<AdvertsContent> | undefine
           legalApproval: Boolean(item.legalApproval),
           legalApprovedAt: item.legalApprovedAt ? String(item.legalApprovedAt) : undefined,
           legalApprovedBy: item.legalApprovedBy ? String(item.legalApprovedBy) : undefined,
+          // legalApprovalHash is required to validate approval binding after normalization.
+          legalApprovalHash: item.legalApprovalHash ? String(item.legalApprovalHash) : undefined,
         }))
     : [];
 

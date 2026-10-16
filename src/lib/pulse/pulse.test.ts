@@ -1,36 +1,15 @@
 /**
  * @jest-environment node
+ *
+ * DB-backed tests for the weekly pulse engine.
+ * Pure risk-check tests live in announcement-risk.test.ts (no DB required).
  */
-import { getWeeklyPulseFeed, recordMemberWeeklyCheckIn, checkAnnouncementRisk } from './pulse';
+import { getWeeklyPulseFeed, recordMemberWeeklyCheckIn } from './pulse';
 import { db } from '@/lib/db';
 import { users, notifications } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-describe('Weekly Pulse Engine', () => {
-  it('runs checkAdvertRisk on pulse announcements and emits warning on risk without gating', () => {
-    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-
-    // Risky announcement
-    const risky = checkAnnouncementRisk({
-      title: 'Partner Program with 40% Return',
-      body: 'Check out the details',
-    });
-    expect(risky.hasRisk).toBe(true);
-    expect(risky.matchedTerms).toContain('40%');
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('[Compliance Warning] Pulse announcement "Partner Program with 40% Return"')
-    );
-
-    // Clean announcement
-    const clean = checkAnnouncementRisk({
-      title: 'Weekly Executive Chapter Sync',
-      body: 'Campus representatives meeting on Friday at 4pm',
-    });
-    expect(clean.hasRisk).toBe(false);
-
-    consoleWarnSpy.mockRestore();
-  });
-
+describe('Weekly Pulse Engine (DB-backed)', () => {
   it('returns active weekly pulse feed with week number and tasks', async () => {
     const feed = await getWeeklyPulseFeed();
     expect(feed.weekNumber).toBeGreaterThan(0);

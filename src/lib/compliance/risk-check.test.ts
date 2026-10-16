@@ -240,4 +240,84 @@ describe('Financial Risk Compliance Check', () => {
       expect(result.matchedFields).toHaveLength(0);
     });
   });
+
+  describe('Legacy-shaped advert records (imageUrl only, no flyerImage)', () => {
+    /**
+     * Inventory of image fields that existing Mongo advert records may carry:
+     *
+     *   imageUrl   — the primary banner/card thumbnail; present on all records
+     *                since the first CMS schema (normalizeAdvertsContent line ~754, 833, 898).
+     *   flyerImage — added in Phase 0.2 (AdvertItem type + computeAdvertContentHash).
+     *                May be absent on pre-Phase-0.2 records ("legacy shape").
+     *   imageAlt   — optional accessibility label; also normalized and hashed.
+     *
+     * No field named `modalImage` or `image` (bare) was ever used in the schema.
+     * Both imageUrl and flyerImage are included in computeAdvertContentHash().
+     * flyerImage (or showModal: true) triggers imageRisk in checkAdvertRisk().
+     */
+
+    it('legacy record with imageUrl only: hash is stable and no imageRisk is raised', () => {
+      const legacyAdvert = {
+        id: 'advert-legacy-001',
+        title: 'Harvest Season Commodity Offer',
+        eyebrow: 'Agricultural Trade',
+        body: 'Direct purchase of verified crop batches from Kogi State.',
+        imageUrl: '/images/adverts/harvest-banner.jpg',
+        // flyerImage intentionally absent — older Mongo record shape
+        ctaLabel: 'View Offer',
+        ctaHref: '/sectors#agriculture',
+        enabled: true,
+        showModal: false,
+        startsAt: '',
+        endsAt: '',
+        sortOrder: 0,
+      };
+
+      // Hash should be deterministic and stable for legacy-shaped records
+      const hash1 = computeAdvertContentHash(legacyAdvert);
+      const hash2 = computeAdvertContentHash({ ...legacyAdvert });
+      expect(hash1).toBe(hash2);
+      expect(hash1).toHaveLength(64); // SHA-256 hex
+
+      // Changing imageUrl must change the hash
+      expect(computeAdvertContentHash({ ...legacyAdvert, imageUrl: '/images/adverts/different.jpg' })).not.toBe(hash1);
+
+      // No flyerImage + showModal: false → no imageRisk
+      const risk = checkAdvertRisk(legacyAdvert);
+      expect(risk.imageRisk).toBe(false);
+      expect(risk.hasRisk).toBe(false);
+    });
+
+    it('legacy record gains imageRisk once flyerImage is set (e.g. after CMS edit)', () => {
+      const legacyAdvert = {
+        title: 'Trade Update',
+        body: 'Seasonal overview of commodity trades.',
+        imageUrl: '/images/adverts/trade-update.jpg',
+      };
+
+      const upgraded = { ...legacyAdvert, flyerImage: '/images/flyers/trade-flyer.png' };
+
+      expect(checkAdvertRisk(legacyAdvert).imageRisk).toBe(false);
+      expect(checkAdvertRisk(upgraded).imageRisk).toBe(true);
+      expect(checkAdvertRisk(upgraded).matchedFields).toContain('flyerImage');
+
+      // Hash changes when flyerImage is added
+      expect(computeAdvertContentHash(upgraded)).not.toBe(computeAdvertContentHash(legacyAdvert));
+    });
+
+    it('legacy record with showModal: true triggers imageRisk even without flyerImage', () => {
+      const modalAdvert = {
+        title: 'Campus Opportunity Brief',
+        body: 'Monthly update from the chapter executives.',
+        imageUrl: '/images/adverts/campus-brief.jpg',
+        showModal: true,
+      };
+
+      const risk = checkAdvertRisk(modalAdvert);
+      expect(risk.imageRisk).toBe(true);
+      expect(risk.matchedFields).toContain('showModal');
+      expect(risk.matchedTerms).toContain("Image content can't be auto-checked.");
+    });
+  });
 });
+
