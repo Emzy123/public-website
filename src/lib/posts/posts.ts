@@ -11,6 +11,7 @@ import {
 import { eq, and, sql, desc, inArray, ilike } from 'drizzle-orm';
 import { sanitizePostHtml } from './sanitizer';
 import { writeAdminAudit } from '@/lib/auth/guards';
+import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
 
 export interface CreatePostInput {
   title: string;
@@ -219,6 +220,21 @@ export async function createPost(input: CreatePostInput): Promise<PostRecord> {
   };
 
   fallbackPostsStore.set(id, record);
+
+  try {
+    const { getMongoDb } = await import('@/lib/db/mongodb');
+    const mongo = await getMongoDb();
+    if (mongo) {
+      await mongo.collection<any>('posts').insertOne({
+        ...record,
+        _id: id,
+      });
+    }
+  } catch {
+    /* Mongo fallback optional */
+  }
+
+  await logPostgresFallbackWrite('post', id);
   return record;
 }
 
@@ -285,6 +301,22 @@ export async function updatePost(input: UpdatePostInput): Promise<PostRecord | n
   };
 
   fallbackPostsStore.set(input.postId, record);
+
+  try {
+    const { getMongoDb } = await import('@/lib/db/mongodb');
+    const mongo = await getMongoDb();
+    if (mongo) {
+      await mongo.collection<any>('posts').updateOne(
+        { _id: input.postId },
+        { $set: record },
+        { upsert: true }
+      );
+    }
+  } catch {
+    /* Mongo fallback optional */
+  }
+
+  await logPostgresFallbackWrite('post', input.postId);
   return record;
 }
 

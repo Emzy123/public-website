@@ -13,6 +13,7 @@ import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified
 import { validateOrigin } from '@/lib/security/origin';
 
 import { sanitizeDatabaseError } from '@/lib/applications/capacity-audit';
+import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
 
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
@@ -271,6 +272,7 @@ export async function POST(request: NextRequest) {
             },
             { upsert: true }
           );
+          await logPostgresFallbackWrite('user', generatedId);
         }
       } catch {
         /* Mongo upsert skipped */

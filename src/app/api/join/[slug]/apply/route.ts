@@ -17,6 +17,7 @@ import {
   submitCampaignApplication,
 } from '@/lib/applications/campaigns';
 import { sanitizeDatabaseError } from '@/lib/db';
+import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
 import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
@@ -308,6 +309,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
       const insert = await db.collection('applications').insertOne(application);
       const applicationId = String(insert.insertedId);
+      await logPostgresFallbackWrite('application', applicationId);
 
       const attached = await attachDocumentsToApplication(docIds, params.slug, role, applicationId);
       if (!attached.ok) {

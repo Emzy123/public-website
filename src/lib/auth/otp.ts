@@ -4,6 +4,7 @@ import { verificationTokens, auditLog } from '@/lib/db/schema';
 import { eq, and, gt, desc } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
+import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
 const MONGO_TOKENS_COLLECTION = 'verification_tokens';
@@ -262,7 +263,7 @@ export async function createEmailOtp(
       const mongodb = await getMongoFallback();
       if (!mongodb) throw new Error('MongoDB client not configured');
       await mongodb.collection(MONGO_TOKENS_COLLECTION).deleteMany({ identifier: normalized });
-      await mongodb.collection(MONGO_TOKENS_COLLECTION).insertOne({
+      const insert = await mongodb.collection(MONGO_TOKENS_COLLECTION).insertOne({
         identifier: normalized,
         tokenHash,
         channel: 'email_otp',
@@ -270,6 +271,7 @@ export async function createEmailOtp(
         attempts: 0,
         createdAt: new Date(),
       });
+      await logPostgresFallbackWrite('verification_token', String(insert.insertedId || tokenHash));
     } catch (mongoErr) {
       console.error('[Auth] Both Postgres and MongoDB token stores failed:', mongoErr);
       throw new Error('Database unavailable to store verification token. Please verify DATABASE_URL or MONGODB_URI.');
@@ -310,7 +312,7 @@ export async function createMagicLink(
       const mongodb = await getMongoFallback();
       if (!mongodb) throw new Error('MongoDB client not configured');
       await mongodb.collection(MONGO_TOKENS_COLLECTION).deleteMany({ identifier: normalized });
-      await mongodb.collection(MONGO_TOKENS_COLLECTION).insertOne({
+      const insert = await mongodb.collection(MONGO_TOKENS_COLLECTION).insertOne({
         identifier: normalized,
         tokenHash,
         channel: 'email_magic_link',
@@ -318,6 +320,7 @@ export async function createMagicLink(
         attempts: 0,
         createdAt: new Date(),
       });
+      await logPostgresFallbackWrite('verification_token', String(insert.insertedId || tokenHash));
     } catch (mongoErr) {
       console.error('[Auth] Both Postgres and MongoDB token stores failed:', mongoErr);
       throw new Error('Database unavailable to store verification token. Please verify DATABASE_URL or MONGODB_URI.');
