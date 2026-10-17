@@ -164,136 +164,143 @@ export async function submitCampaignApplication(
     );
   }
 
-  // Atomically increment campaign application count only if capacity remains and cohort is active
-  const updatedCampaigns = await db
-    .update(campaigns)
-    .set({
-      applicationCount: sql`${campaigns.applicationCount} + 1`,
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(campaigns.id, campaignInfo.campaign.id),
-        eq(campaigns.status, 'active'),
-        or(
-          isNull(campaigns.seatLimit),
-          lt(campaigns.applicationCount, campaigns.seatLimit)
-        )
-      )
-    )
-    .returning();
-
-  if (!updatedCampaigns || updatedCampaigns.length === 0) {
-    throw new Error('Capacity limit reached for this cohort.');
-  }
-
-  const [uni] = await db
-    .select()
-    .from(universities)
-    .where(eq(universities.id, input.universityId));
-
-  if (!uni) {
-    throw new Error('Selected university is not valid or accredited.');
-  }
-
   const normalizedEmail = input.email.trim().toLowerCase();
 
-  // Find or create user
-  let [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, normalizedEmail));
-
-  if (!user) {
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        email: normalizedEmail,
-        phone: input.phone,
+  const result = await db.transaction(async (tx) => {
+    // Atomically increment campaign application count only if capacity remains and cohort is active
+    const updatedCampaigns = await tx
+      .update(campaigns)
+      .set({
+        applicationCount: sql`${campaigns.applicationCount} + 1`,
+        updatedAt: new Date(),
       })
+      .where(
+        and(
+          eq(campaigns.id, campaignInfo.campaign.id),
+          eq(campaigns.status, 'active'),
+          or(
+            isNull(campaigns.seatLimit),
+            lt(campaigns.applicationCount, campaigns.seatLimit)
+          )
+        )
+      )
       .returning();
-    user = newUser;
 
-    // Assign applicant role
-    await db.insert(userRoles).values({
-      userId: user.id,
-      role: 'applicant',
-    });
-  } else {
-    // Ensure applicant role exists if user does not have higher roles
-    const existingRoles = await db
+    if (!updatedCampaigns || updatedCampaigns.length === 0) {
+      throw new Error('Capacity limit reached for this cohort.');
+    }
+
+    const [uni] = await tx
       .select()
-      .from(userRoles)
-      .where(eq(userRoles.userId, user.id));
+      .from(universities)
+      .where(eq(universities.id, input.universityId));
 
-    if (existingRoles.length === 0) {
-      await db.insert(userRoles).values({
+    if (!uni) {
+      throw new Error('Selected university is not valid or accredited.');
+    }
+
+    // Find or create user
+    let [user] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.email, normalizedEmail));
+
+    if (!user) {
+      const [newUser] = await tx
+        .insert(users)
+        .values({
+          email: normalizedEmail,
+          phone: input.phone,
+        })
+        .returning();
+      user = newUser;
+
+      // Assign applicant role
+      await tx.insert(userRoles).values({
         userId: user.id,
         role: 'applicant',
       });
+    } else {
+      // Ensure applicant role exists if user does not have higher roles
+      const existingRoles = await tx
+        .select()
+        .from(userRoles)
+        .where(eq(userRoles.userId, user.id));
+
+      if (existingRoles.length === 0) {
+        await tx.insert(userRoles).values({
+          userId: user.id,
+          role: 'applicant',
+        });
+      }
     }
-  }
 
-  // Insert application
-  const [app] = await db
-    .insert(applications)
-    .values({
-      campaignId: campaignInfo.campaign.id,
-      userId: user.id,
-      universityId: input.universityId,
-      fullName: input.fullName.trim(),
-      email: normalizedEmail,
-      phone: input.phone.trim(),
-      programme: input.programme.trim(),
-      level: input.level,
-      division: input.division,
-      contributionPitch: input.contributionPitch.trim(),
-      photoUrl: input.photoUrl || '/images/avatar-placeholder.png',
-      status: 'submitted',
-    })
-    .returning();
+    // Insert application
+    const [app] = await tx
+      .insert(applications)
+      .values({
+        campaignId: campaignInfo.campaign.id,
+        userId: user.id,
+        universityId: input.universityId,
+        fullName: input.fullName.trim(),
+        email: normalizedEmail,
+        phone: input.phone.trim(),
+        programme: input.programme.trim(),
+        level: input.level,
+        division: input.division,
+        contributionPitch: input.contributionPitch.trim(),
+        photoUrl: input.photoUrl || '/images/avatar-placeholder.png',
+        status: 'submitted',
+      })
+      .returning();
 
-  // Ensure member profile exists in pending state
-  const [profile] = await db
-    .select()
-    .from(memberProfiles)
-    .where(eq(memberProfiles.userId, user.id));
+    // Ensure member profile exists in pending state
+    const [profile] = await tx
+      .select()
+      .from(memberProfiles)
+      .where(eq(memberProfiles.userId, user.id));
 
-  let resolvedChapterId: string | null = null;
-  if (input.chapter && (await validateChapterSlug(input.chapter)).valid) {
-    const [matchedChapter] = await db
-      .select({ id: chapters.id })
-      .from(chapters)
-      .where(eq(chapters.slug, input.chapter.toLowerCase().trim()));
-    if (matchedChapter) resolvedChapterId = matchedChapter.id;
-  }
-  if (!resolvedChapterId && input.universityId) {
-    const [uniChapter] = await db
-      .select({ id: chapters.id })
-      .from(chapters)
-      .where(eq(chapters.universityId, input.universityId));
-    if (uniChapter) resolvedChapterId = uniChapter.id;
-  }
+    let resolvedChapterId: string | null = null;
+    if (input.chapter && (await validateChapterSlug(input.chapter)).valid) {
+      const [matchedChapter] = await tx
+        .select({ id: chapters.id })
+        .from(chapters)
+        .where(eq(chapters.slug, input.chapter.toLowerCase().trim()));
+      if (matchedChapter) resolvedChapterId = matchedChapter.id;
+    }
+    if (!resolvedChapterId && input.universityId) {
+      const [uniChapter] = await tx
+        .select({ id: chapters.id })
+        .from(chapters)
+        .where(eq(chapters.universityId, input.universityId));
+      if (uniChapter) resolvedChapterId = uniChapter.id;
+    }
 
-  if (!profile) {
-    await db.insert(memberProfiles).values({
-      userId: user.id,
-      chapterId: resolvedChapterId,
-      fullName: input.fullName.trim(),
-      programme: input.programme.trim(),
-      level: input.level,
-      division: input.division,
-      status: 'pending',
-      referralCode: generateReferralCode(),
-      referredByCode: input.referredByCode?.trim() || null,
-      profileCompletenessPct: 50,
-    });
-  } else if (resolvedChapterId && !profile.chapterId) {
-    await db
-      .update(memberProfiles)
-      .set({ chapterId: resolvedChapterId, division: input.division, updatedAt: new Date() })
-      .where(eq(memberProfiles.id, profile.id));
-  }
+    if (!profile) {
+      await tx.insert(memberProfiles).values({
+        userId: user.id,
+        chapterId: resolvedChapterId,
+        fullName: input.fullName.trim(),
+        programme: input.programme.trim(),
+        level: input.level,
+        division: input.division,
+        status: 'pending',
+        referralCode: generateReferralCode(),
+        referredByCode: input.referredByCode?.trim() || null,
+        profileCompletenessPct: 50,
+      });
+    } else if (resolvedChapterId && !profile.chapterId) {
+      await tx
+        .update(memberProfiles)
+        .set({ chapterId: resolvedChapterId, division: input.division, updatedAt: new Date() })
+        .where(eq(memberProfiles.id, profile.id));
+    }
+
+    return {
+      applicationId: app.id,
+      campaignName: campaignInfo.campaign.name,
+    };
+  });
 
   // Send transactional email notice
   await sendApplicationNotice({
@@ -303,10 +310,7 @@ export async function submitCampaignApplication(
     division: input.division,
   });
 
-  return {
-    applicationId: app.id,
-    campaignName: campaignInfo.campaign.name,
-  };
+  return result;
 }
 
 async function sendApplicationNotice(opts: {

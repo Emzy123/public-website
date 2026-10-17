@@ -20,6 +20,7 @@ import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
   tryReserveApplicationSlot,
+  releaseApplicationSlot,
   normalizeDivisionSlug,
 } from '@/lib/registration-links';
 import { isValidChapterSlug, validateChapterSlug } from '@/lib/chapters/chapters';
@@ -239,85 +240,97 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       return NextResponse.json({ error: 'This application period has closed.' }, { status: 403 });
     }
 
-    const submittedAt = new Date();
-    const agreementText =
-      "I confirm that my details are accurate and agree to represent SINet's community values. This registration is subject to review before role assignment is confirmed.";
-    const agreementMeta = {
-      acceptedAt: submittedAt.toISOString(),
-      version: 'community-code-of-conduct-v2',
-      textHash: createHash('sha256').update(agreementText).digest('hex'),
-      ip: getClientIp(request),
-      userAgent: request.headers.get('user-agent') || 'unknown',
-    };
+    try {
+      const submittedAt = new Date();
+      const agreementText =
+        "I confirm that my details are accurate and agree to represent SINet's community values. This registration is subject to review before role assignment is confirmed.";
+      const agreementMeta = {
+        acceptedAt: submittedAt.toISOString(),
+        version: 'community-code-of-conduct-v2',
+        textHash: createHash('sha256').update(agreementText).digest('hex'),
+        ip: getClientIp(request),
+        userAgent: request.headers.get('user-agent') || 'unknown',
+      };
 
-    const rawChapter = data.chapter || (typeof body?.chapter === 'string' ? body.chapter.toLowerCase().trim() : undefined);
-    let validChapter: string | null = null;
-    if (rawChapter) {
-      const chapterValidation = await validateChapterSlug(rawChapter);
-      if (chapterValidation.status === 'unreachable') {
-        return NextResponse.json(
-          {
-            error: 'Campus chapter verification is temporarily unavailable. Please try again shortly.',
-            retryable: true,
-          },
-          { status: 503 }
-        );
+      const rawChapter = data.chapter || (typeof body?.chapter === 'string' ? body.chapter.toLowerCase().trim() : undefined);
+      let validChapter: string | null = null;
+      if (rawChapter) {
+        const chapterValidation = await validateChapterSlug(rawChapter);
+        if (chapterValidation.status === 'unreachable') {
+          // Release reserved slot on unreachable chapter verification
+          await releaseApplicationSlot(db, params.slug).catch((err) =>
+            console.error('Failed to release slot on unreachable chapter error:', err)
+          );
+          return NextResponse.json(
+            {
+              error: 'Campus chapter verification is temporarily unavailable. Please try again shortly.',
+              retryable: true,
+            },
+            { status: 503 }
+          );
+        }
+        validChapter = chapterValidation.valid ? (chapterValidation.slug ?? rawChapter.toLowerCase().trim()) : null;
       }
-      validChapter = chapterValidation.valid ? (chapterValidation.slug ?? rawChapter.toLowerCase().trim()) : null;
-    }
 
-    const rawDivision = data.division || (typeof body?.division === 'string' ? body.division.toLowerCase().trim() : undefined);
-    const validDivision = normalizeDivisionSlug(rawDivision);
+      const rawDivision = data.division || (typeof body?.division === 'string' ? body.division.toLowerCase().trim() : undefined);
+      const validDivision = normalizeDivisionSlug(rawDivision);
 
-    const application = {
-      pathway: role,
-      role,
-      chapter: validChapter,
-      division: validDivision,
-      status: 'pending',
-      data,
-      agreementMeta,
-      sourceLinkId: reserved._id,
-      sourceLinkName: reserved.name,
-      sourceLinkSlug: reserved.slug,
-      submittedAt,
-      updatedAt: submittedAt,
-    };
+      const application = {
+        pathway: role,
+        role,
+        chapter: validChapter,
+        division: validDivision,
+        status: 'pending',
+        data,
+        agreementMeta,
+        sourceLinkId: reserved._id,
+        sourceLinkName: reserved.name,
+        sourceLinkSlug: reserved.slug,
+        submittedAt,
+        updatedAt: submittedAt,
+      };
 
-    const insert = await db.collection('applications').insertOne(application);
-    const applicationId = String(insert.insertedId);
+      const insert = await db.collection('applications').insertOne(application);
+      const applicationId = String(insert.insertedId);
 
-    const attached = await attachDocumentsToApplication(docIds, params.slug, role, applicationId);
-    if (!attached.ok) {
-      console.error('Document attach failed after application insert:', attached.error, applicationId);
-    }
+      const attached = await attachDocumentsToApplication(docIds, params.slug, role, applicationId);
+      if (!attached.ok) {
+        console.error('Document attach failed after application insert:', attached.error, applicationId);
+      }
 
-    await db.collection('members').updateOne(
-      { email: data.email.toLowerCase() },
-      {
-        $set: {
-          fullName: data.fullName,
-          email: data.email.toLowerCase(),
-          phone: data.phone,
-          pathway: role,
-          sourceLink: reserved.name,
-          ...(validChapter ? { chapter: validChapter } : {}),
-          ...(validDivision ? { division: validDivision } : {}),
-          updatedAt: submittedAt,
+      await db.collection('members').updateOne(
+        { email: data.email.toLowerCase() },
+        {
+          $set: {
+            fullName: data.fullName,
+            email: data.email.toLowerCase(),
+            phone: data.phone,
+            pathway: role,
+            sourceLink: reserved.name,
+            ...(validChapter ? { chapter: validChapter } : {}),
+            ...(validDivision ? { division: validDivision } : {}),
+            updatedAt: submittedAt,
+          },
+          $setOnInsert: { createdAt: submittedAt, status: 'pending' },
+          $addToSet: { pathways: role },
         },
-        $setOnInsert: { createdAt: submittedAt, status: 'pending' },
-        $addToSet: { pathways: role },
-      },
-      { upsert: true }
-    );
+        { upsert: true }
+      );
 
-    sendApplicationReceivedEmail({
-      email: data.email,
-      name: data.fullName,
-      role: ROLE_LABELS[role] || getRoleDefinition(role).label,
-    }).catch((err) => console.warn('Application received email failed:', err));
+      sendApplicationReceivedEmail({
+        email: data.email,
+        name: data.fullName,
+        role: ROLE_LABELS[role] || getRoleDefinition(role).label,
+      }).catch((err) => console.warn('Application received email failed:', err));
 
-    return NextResponse.json({ success: true, applicationId }, { status: 201 });
+      return NextResponse.json({ success: true, applicationId }, { status: 201 });
+    } catch (insertError) {
+      // Compensating transaction: release reserved slot if application insert fails
+      await releaseApplicationSlot(db, params.slug).catch((err) =>
+        console.error('Failed to release application slot after insert error:', err)
+      );
+      throw insertError;
+    }
   } catch (error) {
     console.error('Campaign application submission error:', error);
     const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;

@@ -343,7 +343,23 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
         body: JSON.stringify(payload),
       });
       const result = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(result.error || 'Unable to submit application.');
+      if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error(result.error || 'This application link is closed and is no longer accepting submissions.');
+        }
+        if (res.status === 409) {
+          throw new Error(result.error || 'This application link has reached its maximum capacity.');
+        }
+        if (res.status === 410) {
+          throw new Error(result.error || 'The deadline for this application period has passed.');
+        }
+        if (res.status === 503) {
+          throw new Error(
+            result.error || 'Chapter verification or service is temporarily unavailable. Please retry in a few moments.'
+          );
+        }
+        throw new Error(result.error || 'Unable to submit application.');
+      }
       setComplete(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to submit application.');

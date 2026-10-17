@@ -161,6 +161,18 @@ export function StudentCampaignApplicationForm({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
+        if (res.status === 403) {
+          throw new Error(data.error || 'This campaign is closed and is no longer accepting applications.');
+        }
+        if (res.status === 409) {
+          throw new Error(data.error || 'Capacity limit reached for this cohort.');
+        }
+        if (res.status === 410) {
+          throw new Error(data.error || 'The application deadline for this cohort has passed.');
+        }
+        if (res.status === 503) {
+          throw new Error(data.error || 'The admissions service is temporarily unavailable. Please retry shortly.');
+        }
         throw new Error(data.error || 'Failed to submit application.');
       }
 

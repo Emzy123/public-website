@@ -129,6 +129,22 @@ export async function tryReserveApplicationSlot(
   return link;
 }
 
+/**
+ * Releases a previously reserved application slot by decrementing applicationCount.
+ * Guards with { applicationCount: { $gt: 0 } } so it never decrements below 0
+ * (compensating transaction for downstream application insert or validation failures).
+ */
+export async function releaseApplicationSlot(
+  db: Awaited<ReturnType<typeof import('@/lib/db/mongodb').getMongoDb>>,
+  slug: string,
+): Promise<boolean> {
+  const result = await db.collection(REGISTRATION_LINKS_COLLECTION).updateOne(
+    { slug, applicationCount: { $gt: 0 } },
+    { $inc: { applicationCount: -1 }, $set: { updatedAt: new Date() } },
+  );
+  return (result.modifiedCount ?? 0) > 0;
+}
+
 export function serialiseRegistrationLink(doc: Document) {
   const link = doc as LinkDoc & { _id: import('mongodb').ObjectId; name: string; slug: string; roles: ApplicationRole[]; createdBy: string; createdAt: Date; updatedAt: Date };
   return {

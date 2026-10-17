@@ -3,6 +3,7 @@
  */
 import {
   tryReserveApplicationSlot,
+  releaseApplicationSlot,
   normalizeDivisionSlug,
   buildJoinRedirectUrl,
   REGISTRATION_LINKS_COLLECTION,
@@ -49,6 +50,44 @@ describe('registration-links service', () => {
       expect(options).toEqual({ returnDocument: 'after' });
     });
 
+    it('enforces capacity precedence (maxApplications > quota > seatLimit) in the atomic filter', async () => {
+      const findOneAndUpdateMock = jest.fn().mockResolvedValue(null);
+
+      const mockDb = {
+        collection: jest.fn().mockReturnValue({
+          findOneAndUpdate: findOneAndUpdateMock,
+        }),
+      } as any;
+
+      await tryReserveApplicationSlot(mockDb, 'precedence-check');
+      const [filter] = findOneAndUpdateMock.mock.calls[0];
+
+      // Verify the filter includes precedence branches:
+      // 1. maxApplications branch
+      // 2. quota branch (when maxApplications is null/undefined)
+      // 3. seatLimit branch (when maxApplications and quota are null/undefined)
+      const capacityClause = filter.$and[1].$or;
+      expect(capacityClause).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            maxApplications: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$maxApplications'] },
+          }),
+          expect.objectContaining({
+            maxApplications: { $in: [null, undefined] },
+            quota: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$quota'] },
+          }),
+          expect.objectContaining({
+            maxApplications: { $in: [null, undefined] },
+            quota: { $in: [null, undefined] },
+            seatLimit: { $gt: 0 },
+            $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$seatLimit'] },
+          }),
+        ])
+      );
+    });
+
     it('returns null when capacity or status filter does not match (slot full or closed)', async () => {
       const findOneAndUpdateMock = jest.fn().mockResolvedValue(null);
 
@@ -60,6 +99,46 @@ describe('registration-links service', () => {
 
       const result = await tryReserveApplicationSlot(mockDb, 'full-drive');
       expect(result).toBeNull();
+    });
+  });
+
+  describe('releaseApplicationSlot compensating transaction', () => {
+    it('atomically decrements applicationCount when > 0', async () => {
+      const updateOneMock = jest.fn().mockResolvedValue({ modifiedCount: 1 });
+      const mockDb = {
+        collection: jest.fn().mockReturnValue({
+          updateOne: updateOneMock,
+        }),
+      } as any;
+
+      const released = await releaseApplicationSlot(mockDb, 'test-link');
+      expect(released).toBe(true);
+
+      const [filter, update] = updateOneMock.mock.calls[0];
+      expect(filter).toEqual({
+        slug: 'test-link',
+        applicationCount: { $gt: 0 },
+      });
+      expect(update).toEqual({
+        $inc: { applicationCount: -1 },
+        $set: { updatedAt: expect.any(Date) },
+      });
+    });
+
+    it('returns false and does not decrement below 0 if applicationCount is already 0', async () => {
+      const updateOneMock = jest.fn().mockResolvedValue({ modifiedCount: 0 });
+      const mockDb = {
+        collection: jest.fn().mockReturnValue({
+          updateOne: updateOneMock,
+        }),
+      } as any;
+
+      const released = await releaseApplicationSlot(mockDb, 'empty-link');
+      expect(released).toBe(false);
+      expect(updateOneMock).toHaveBeenCalledWith(
+        { slug: 'empty-link', applicationCount: { $gt: 0 } },
+        expect.any(Object)
+      );
     });
   });
 

@@ -7,6 +7,7 @@ import { POST } from './route';
 import * as campaignsModule from '@/lib/applications/campaigns';
 import * as mongodbModule from '@/lib/db/mongodb';
 import * as registrationLinksModule from '@/lib/registration-links';
+import * as chaptersModule from '@/lib/chapters/chapters';
 
 jest.mock('@/lib/security/public-form', () => ({
   enforcePublicFormGuards: jest.fn().mockResolvedValue(null),
@@ -255,6 +256,10 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
 
   it('rejects with retryable 503 error when chapter verification data sources are unreachable and chapter is supplied', async () => {
     jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+    jest.spyOn(chaptersModule, 'validateChapterSlug').mockResolvedValue({
+      valid: false,
+      status: 'unreachable',
+    });
 
     const mockStaffLink = {
       _id: 'link-mongo-staff-005',
@@ -265,11 +270,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
     };
 
     const mockCollection = {
-      findOne: jest.fn().mockImplementation((query: any) => {
-        if (query?.slug === 'hq-staff-anywhere') return Promise.resolve(mockStaffLink);
-        // Mongo query for chapter throws simulating DB network failure
-        return Promise.reject(new Error('MongoNetworkError: connection timed out'));
-      }),
+      findOne: jest.fn().mockResolvedValue(mockStaffLink),
       insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-staff-005' }),
       updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
     };
@@ -279,6 +280,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
     } as any);
 
     jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(mockStaffLink as any);
+    const releaseSpy = jest.spyOn(registrationLinksModule, 'releaseApplicationSlot').mockResolvedValue(true);
 
     const req = new NextRequest('http://localhost:3000/api/join/hq-staff-anywhere/apply', {
       method: 'POST',
@@ -296,8 +298,9 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
     expect(json.retryable).toBe(true);
     expect(json.error).toContain('Campus chapter verification is temporarily unavailable');
 
-    // Crucially: no application is inserted with chapter: null
+    // Crucially: no application is inserted with chapter: null and slot is released
     expect(mockCollection.insertOne).not.toHaveBeenCalled();
+    expect(releaseSpy).toHaveBeenCalledWith(expect.anything(), 'hq-staff-anywhere');
   });
 
   it('persists chapter and division to submitCampaignApplication on Postgres campaign link', async () => {
@@ -610,6 +613,41 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       expect(res.status).toBe(409);
       const data = await res.json();
       expect(data.status).toBe('Full');
+    });
+
+    it('releases reserved slot with compensating decrement if application insertion fails', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const mockLink = {
+        _id: 'link-mongo-fail-insert',
+        slug: 'fail-insert-link',
+        name: 'Fail Insert Link',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(mockLink),
+        insertOne: jest.fn().mockRejectedValue(new Error('MongoWriteException: disk full')),
+      };
+
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(mockLink as any);
+      const releaseSpy = jest.spyOn(registrationLinksModule, 'releaseApplicationSlot').mockResolvedValue(true);
+
+      const req = new NextRequest('http://localhost:3000/api/join/fail-insert-link/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'fail-insert-link' } });
+      expect(res.status).toBe(503);
+      expect(releaseSpy).toHaveBeenCalledWith(expect.anything(), 'fail-insert-link');
     });
   });
 });
