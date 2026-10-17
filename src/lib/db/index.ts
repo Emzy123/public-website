@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
-import { sanitizeDatabaseError } from '@/lib/applications/capacity-audit';
+import { sanitizeDatabaseError } from './sanitize-error';
 
 const connectionString =
   process.env.DATABASE_URL?.trim() || 'postgresql://postgres@localhost:5432/sinet_dev';

@@ -3,7 +3,7 @@ import { Verify2faSchema } from '@/lib/schemas/auth.schema';
 import { getSession, createSessionToken, setSessionCookie } from '@/lib/auth/session';
 import { verifyTotpCode } from '@/lib/auth/totp';
 import { writeAdminAudit } from '@/lib/auth/guards';
-import { db } from '@/lib/db';
+import { db, sanitizeDatabaseError } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
@@ -39,48 +39,59 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Find user's secret or global ADMIN_TOTP_SECRET fallback
-  const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
-  const secret = user?.totpSecret || process.env.ADMIN_TOTP_SECRET;
+  try {
+    // Find user's secret or global ADMIN_TOTP_SECRET fallback
+    const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
+    const secret = user?.totpSecret || process.env.ADMIN_TOTP_SECRET;
 
-  if (!secret) {
-    return NextResponse.json(
-      { error: '2FA is not configured for this account. Contact system administrator.' },
-      { status: 400 }
-    );
-  }
+    if (!secret) {
+      return NextResponse.json(
+        { error: '2FA is not configured for this account. Contact system administrator.' },
+        { status: 400 }
+      );
+    }
 
-  const isValid = verifyTotpCode(secret, code);
-  if (!isValid) {
+    const isValid = verifyTotpCode(secret, code);
+    if (!isValid) {
+      await writeAdminAudit({
+        actorId: session.userId,
+        actorEmail: session.email,
+        action: 'admin.2fa_failed',
+        resource: 'auth',
+        ipAddress: ip,
+      }).catch(() => {});
+      return NextResponse.json({ error: 'Invalid 2FA authentication code.' }, { status: 401 });
+    }
+
+    // 2FA successful: elevate session token
+    const elevatedToken = await createSessionToken({
+      ...session,
+      is2faAuthenticated: true,
+    });
+
     await writeAdminAudit({
       actorId: session.userId,
       actorEmail: session.email,
-      action: 'admin.2fa_failed',
+      action: 'admin.2fa_success',
       resource: 'auth',
       ipAddress: ip,
+    }).catch(() => {});
+
+    const response = NextResponse.json({
+      success: true,
+      message: 'Two-factor authentication successful.',
     });
-    return NextResponse.json({ error: 'Invalid 2FA authentication code.' }, { status: 401 });
+
+    setSessionCookie(response, elevatedToken);
+    return response;
+  } catch (error) {
+    console.error('[Verify2FA] Database error during 2FA verification:', error);
+    return NextResponse.json(
+      {
+        error: 'Authentication service temporarily unavailable. Please retry shortly.',
+        reason: sanitizeDatabaseError(error),
+      },
+      { status: 503 }
+    );
   }
-
-  // 2FA successful: elevate session token
-  const elevatedToken = await createSessionToken({
-    ...session,
-    is2faAuthenticated: true,
-  });
-
-  await writeAdminAudit({
-    actorId: session.userId,
-    actorEmail: session.email,
-    action: 'admin.2fa_success',
-    resource: 'auth',
-    ipAddress: ip,
-  });
-
-  const response = NextResponse.json({
-    success: true,
-    message: 'Two-factor authentication successful.',
-  });
-
-  setSessionCookie(response, elevatedToken);
-  return response;
 }

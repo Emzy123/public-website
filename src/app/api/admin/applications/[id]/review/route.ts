@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { requireRole, requireChapterLead, AuthError, ForbiddenError } from '@/lib/auth/guards';
 import { reviewApplicationDecision } from '@/lib/applications/campaigns';
 import { getMongoDb } from '@/lib/db/mongodb';
-import { db } from '@/lib/db';
+import { db, isPostgresConfigured, sanitizeDatabaseError } from '@/lib/db';
 import { applications, chapters } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -107,10 +107,31 @@ export async function POST(
     }
 
     // 2. Fall back to PostgreSQL applications
-    const [app] = await db
-      .select({ id: applications.id, universityId: applications.universityId })
-      .from(applications)
-      .where(eq(applications.id, params.id));
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
+
+    if (isUuid && !isPostgresConfigured()) {
+      return NextResponse.json(
+        { error: 'database_unavailable', reason: 'Primary database is not configured or unavailable' },
+        { status: 503 }
+      );
+    }
+
+    let app;
+    try {
+      const [foundApp] = await db
+        .select({ id: applications.id, universityId: applications.universityId })
+        .from(applications)
+        .where(eq(applications.id, params.id));
+      app = foundApp;
+    } catch (dbErr) {
+      if (isUuid) {
+        return NextResponse.json(
+          { error: 'database_unavailable', reason: sanitizeDatabaseError(dbErr) },
+          { status: 503 }
+        );
+      }
+      throw dbErr;
+    }
 
     if (!app) {
       return NextResponse.json({ error: 'Application record not found.' }, { status: 404 });
@@ -154,6 +175,13 @@ export async function POST(
     }
     if (error instanceof ForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
+    if (isUuid) {
+      return NextResponse.json(
+        { error: 'database_unavailable', reason: sanitizeDatabaseError(error) },
+        { status: 503 }
+      );
     }
     const message = error instanceof Error ? error.message : 'Review action failed';
     console.error('Application review action error:', error);

@@ -16,7 +16,13 @@ type AuditEntry = {
   createdAt: string;
 };
 
-export function AuditLogClient({ initialLogs }: { initialLogs: AuditEntry[] }) {
+export function AuditLogClient({
+  initialLogs,
+  databaseUnavailable = false,
+}: {
+  initialLogs: AuditEntry[];
+  databaseUnavailable?: boolean;
+}) {
   const [logs] = useState<AuditEntry[]>(initialLogs);
   const [actionFilter, setActionFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -64,6 +70,25 @@ export function AuditLogClient({ initialLogs }: { initialLogs: AuditEntry[] }) {
 
       {/* Main Container */}
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
+        {databaseUnavailable && (
+          <div role="alert" className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-900 shadow-sm flex items-start gap-3.5">
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-amber-900">Audit Log Service Temporarily Unavailable</h3>
+              <p className="mt-1 text-xs text-amber-800">
+                The institutional audit trail database is currently unreachable. Please retry shortly.
+              </p>
+              <div className="mt-3">
+                <Link
+                  href="/admin/audit"
+                  className="inline-flex items-center rounded-xl bg-amber-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700"
+                >
+                  Retry Loading Audit Log
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-amber-700">

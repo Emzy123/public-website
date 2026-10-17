@@ -9,11 +9,12 @@
  * Contains NO personal data (no applicant names, emails, phones, or pitch contents).
  */
 
-import { getMongoDb } from '@/lib/db/mongodb';
 import { db } from '@/lib/db';
 import * as schema from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { normalizeStatus } from '@/lib/applications/link-status';
+import { sanitizeDatabaseError } from '@/lib/db/sanitize-error';
+export { sanitizeDatabaseError };
 
 export interface CapacityDriftMismatch {
   store: 'MongoDB' | 'PostgreSQL';
@@ -52,69 +53,6 @@ export interface CapacityAuditResult {
   summary: CapacityAuditSummary;
 }
 
-/**
- * Sanitizes raw database connection/query errors into safe, high-level diagnosis strings.
- * Security guarantee: NEVER exposes URLs, hosts, ports, IP addresses, users, or credentials.
- */
-export function sanitizeDatabaseError(err: unknown): string {
-  if (!err) return 'unknown error';
-  const msg = err instanceof Error ? err.message : String(err);
-  const code = (err as { code?: string | number })?.code ? String((err as { code?: string | number }).code) : '';
-  const combined = `${msg} ${code}`.toLowerCase();
-
-  if (
-    combined.includes('econnrefused') ||
-    combined.includes('connection refused') ||
-    combined.includes('connect refused')
-  ) {
-    return 'connection refused';
-  }
-  if (
-    combined.includes('password authentication failed') ||
-    combined.includes('authentication failed') ||
-    combined.includes('auth failed') ||
-    combined.includes('bad auth') ||
-    combined.includes('28p01') ||
-    combined.includes('28000')
-  ) {
-    return 'auth failed';
-  }
-  if (
-    combined.includes('ssl') ||
-    combined.includes('tls') ||
-    combined.includes('encryption') ||
-    combined.includes('certificate') ||
-    combined.includes('no pg_hba.conf entry')
-  ) {
-    return 'SSL required';
-  }
-  if (
-    combined.includes('etimedout') ||
-    combined.includes('timeout') ||
-    combined.includes('timed out') ||
-    combined.includes('connect_timeout')
-  ) {
-    return 'timeout';
-  }
-  if (
-    combined.includes('enotfound') ||
-    combined.includes('getaddrinfo') ||
-    combined.includes('dns')
-  ) {
-    return 'host not found (DNS lookup failed)';
-  }
-  if (combined.includes('database') && combined.includes('does not exist')) {
-    return 'database does not exist';
-  }
-  if (combined.includes('relation') && combined.includes('does not exist')) {
-    return 'relation or schema missing';
-  }
-  if (combined.includes('too many') || combined.includes('remaining connection slots')) {
-    return 'connection pool exhausted';
-  }
-  return 'connection or query failed';
-}
-
 export async function performCapacityAudit(options: { apply?: boolean } = {}): Promise<CapacityAuditResult> {
   const apply = options.apply === true;
   const countDrift: CapacityDriftMismatch[] = [];
@@ -130,6 +68,7 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
   // 1. Scan MongoDB registration_links
   if (process.env.MONGODB_URI?.trim() || process.env.MONGODB_URI_DIRECT?.trim()) {
     try {
+      const { getMongoDb } = await import('@/lib/db/mongodb');
       const mongo = await getMongoDb();
       const links = await mongo.collection('registration_links').find({}).toArray();
       mongoConnected = true;

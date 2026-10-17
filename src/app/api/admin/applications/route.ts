@@ -198,6 +198,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. Fetch from PostgreSQL applications (if not specifically filtering by Mongo linkId)
+    let postgresUnavailable = false;
     if (!linkIdParam) {
       try {
         const pgStatus =
@@ -248,6 +249,7 @@ export async function GET(request: NextRequest) {
           });
         }
       } catch (pgErr) {
+        postgresUnavailable = true;
         console.warn('[AdminApps] PostgreSQL query skipped/failed:', pgErr);
       }
     }
@@ -264,6 +266,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      postgresUnavailable,
       applications: allApps,
       total: allApps.length,
       counts: {

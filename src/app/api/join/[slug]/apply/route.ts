@@ -16,6 +16,7 @@ import {
   addCampaignWaitlist,
   submitCampaignApplication,
 } from '@/lib/applications/campaigns';
+import { sanitizeDatabaseError } from '@/lib/db';
 import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
@@ -144,7 +145,22 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
         if (msg.includes('deadline')) {
           return NextResponse.json({ error: msg, status: 'Expired' }, { status: 410 });
         }
-        return NextResponse.json({ error: msg }, { status: 400 });
+        if (msg.includes('Selected university is not valid') || msg.includes('not valid or accredited')) {
+          return NextResponse.json({ error: msg }, { status: 400 });
+        }
+        if (msg.includes('not accepting')) {
+          return NextResponse.json({ error: msg }, { status: 403 });
+        }
+        if (msg.includes('not found')) {
+          return NextResponse.json({ error: msg }, { status: 404 });
+        }
+        return NextResponse.json(
+          {
+            error: 'We could not save your application. Please try again.',
+            reason: sanitizeDatabaseError(err),
+          },
+          { status: 503 }
+        );
       }
     }
 
@@ -335,7 +351,11 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
     console.error('Campaign application submission error:', error);
     const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;
     return NextResponse.json(
-      { error: 'We could not save your application. Please try again.', ...(details ? { details } : {}) },
+      {
+        error: 'We could not save your application. Please try again.',
+        reason: sanitizeDatabaseError(error),
+        ...(details ? { details } : {}),
+      },
       { status: 503 }
     );
   }

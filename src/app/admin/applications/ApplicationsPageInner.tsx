@@ -51,6 +51,7 @@ export default function ApplicationsPageInner() {
   const [decisionRemarks, setDecisionRemarks] = useState('');
   const [notifyApplicant, setNotifyApplicant] = useState(true);
   const [feedbackBanner, setFeedbackBanner] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [postgresUnavailable, setPostgresUnavailable] = useState(false);
 
   // Batch selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -77,6 +78,7 @@ export default function ApplicationsPageInner() {
         throw new Error(data.error || 'Failed to load applications');
       }
 
+      setPostgresUnavailable(Boolean(data.postgresUnavailable));
       setApplications(data.applications || []);
       setModerator(data.moderator || null);
     } catch (err) {
@@ -355,6 +357,17 @@ export default function ApplicationsPageInner() {
           </button>
         </div>
       </div>
+
+      {postgresUnavailable && (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-sm flex items-start gap-3">
+          <div className="flex-1">
+            <h4 className="font-semibold text-xs uppercase tracking-wider text-amber-800">Primary Database Unavailable</h4>
+            <p className="text-xs text-amber-700 mt-0.5">
+              The primary PostgreSQL database is currently unreachable. Postgres-backed student cohort applications cannot be retrieved or reviewed until connectivity is restored.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── 2. KPI Overview Card (Matching Reference Design Layout) ── */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm">

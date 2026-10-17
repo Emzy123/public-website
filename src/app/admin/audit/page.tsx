@@ -18,23 +18,31 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminAuditPage() {
-  const rawLogs = await db
-    .select()
-    .from(auditLog)
-    .orderBy(desc(auditLog.createdAt))
-    .limit(100);
+  let formattedLogs: any[] = [];
+  let isUnavailable = false;
 
-  const formattedLogs = rawLogs.map((log) => ({
-    id: log.id,
-    actorId: log.actorId,
-    actorEmail: log.actorEmail,
-    action: log.action,
-    resource: log.resource,
-    resourceId: log.resourceId,
-    metadata: (log.metadata as Record<string, unknown>) || null,
-    ipAddress: log.ipAddress,
-    createdAt: log.createdAt.toISOString(),
-  }));
+  try {
+    const rawLogs = await db
+      .select()
+      .from(auditLog)
+      .orderBy(desc(auditLog.createdAt))
+      .limit(100);
 
-  return <AuditLogClient initialLogs={formattedLogs} />;
+    formattedLogs = rawLogs.map((log) => ({
+      id: log.id,
+      actorId: log.actorId,
+      actorEmail: log.actorEmail,
+      action: log.action,
+      resource: log.resource,
+      resourceId: log.resourceId,
+      metadata: (log.metadata as Record<string, unknown>) || null,
+      ipAddress: log.ipAddress,
+      createdAt: log.createdAt.toISOString(),
+    }));
+  } catch (err) {
+    console.warn('[AdminAuditPage] Failed to fetch audit logs from Postgres:', err);
+    isUnavailable = true;
+  }
+
+  return <AuditLogClient initialLogs={formattedLogs} databaseUnavailable={isUnavailable} />;
 }
