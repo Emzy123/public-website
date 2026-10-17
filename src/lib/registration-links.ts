@@ -88,14 +88,8 @@ export async function tryReserveApplicationSlot(
       },
       {
         $or: [
-          {
-            $and: [
-              { quota: { $in: [null, undefined] } },
-              { maxApplications: { $in: [null, undefined] } },
-              { seatLimit: { $in: [null, undefined] } },
-            ],
-          },
           // Precedence: maxApplications > quota > seatLimit
+          // Positive finite limits (must have capacity remaining):
           {
             maxApplications: { $gt: 0 },
             $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$maxApplications'] },
@@ -110,6 +104,28 @@ export async function tryReserveApplicationSlot(
             quota: { $in: [null, undefined] },
             seatLimit: { $gt: 0 },
             $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$seatLimit'] },
+          },
+          // Unlimited branches (0 or unspecified limit):
+          // 1. maxApplications is explicitly 0 or negative (unlimited override)
+          {
+            maxApplications: { $lte: 0 },
+          },
+          // 2. maxApplications not set, quota explicitly 0 or negative
+          {
+            maxApplications: { $in: [null, undefined] },
+            quota: { $lte: 0 },
+          },
+          // 3. maxApplications not set, quota not set, seatLimit explicitly 0 or negative
+          {
+            maxApplications: { $in: [null, undefined] },
+            quota: { $in: [null, undefined] },
+            seatLimit: { $lte: 0 },
+          },
+          // 4. No limit specified at all (all null/undefined/missing)
+          {
+            maxApplications: { $in: [null, undefined] },
+            quota: { $in: [null, undefined] },
+            seatLimit: { $in: [null, undefined] },
           },
         ],
       },

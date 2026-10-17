@@ -45,12 +45,20 @@ export function parseExpiryDate(expiry: Date | string | null | undefined): Date 
  * - maxApplications: explicit application override limit
  * - quota: MongoDB registration link capacity
  * - seatLimit: PostgreSQL campaign cohort limit
- * Returns null if unbounded (no limit specified).
+ *
+ * Note: A capacity limit of 0 (or negative) explicitly defines "no limit" (unlimited).
+ * Returns null if unbounded (no limit specified or explicitly set to 0).
  */
 export function getEffectiveCapacityLimit(campaign: CampaignLinkLike): number | null {
-  if (campaign.maxApplications != null) return campaign.maxApplications;
-  if (campaign.quota != null) return campaign.quota;
-  if (campaign.seatLimit != null) return campaign.seatLimit;
+  if (campaign.maxApplications != null) {
+    return campaign.maxApplications > 0 ? campaign.maxApplications : null;
+  }
+  if (campaign.quota != null) {
+    return campaign.quota > 0 ? campaign.quota : null;
+  }
+  if (campaign.seatLimit != null) {
+    return campaign.seatLimit > 0 ? campaign.seatLimit : null;
+  }
   return null;
 }
 

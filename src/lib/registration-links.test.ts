@@ -62,10 +62,11 @@ describe('registration-links service', () => {
       await tryReserveApplicationSlot(mockDb, 'precedence-check');
       const [filter] = findOneAndUpdateMock.mock.calls[0];
 
-      // Verify the filter includes precedence branches:
-      // 1. maxApplications branch
-      // 2. quota branch (when maxApplications is null/undefined)
-      // 3. seatLimit branch (when maxApplications and quota are null/undefined)
+      // Verify the filter includes precedence branches and unlimited branches:
+      // 1. maxApplications branch (> 0)
+      // 2. quota branch (> 0 when maxApplications is null/undefined)
+      // 3. seatLimit branch (> 0 when maxApplications and quota are null/undefined)
+      // 4. Unlimited branches (maxApplications <= 0, quota <= 0, seatLimit <= 0, or all null/undefined)
       const capacityClause = filter.$and[1].$or;
       expect(capacityClause).toEqual(
         expect.arrayContaining([
@@ -84,8 +85,61 @@ describe('registration-links service', () => {
             seatLimit: { $gt: 0 },
             $expr: { $lt: [{ $ifNull: ['$applicationCount', 0] }, '$seatLimit'] },
           }),
+          expect.objectContaining({
+            maxApplications: { $lte: 0 },
+          }),
+          expect.objectContaining({
+            maxApplications: { $in: [null, undefined] },
+            quota: { $lte: 0 },
+          }),
+          expect.objectContaining({
+            maxApplications: { $in: [null, undefined] },
+            quota: { $in: [null, undefined] },
+            seatLimit: { $in: [null, undefined] },
+          }),
         ])
       );
+    });
+
+    it('successfully reserves slot and increments applicationCount on an unlimited link', async () => {
+      const mockUpdated = {
+        _id: 'link-unlimited',
+        slug: 'unlimited-link',
+        applicationCount: 51,
+        isOpen: true,
+      };
+      const findOneAndUpdateMock = jest.fn().mockResolvedValue(mockUpdated);
+      const mockDb = {
+        collection: jest.fn().mockReturnValue({
+          findOneAndUpdate: findOneAndUpdateMock,
+          updateOne: jest.fn(),
+        }),
+      } as any;
+
+      const result = await tryReserveApplicationSlot(mockDb, 'unlimited-link');
+      expect(result).toBe(mockUpdated);
+      expect(findOneAndUpdateMock).toHaveBeenCalled();
+    });
+
+    it('treats maxApplications: 0 as unlimited and successfully reserves slot', async () => {
+      const mockUpdated = {
+        _id: 'link-zero',
+        slug: 'zero-max-link',
+        maxApplications: 0,
+        applicationCount: 101,
+        isOpen: true,
+      };
+      const findOneAndUpdateMock = jest.fn().mockResolvedValue(mockUpdated);
+      const mockDb = {
+        collection: jest.fn().mockReturnValue({
+          findOneAndUpdate: findOneAndUpdateMock,
+          updateOne: jest.fn(),
+        }),
+      } as any;
+
+      const result = await tryReserveApplicationSlot(mockDb, 'zero-max-link');
+      expect(result).toBe(mockUpdated);
+      expect(findOneAndUpdateMock).toHaveBeenCalled();
     });
 
     it('returns null when capacity or status filter does not match (slot full or closed)', async () => {

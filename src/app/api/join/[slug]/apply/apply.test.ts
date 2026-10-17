@@ -649,5 +649,81 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       expect(res.status).toBe(503);
       expect(releaseSpy).toHaveBeenCalledWith(expect.anything(), 'fail-insert-link');
     });
+
+    it('accepts submissions when link has no quota or capacity limits (unlimited)', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const unlimitedLink = {
+        _id: 'link-unlimited-mongo',
+        slug: 'unlimited-link',
+        name: 'Unlimited Open Link',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+        applicationCount: 1500,
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(unlimitedLink),
+        insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-unlimited-123' }),
+        updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      };
+
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(unlimitedLink as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/unlimited-link/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'unlimited-link' } });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.applicationId).toBe('app-unlimited-123');
+    });
+
+    it('accepts submissions when link has maxApplications: 0 (explicit unlimited override)', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(null);
+
+      const zeroLimitLink = {
+        _id: 'link-zero-mongo',
+        slug: 'zero-limit-link',
+        name: 'Zero Limit Link',
+        roles: ['staff'],
+        isOpen: true,
+        status: 'open',
+        maxApplications: 0,
+        applicationCount: 200,
+      };
+
+      const mockCollection = {
+        findOne: jest.fn().mockResolvedValue(zeroLimitLink),
+        insertOne: jest.fn().mockResolvedValue({ insertedId: 'app-zero-123' }),
+        updateOne: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+      };
+
+      jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue({
+        collection: jest.fn().mockReturnValue(mockCollection),
+      } as any);
+
+      jest.spyOn(registrationLinksModule, 'tryReserveApplicationSlot').mockResolvedValue(zeroLimitLink as any);
+
+      const req = new NextRequest('http://localhost:3000/api/join/zero-limit-link/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validStaffBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'zero-limit-link' } });
+      expect(res.status).toBe(201);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+    });
   });
 });

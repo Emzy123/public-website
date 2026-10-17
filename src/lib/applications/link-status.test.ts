@@ -139,6 +139,33 @@ describe('Shared Link & Campaign Status Engine (Single Source of Truth)', () => 
       expect(getEffectiveCapacityLimit({})).toBeNull();
       expect(getEffectiveCapacityLimit({ maxApplications: null, quota: null, seatLimit: null })).toBeNull();
     });
+
+    it('treats 0 (or negative) capacity limits explicitly as no limit (unlimited / null)', () => {
+      expect(getEffectiveCapacityLimit({ maxApplications: 0 })).toBeNull();
+      expect(getEffectiveCapacityLimit({ quota: 0 })).toBeNull();
+      expect(getEffectiveCapacityLimit({ seatLimit: 0 })).toBeNull();
+      expect(getEffectiveCapacityLimit({ maxApplications: -1 })).toBeNull();
+
+      // Explicit maxApplications: 0 acts as unlimited override even if quota is set
+      expect(getEffectiveCapacityLimit({ maxApplications: 0, quota: 50 })).toBeNull();
+    });
+
+    it('keeps link open and status Open when maxApplications is 0 or unlimited regardless of applicationCount', () => {
+      const unlimitedZero = {
+        status: 'active',
+        maxApplications: 0,
+        applicationCount: 5000,
+      };
+      expect(isCampaignLinkOpen(unlimitedZero, baseNow)).toBe(true);
+      expect(getCampaignLinkDisplayStatus(unlimitedZero, baseNow)).toBe('Open');
+
+      const unbounded = {
+        status: 'active',
+        applicationCount: 10000,
+      };
+      expect(isCampaignLinkOpen(unbounded, baseNow)).toBe(true);
+      expect(getCampaignLinkDisplayStatus(unbounded, baseNow)).toBe('Open');
+    });
   });
 
   describe('Expiry timezone handling (Africa/Lagos UTC+1 end-of-day for date-only)', () => {

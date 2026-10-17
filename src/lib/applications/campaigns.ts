@@ -86,13 +86,13 @@ export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInf
   } else if (campaign.endsAt && campaign.endsAt <= now) {
     isAccepting = false;
     statusReason = 'The application deadline for this cohort has passed.';
-  } else if (campaign.seatLimit !== null && campaign.applicationCount >= campaign.seatLimit) {
+  } else if (campaign.seatLimit !== null && campaign.seatLimit > 0 && campaign.applicationCount >= campaign.seatLimit) {
     isAccepting = false;
     statusReason = 'Capacity limit reached for this cohort.';
   }
 
   const seatsRemaining =
-    campaign.seatLimit !== null
+    campaign.seatLimit !== null && campaign.seatLimit > 0
       ? Math.max(0, campaign.seatLimit - campaign.applicationCount)
       : null;
 
@@ -180,6 +180,7 @@ export async function submitCampaignApplication(
           eq(campaigns.status, 'active'),
           or(
             isNull(campaigns.seatLimit),
+            eq(campaigns.seatLimit, 0),
             lt(campaigns.applicationCount, campaigns.seatLimit)
           )
         )

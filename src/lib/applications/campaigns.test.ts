@@ -8,7 +8,7 @@ import {
   reviewApplicationDecision,
 } from './campaigns';
 import { db } from '@/lib/db';
-import { universities, users, userRoles, memberProfiles, userBadges } from '@/lib/db/schema';
+import { universities, users, userRoles, memberProfiles, userBadges, campaigns } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('Campaigns & Applications Service Layer', () => {
@@ -107,5 +107,66 @@ describe('Campaigns & Applications Service Layer', () => {
     const badges = await db.select().from(userBadges).where(eq(userBadges.userId, user.id));
     const badgeIds = badges.map((b) => b.badgeId);
     expect(badgeIds).toContain('verified_member');
+  });
+
+  it('enforces atomic capacity under concurrency on Postgres (seat_limit = 1, exactly one succeeds, application_count ends at 1)', async () => {
+    const [testUni] = await db.select().from(universities).limit(1);
+    expect(testUni).toBeDefined();
+
+    const campaignSlug = `concurrency-seat-limit-${Date.now()}`;
+    const [testCampaign] = await db
+      .insert(campaigns)
+      .values({
+        slug: campaignSlug,
+        name: 'Concurrent Seat Limit Test',
+        description: 'Testing atomic Postgres capacity limit under race conditions',
+        seatLimit: 1,
+        applicationCount: 0,
+        status: 'active',
+      })
+      .returning();
+
+    expect(testCampaign).toBeDefined();
+
+    // Fire two submitCampaignApplication calls concurrently
+    const p1 = submitCampaignApplication(campaignSlug, {
+      fullName: 'Concurrent Applicant One',
+      email: `conc-1-${Date.now()}@test.edu.ng`,
+      phone: `+23480${Math.floor(10000000 + Math.random() * 90000000)}`,
+      universityId: testUni.id,
+      programme: 'B.Sc Economics',
+      level: '200',
+      division: 'student_finance',
+      contributionPitch: 'Concurrent applicant pitch 1',
+      codeOfConductAccepted: true,
+    });
+
+    const p2 = submitCampaignApplication(campaignSlug, {
+      fullName: 'Concurrent Applicant Two',
+      email: `conc-2-${Date.now()}@test.edu.ng`,
+      phone: `+23480${Math.floor(10000000 + Math.random() * 90000000)}`,
+      universityId: testUni.id,
+      programme: 'B.Sc Economics',
+      level: '200',
+      division: 'student_finance',
+      contributionPitch: 'Concurrent applicant pitch 2',
+      codeOfConductAccepted: true,
+    });
+
+    const results = await Promise.allSettled([p1, p2]);
+    const succeeded = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
+
+    // Exactly one succeeds, the other gets Full
+    expect(succeeded).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+    expect((failed[0] as PromiseRejectedResult).reason.message).toContain('Capacity limit reached');
+
+    // Confirm application_count in database ends at exactly 1
+    const [refetched] = await db
+      .select({ applicationCount: campaigns.applicationCount })
+      .from(campaigns)
+      .where(eq(campaigns.id, testCampaign.id));
+    expect(refetched.applicationCount).toBe(1);
   });
 });
