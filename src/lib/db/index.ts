@@ -1,6 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { sanitizeDatabaseError } from '@/lib/applications/capacity-audit';
 
 const connectionString =
   process.env.DATABASE_URL?.trim() || 'postgresql://postgres@localhost:5432/sinet_dev';
@@ -21,7 +22,7 @@ const client =
   postgres(connectionString, {
     prepare: false,
     max: process.env.NODE_ENV === 'production' ? 5 : 5,
-    ssl: isLocal ? false : { rejectUnauthorized: false },
+    ssl: isLocal ? false : 'require',
     connect_timeout: 15,
     idle_timeout: 20,
   });
@@ -34,4 +35,4 @@ export const db = drizzle(client, { schema });
 export function isPostgresConfigured(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
-export { client, schema };
+export { client, schema, sanitizeDatabaseError };

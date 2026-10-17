@@ -12,6 +12,8 @@ import { eq } from 'drizzle-orm';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
 
+import { sanitizeDatabaseError } from '@/lib/applications/capacity-audit';
+
 export async function POST(request: NextRequest) {
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });
@@ -56,6 +58,8 @@ export async function POST(request: NextRequest) {
       phone?: string | null;
       status?: string;
       pathway?: string;
+      totpEnabled?: boolean;
+      twoFactorEnabled?: boolean;
     } | null = null;
 
     try {
@@ -63,6 +67,12 @@ export async function POST(request: NextRequest) {
       if (mongo) {
         const doc = await mongo.collection('members').findOne({ email: normalizedEmail });
         if (doc) {
+          const totp =
+            typeof doc.totpEnabled === 'boolean'
+              ? doc.totpEnabled
+              : typeof doc.twoFactorEnabled === 'boolean'
+              ? doc.twoFactorEnabled
+              : undefined;
           mongoMember = {
             _id: doc._id,
             fullName: doc.fullName as string,
@@ -70,6 +80,8 @@ export async function POST(request: NextRequest) {
             phone: (doc.phone as string) || null,
             status: (doc.status as string) || 'active',
             pathway: (doc.pathway as string) || 'member',
+            totpEnabled: totp,
+            twoFactorEnabled: totp,
           };
         } else {
           // Check if user has an approved application
@@ -79,6 +91,16 @@ export async function POST(request: NextRequest) {
           });
           if (app) {
             const appData = (app.data as Record<string, unknown>) || {};
+            const appTotp =
+              typeof app.totpEnabled === 'boolean'
+                ? app.totpEnabled
+                : typeof appData.totpEnabled === 'boolean'
+                ? (appData.totpEnabled as boolean)
+                : typeof app.twoFactorEnabled === 'boolean'
+                ? app.twoFactorEnabled
+                : typeof appData.twoFactorEnabled === 'boolean'
+                ? (appData.twoFactorEnabled as boolean)
+                : undefined;
             mongoMember = {
               _id: app._id,
               fullName: (appData.fullName as string) || (app.fullName as string) || normalizedEmail.split('@')[0],
@@ -86,6 +108,8 @@ export async function POST(request: NextRequest) {
               phone: (appData.phone as string) || (app.phone as string) || null,
               status: 'active',
               pathway: (app.pathway as string) || (app.role as string) || 'member',
+              totpEnabled: appTotp,
+              twoFactorEnabled: appTotp,
             };
           }
         }
@@ -102,6 +126,7 @@ export async function POST(request: NextRequest) {
     } | null = null;
     let roles: UserRole[] = [];
     let chapterIds: string[] = [];
+    let postgresError: unknown = null;
 
     // 2. Try PostgreSQL users table if configured
     if (isPostgresConfigured()) {
@@ -184,18 +209,39 @@ export async function POST(request: NextRequest) {
           totpEnabled: user.totpEnabled,
         };
       } catch (pgErr) {
+        postgresError = pgErr;
         console.warn('[VerifyOtp] PostgreSQL user lookup failed, using resilient fallback:', pgErr);
       }
+    } else {
+      postgresError = 'DATABASE_URL not set';
     }
 
     // 3. Fallback when PostgreSQL is offline or user exists in MongoDB
     if (!userRecord) {
+      // P0 Security Item 1: If 2FA status cannot be determined or if user has 2FA enabled,
+      // fail closed with 503. Never issue a session in that state.
+      const isKnownNo2fa =
+        mongoMember &&
+        (mongoMember.totpEnabled === false || mongoMember.twoFactorEnabled === false);
+
+      if (!isKnownNo2fa) {
+        return NextResponse.json(
+          {
+            error: 'Sign-in temporarily unavailable',
+            message: 'Sign-in temporarily unavailable. Please try again later or contact support.',
+            reason: sanitizeDatabaseError(postgresError),
+          },
+          { status: 503 }
+        );
+      }
+
+      // P0 Security Item 2: Fallback JWTs must NEVER carry admin or elevated roles.
+      // Default to basic 'member' role.
       const generatedId = mongoMember?._id
         ? String(mongoMember._id)
         : `00000000-0000-0000-0000-${crypto.createHash('md5').update(normalizedEmail).digest('hex').slice(0, 12)}`;
 
-      const assignedRole: UserRole = isConfiguredAdmin ? 'super_admin' : 'member';
-      roles = [assignedRole];
+      roles = ['member'];
       chapterIds = [];
 
       userRecord = {
