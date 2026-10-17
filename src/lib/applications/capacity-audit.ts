@@ -35,17 +35,84 @@ export interface ZeroLimitEntry {
   note: string;
 }
 
+export interface CapacityAuditSummary {
+  mongoLinksScanned: number;
+  postgresCampaignsScanned: number;
+  mismatchCount: number;
+  zeroLimitCount: number;
+  mongoConnected: boolean;
+  postgresConnected: boolean;
+  mongoError?: string;
+  postgresError?: string;
+}
+
 export interface CapacityAuditResult {
   countDrift: CapacityDriftMismatch[];
   zeroLimits: ZeroLimitEntry[];
-  summary: {
-    mongoLinksScanned: number;
-    postgresCampaignsScanned: number;
-    mismatchCount: number;
-    zeroLimitCount: number;
-    mongoConnected: boolean;
-    postgresConnected: boolean;
-  };
+  summary: CapacityAuditSummary;
+}
+
+/**
+ * Sanitizes raw database connection/query errors into safe, high-level diagnosis strings.
+ * Security guarantee: NEVER exposes URLs, hosts, ports, IP addresses, users, or credentials.
+ */
+export function sanitizeDatabaseError(err: unknown): string {
+  if (!err) return 'unknown error';
+  const msg = err instanceof Error ? err.message : String(err);
+  const code = (err as { code?: string | number })?.code ? String((err as { code?: string | number }).code) : '';
+  const combined = `${msg} ${code}`.toLowerCase();
+
+  if (
+    combined.includes('econnrefused') ||
+    combined.includes('connection refused') ||
+    combined.includes('connect refused')
+  ) {
+    return 'connection refused';
+  }
+  if (
+    combined.includes('password authentication failed') ||
+    combined.includes('authentication failed') ||
+    combined.includes('auth failed') ||
+    combined.includes('bad auth') ||
+    combined.includes('28p01') ||
+    combined.includes('28000')
+  ) {
+    return 'auth failed';
+  }
+  if (
+    combined.includes('ssl') ||
+    combined.includes('tls') ||
+    combined.includes('encryption') ||
+    combined.includes('certificate') ||
+    combined.includes('no pg_hba.conf entry')
+  ) {
+    return 'SSL required';
+  }
+  if (
+    combined.includes('etimedout') ||
+    combined.includes('timeout') ||
+    combined.includes('timed out') ||
+    combined.includes('connect_timeout')
+  ) {
+    return 'timeout';
+  }
+  if (
+    combined.includes('enotfound') ||
+    combined.includes('getaddrinfo') ||
+    combined.includes('dns')
+  ) {
+    return 'host not found (DNS lookup failed)';
+  }
+  if (combined.includes('database') && combined.includes('does not exist')) {
+    return 'database does not exist';
+  }
+  if (combined.includes('relation') && combined.includes('does not exist')) {
+    return 'relation or schema missing';
+  }
+  if (combined.includes('too many') || combined.includes('remaining connection slots')) {
+    return 'connection pool exhausted';
+  }
+  return 'connection or query failed';
 }
 
 export async function performCapacityAudit(options: { apply?: boolean } = {}): Promise<CapacityAuditResult> {
@@ -57,14 +124,15 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
   let postgresCampaignsScanned = 0;
   let mongoConnected = false;
   let postgresConnected = false;
+  let mongoError: string | undefined;
+  let postgresError: string | undefined;
 
   // 1. Scan MongoDB registration_links
   if (process.env.MONGODB_URI?.trim() || process.env.MONGODB_URI_DIRECT?.trim()) {
     try {
       const mongo = await getMongoDb();
-      mongoConnected = true;
-
       const links = await mongo.collection('registration_links').find({}).toArray();
+      mongoConnected = true;
       mongoLinksScanned = links.length;
 
       for (const link of links) {
@@ -144,15 +212,19 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
         }
       }
     } catch (err) {
-      console.warn('[CapacityAudit] MongoDB query failed:', err instanceof Error ? err.message : err);
+      mongoConnected = false;
+      mongoError = sanitizeDatabaseError(err);
+      console.warn('[CapacityAudit] MongoDB query failed:', mongoError);
     }
+  } else {
+    mongoError = 'MONGODB_URI not set';
   }
 
   // 2. Scan PostgreSQL campaigns
   if (process.env.DATABASE_URL?.trim()) {
     try {
-      postgresConnected = true;
       const campaigns = await db.select().from(schema.campaigns);
+      postgresConnected = true;
       postgresCampaignsScanned = campaigns.length;
 
       for (const campaign of campaigns) {
@@ -200,8 +272,12 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
         }
       }
     } catch (err) {
-      console.warn('[CapacityAudit] PostgreSQL query failed:', err instanceof Error ? err.message : err);
+      postgresConnected = false;
+      postgresError = sanitizeDatabaseError(err);
+      console.warn('[CapacityAudit] PostgreSQL query failed:', postgresError);
     }
+  } else {
+    postgresError = 'DATABASE_URL not set';
   }
 
   return {
@@ -214,6 +290,8 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
       zeroLimitCount: zeroLimits.length,
       mongoConnected,
       postgresConnected,
+      ...(mongoError ? { mongoError } : {}),
+      ...(postgresError ? { postgresError } : {}),
     },
   };
 }

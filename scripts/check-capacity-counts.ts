@@ -83,6 +83,16 @@ export async function runCliAudit(options: { apply?: boolean } = {}) {
     );
   }
 
+  console.log('\n---------------------------------------------------------------');
+  console.log('STORE CONNECTION STATUS');
+  console.log('---------------------------------------------------------------');
+  console.log(
+    `- MongoDB:    ${result.summary.mongoConnected ? `CONNECTED (${result.summary.mongoLinksScanned} link(s) scanned)` : `FAILED / SKIPPED (${result.summary.mongoError || 'error'})`}`
+  );
+  console.log(
+    `- PostgreSQL: ${result.summary.postgresConnected ? `CONNECTED (${result.summary.postgresCampaignsScanned} campaign(s) scanned)` : `FAILED / SKIPPED (${result.summary.postgresError || 'error'})`}`
+  );
+
   console.log('===============================================================\n');
   return result;
 }
