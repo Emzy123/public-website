@@ -167,6 +167,25 @@ export async function submitCampaignApplication(
   const normalizedEmail = input.email.trim().toLowerCase();
 
   const result = await db.transaction(async (tx) => {
+    // Self-healing: if campaign applicationCount is NULL, initialize it atomically with the real application count
+    const [uninitialized] = await tx
+      .select({ id: campaigns.id })
+      .from(campaigns)
+      .where(and(eq(campaigns.id, campaignInfo.campaign.id), isNull(campaigns.applicationCount)));
+
+    if (uninitialized) {
+      const [countRow] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(applications)
+        .where(eq(applications.campaignId, campaignInfo.campaign.id));
+      const realCount = countRow?.count ?? 0;
+
+      await tx
+        .update(campaigns)
+        .set({ applicationCount: realCount, updatedAt: new Date() })
+        .where(and(eq(campaigns.id, campaignInfo.campaign.id), isNull(campaigns.applicationCount)));
+    }
+
     // Atomically increment campaign application count only if capacity remains and cohort is active
     const updatedCampaigns = await tx
       .update(campaigns)

@@ -26,6 +26,7 @@ describe('registration-links service', () => {
 
       const mockDb = {
         collection: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
           findOneAndUpdate: findOneAndUpdateMock,
           updateOne: updateOneMock,
         }),
@@ -55,6 +56,7 @@ describe('registration-links service', () => {
 
       const mockDb = {
         collection: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
           findOneAndUpdate: findOneAndUpdateMock,
         }),
       } as any;
@@ -111,6 +113,7 @@ describe('registration-links service', () => {
       const findOneAndUpdateMock = jest.fn().mockResolvedValue(mockUpdated);
       const mockDb = {
         collection: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
           findOneAndUpdate: findOneAndUpdateMock,
           updateOne: jest.fn(),
         }),
@@ -132,6 +135,7 @@ describe('registration-links service', () => {
       const findOneAndUpdateMock = jest.fn().mockResolvedValue(mockUpdated);
       const mockDb = {
         collection: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
           findOneAndUpdate: findOneAndUpdateMock,
           updateOne: jest.fn(),
         }),
@@ -142,11 +146,72 @@ describe('registration-links service', () => {
       expect(findOneAndUpdateMock).toHaveBeenCalled();
     });
 
+    it('self-healing: atomically initializes missing applicationCount to real application count using $exists: false guard', async () => {
+      const mockUninitializedDoc = {
+        _id: 'link-missing-count',
+        slug: 'healing-link',
+        isOpen: true,
+        // applicationCount is missing
+      };
+
+      const mockHealedAndReservedDoc = {
+        ...mockUninitializedDoc,
+        applicationCount: 4, // real was 3, + 1 reserved = 4
+      };
+
+      const findOneMock = jest.fn().mockResolvedValue(mockUninitializedDoc);
+      const countDocumentsMock = jest.fn().mockResolvedValue(3); // 3 applications exist
+      const updateOneMock = jest.fn().mockResolvedValue({ modifiedCount: 1 });
+      const findOneAndUpdateMock = jest.fn().mockResolvedValue(mockHealedAndReservedDoc);
+
+      const mockDb = {
+        collection: jest.fn().mockImplementation((name: string) => {
+          if (name === REGISTRATION_LINKS_COLLECTION) {
+            return {
+              findOne: findOneMock,
+              updateOne: updateOneMock,
+              findOneAndUpdate: findOneAndUpdateMock,
+            };
+          }
+          if (name === 'applications') {
+            return {
+              countDocuments: countDocumentsMock,
+            };
+          }
+          return {};
+        }),
+      } as any;
+
+      const result = await tryReserveApplicationSlot(mockDb, 'healing-link');
+
+      expect(result).toBe(mockHealedAndReservedDoc);
+      // Verify findOne checked for missing/null applicationCount
+      expect(findOneMock).toHaveBeenCalledWith({
+        slug: 'healing-link',
+        $or: [{ applicationCount: { $exists: false } }, { applicationCount: null }],
+      });
+      // Verify countDocuments counted applications for this link
+      expect(countDocumentsMock).toHaveBeenCalled();
+      // Verify atomic updateOne guarded with $exists: false / null and set to realCount
+      expect(updateOneMock).toHaveBeenCalledWith(
+        {
+          slug: 'healing-link',
+          $or: [{ applicationCount: { $exists: false } }, { applicationCount: null }],
+        },
+        expect.objectContaining({
+          $set: expect.objectContaining({ applicationCount: 3 }),
+        })
+      );
+      // Verify normal atomic increment proceeded
+      expect(findOneAndUpdateMock).toHaveBeenCalled();
+    });
+
     it('returns null when capacity or status filter does not match (slot full or closed)', async () => {
       const findOneAndUpdateMock = jest.fn().mockResolvedValue(null);
 
       const mockDb = {
         collection: jest.fn().mockReturnValue({
+          findOne: jest.fn().mockResolvedValue(null),
           findOneAndUpdate: findOneAndUpdateMock,
         }),
       } as any;

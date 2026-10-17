@@ -72,6 +72,36 @@ export async function tryReserveApplicationSlot(
   slug: string,
   now: Date = new Date(),
 ): Promise<(LinkDoc & { _id: import('mongodb').ObjectId }) | null> {
+  // Self-healing: if link has no applicationCount field, count actual applications and initialize it atomically
+  const linkCollection = db.collection(REGISTRATION_LINKS_COLLECTION);
+  if (typeof linkCollection.findOne === 'function') {
+    const uninitialized = await linkCollection.findOne({
+      slug,
+      $or: [{ applicationCount: { $exists: false } }, { applicationCount: null }],
+    });
+
+    if (uninitialized) {
+      const realCount = await db.collection('applications').countDocuments({
+        $or: [
+          { sourceLinkId: uninitialized._id },
+          { sourceLinkId: String(uninitialized._id) },
+          { sourceLinkSlug: slug },
+        ],
+      });
+
+      // Guard with $exists: false (or null) so this atomic backfill only executes once across concurrent requests
+      await linkCollection.updateOne(
+        {
+          slug,
+          $or: [{ applicationCount: { $exists: false } }, { applicationCount: null }],
+        },
+        {
+          $set: { applicationCount: realCount, updatedAt: now },
+        }
+      );
+    }
+  }
+
   const dateOnlyToday = now.toISOString().slice(0, 10);
   const filter: Record<string, unknown> = {
     slug,

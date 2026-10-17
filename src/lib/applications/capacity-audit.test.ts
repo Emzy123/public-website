@@ -1,18 +1,18 @@
 /**
  * @jest-environment node
  */
-import { runAudit } from '../../../scripts/check-capacity-counts';
-import { MongoClient } from 'mongodb';
+import { performCapacityAudit } from './capacity-audit';
+import { getMongoDb } from '@/lib/db/mongodb';
 
-jest.mock('mongodb');
-jest.mock('postgres', () => {
-  return jest.fn();
-});
-jest.mock('drizzle-orm/postgres-js', () => ({
-  drizzle: jest.fn(),
+jest.mock('@/lib/db/mongodb');
+jest.mock('@/lib/db', () => ({
+  db: {
+    select: jest.fn(),
+    update: jest.fn(),
+  },
 }));
 
-describe('Capacity & Drift Audit Engine (scripts/check-capacity-counts.ts)', () => {
+describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts)', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -75,17 +75,12 @@ describe('Capacity & Drift Audit Engine (scripts/check-capacity-counts.ts)', () 
     });
 
     const mockDb = { collection: mockCollection };
-    const mockClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      db: jest.fn().mockReturnValue(mockDb),
-      close: jest.fn().mockResolvedValue(undefined),
-    };
-    (MongoClient as unknown as jest.Mock).mockImplementation(() => mockClient);
+    (getMongoDb as jest.Mock).mockResolvedValue(mockDb);
 
-    const result = await runAudit({ apply: false });
+    const result = await performCapacityAudit({ apply: false });
 
-    expect(result.driftMismatches).toHaveLength(1);
-    expect(result.driftMismatches[0]).toEqual({
+    expect(result.countDrift).toHaveLength(1);
+    expect(result.countDrift[0]).toEqual({
       store: 'MongoDB',
       id: 'link-1',
       slug: 'campus-drive',
@@ -123,16 +118,11 @@ describe('Capacity & Drift Audit Engine (scripts/check-capacity-counts.ts)', () 
       }),
     };
 
-    const mockClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      db: jest.fn().mockReturnValue(mockDb),
-      close: jest.fn().mockResolvedValue(undefined),
-    };
-    (MongoClient as unknown as jest.Mock).mockImplementation(() => mockClient);
+    (getMongoDb as jest.Mock).mockResolvedValue(mockDb);
 
-    const result = await runAudit({ apply: true });
+    const result = await performCapacityAudit({ apply: true });
 
-    expect(result.driftMismatches).toHaveLength(1);
+    expect(result.countDrift).toHaveLength(1);
     expect(mockUpdateOne).toHaveBeenCalledWith(
       { _id: 'link-drift' },
       expect.objectContaining({
@@ -178,21 +168,18 @@ describe('Capacity & Drift Audit Engine (scripts/check-capacity-counts.ts)', () 
             find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue(mockLinks) }),
           };
         }
-        return { countDocuments: jest.fn().mockImplementation((q: any) => {
-          if (q.$or.some((c: any) => c.sourceLinkSlug === 'zero-max-link')) return 10;
-          return 20;
-        }) };
+        return {
+          countDocuments: jest.fn().mockImplementation((q: any) => {
+            if (q.$or.some((c: any) => c.sourceLinkSlug === 'zero-max-link')) return 10;
+            return 20;
+          }),
+        };
       }),
     };
 
-    const mockClient = {
-      connect: jest.fn().mockResolvedValue(undefined),
-      db: jest.fn().mockReturnValue(mockDb),
-      close: jest.fn().mockResolvedValue(undefined),
-    };
-    (MongoClient as unknown as jest.Mock).mockImplementation(() => mockClient);
+    (getMongoDb as jest.Mock).mockResolvedValue(mockDb);
 
-    const result = await runAudit({ apply: false });
+    const result = await performCapacityAudit({ apply: false });
 
     expect(result.zeroLimits).toHaveLength(2);
     expect(result.zeroLimits).toEqual(

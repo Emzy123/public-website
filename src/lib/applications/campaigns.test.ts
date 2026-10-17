@@ -8,8 +8,8 @@ import {
   reviewApplicationDecision,
 } from './campaigns';
 import { db } from '@/lib/db';
-import { universities, users, userRoles, memberProfiles, userBadges, campaigns } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { universities, users, userRoles, memberProfiles, userBadges, campaigns, applications } from '@/lib/db/schema';
+import { eq, sql } from 'drizzle-orm';
 
 describe('Campaigns & Applications Service Layer', () => {
   it('correctly resolves active evergreen campaign status', async () => {
@@ -168,5 +168,94 @@ describe('Campaigns & Applications Service Layer', () => {
       .from(campaigns)
       .where(eq(campaigns.id, testCampaign.id));
     expect(refetched.applicationCount).toBe(1);
+  });
+
+  it('self-healing: atomically initializes application_count from actual applications when NULL on Postgres', async () => {
+    // Allow testing NULL column value by temporarily relaxing NOT NULL constraint on test DB
+    await db.execute(sql`ALTER TABLE campaigns ALTER COLUMN application_count DROP NOT NULL`);
+    try {
+      const [testUni] = await db.select().from(universities).limit(1);
+      expect(testUni).toBeDefined();
+
+      const campaignSlug = `self-healing-pg-${Date.now()}`;
+      const [testCampaign] = await db
+        .insert(campaigns)
+        .values({
+          slug: campaignSlug,
+          name: 'Self-Healing Null Count Campaign',
+          description: 'Tests self-healing initialization when application_count is NULL',
+          seatLimit: 10,
+          applicationCount: sql`NULL`, // explicitly uninitialized / NULL
+          status: 'active',
+        })
+        .returning();
+
+      // Insert 2 preexisting application records directly into applications
+      const [user1] = await db
+        .insert(users)
+        .values({ email: `preexisting-1-${Date.now()}@test.edu.ng` })
+        .returning();
+      const [user2] = await db
+        .insert(users)
+        .values({ email: `preexisting-2-${Date.now()}@test.edu.ng` })
+        .returning();
+
+      await db.insert(applications).values([
+        {
+          campaignId: testCampaign.id,
+          userId: user1.id,
+          universityId: testUni.id,
+          fullName: 'Preexisting Applicant 1',
+          email: user1.email,
+          phone: '+2348011111111',
+          programme: 'Economics',
+          level: '100',
+          division: 'student_finance',
+          contributionPitch: 'Pitch 1',
+          photoUrl: 'https://example.com/photo1.jpg',
+          status: 'submitted',
+        },
+        {
+          campaignId: testCampaign.id,
+          userId: user2.id,
+          universityId: testUni.id,
+          fullName: 'Preexisting Applicant 2',
+          email: user2.email,
+          phone: '+2348022222222',
+          programme: 'Economics',
+          level: '100',
+          division: 'student_finance',
+          contributionPitch: 'Pitch 2',
+          photoUrl: 'https://example.com/photo2.jpg',
+          status: 'submitted',
+        },
+      ]);
+
+      // Submit a new application through the service layer
+      const result = await submitCampaignApplication(campaignSlug, {
+        fullName: 'New Applicant',
+        email: `new-applicant-${Date.now()}@test.edu.ng`,
+        phone: `+23480${Math.floor(10000000 + Math.random() * 90000000)}`,
+        universityId: testUni.id,
+        programme: 'Economics',
+        level: '200',
+        division: 'student_finance',
+        contributionPitch: 'Pitch for self-healing test',
+        codeOfConductAccepted: true,
+      });
+
+      expect(result.applicationId).toBeDefined();
+
+      // Verify self-healing set the count to 2 (preexisting) + 1 (new) = 3
+      const [refetched] = await db
+        .select({ applicationCount: campaigns.applicationCount })
+        .from(campaigns)
+        .where(eq(campaigns.id, testCampaign.id));
+      expect(refetched.applicationCount).toBe(3);
+    } finally {
+      // Clean up any remaining NULL records before restoring NOT NULL constraint
+      await db.execute(sql`UPDATE campaigns SET application_count = 0 WHERE application_count IS NULL`);
+      await db.execute(sql`ALTER TABLE campaigns ALTER COLUMN application_count SET NOT NULL`);
+    }
   });
 });
