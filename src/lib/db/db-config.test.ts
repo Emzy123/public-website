@@ -14,8 +14,8 @@ describe('Postgres TLS verification configuration', () => {
     delete global.__postgresClient;
   });
 
-  it('proves non-local connections enforce verified TLS without rejectUnauthorized: false', () => {
-    process.env.DATABASE_URL = 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=require';
+  it('proves non-local connections enforce verified TLS with rejectUnauthorized: true', () => {
+    process.env.DATABASE_URL = 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=verify-full';
 
     const mockPostgres = jest.fn().mockReturnValue({});
     jest.doMock('postgres', () => mockPostgres);
@@ -28,18 +28,32 @@ describe('Postgres TLS verification configuration', () => {
     expect(mockPostgres).toHaveBeenCalled();
     const options = mockPostgres.mock.calls[0][1];
 
-    // Must NOT disable certificate verification
-    if (typeof options.ssl === 'object' && options.ssl !== null) {
-      expect(options.ssl.rejectUnauthorized).not.toBe(false);
-    }
-    // Must be verified TLS (e.g. 'require', true, or { rejectUnauthorized: true })
-    const isVerifiedTls =
-      options.ssl === 'require' ||
-      options.ssl === 'verify-full' ||
-      options.ssl === true ||
-      (typeof options.ssl === 'object' && options.ssl?.rejectUnauthorized === true);
+    // Certificate verification must be strictly ON ({ rejectUnauthorized: true })
+    expect(typeof options.ssl).toBe('object');
+    expect(options.ssl).not.toBeNull();
+    expect(options.ssl.rejectUnauthorized).toBe(true);
+    expect(options.ssl).not.toBe('require');
+  });
 
-    expect(isVerifiedTls).toBe(true);
+  it('supports custom CA certificate via DATABASE_CA_CERT', () => {
+    process.env.DATABASE_URL = 'postgresql://user:secret@custom-host.internal:5432/neondb';
+    process.env.DATABASE_CA_CERT = '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----';
+
+    const mockPostgres = jest.fn().mockReturnValue({});
+    jest.doMock('postgres', () => mockPostgres);
+    jest.doMock('drizzle-orm/postgres-js', () => ({
+      drizzle: jest.fn().mockReturnValue({}),
+    }));
+
+    require('./index');
+
+    expect(mockPostgres).toHaveBeenCalled();
+    const options = mockPostgres.mock.calls[0][1];
+
+    expect(options.ssl).toEqual({
+      rejectUnauthorized: true,
+      ca: '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----',
+    });
   });
 
   it('keeps local dev connections unencrypted (ssl: false)', () => {

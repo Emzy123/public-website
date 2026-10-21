@@ -64,4 +64,54 @@ describe('GET /api/auth/me resilience', () => {
     expect(body.user.profile).not.toBeNull();
     expect(body.user.profile.fullName).toBe('Sinet Test Member');
   });
+
+  it('ensures roles and chapterIds in degraded response come only from verified JWT, never from Mongo document', async () => {
+    // Verified session from JWT carrying strictly member role and specific chapterId
+    jest.spyOn(sessionModule, 'getSession').mockResolvedValue({
+      userId: 'user-456',
+      email: 'fallback-member@sinet.africa',
+      phone: null,
+      roles: ['member'],
+      chapterIds: [],
+      is2faAuthenticated: false,
+      lastActive: Date.now(),
+    });
+
+    // Postgres is down
+    (db.select as jest.Mock).mockImplementation(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    });
+
+    // Mongo document carries elevated admin role / pathway / permissions
+    const mockFindOne = jest.fn().mockResolvedValue({
+      _id: 'mongo-id-456',
+      fullName: 'Elevated Mongo User',
+      email: 'fallback-member@sinet.africa',
+      role: 'super_admin',
+      roles: ['super_admin', 'admin', 'chapter_lead'],
+      chapterIds: ['unauthorized-chapter-access'],
+      pathway: 'super_admin',
+      status: 'active',
+    });
+    (getMongoDb as jest.Mock).mockResolvedValue({
+      collection: jest.fn().mockReturnValue({
+        findOne: mockFindOne,
+      }),
+    });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.authenticated).toBe(true);
+    expect(body.degraded).toBe(true);
+
+    // Roles and chapterIds must reflect verified JWT ONLY
+    expect(body.user.roles).toEqual(['member']);
+    expect(body.user.roles).not.toContain('super_admin');
+    expect(body.user.roles).not.toContain('admin');
+    expect(body.user.roles).not.toContain('chapter_lead');
+    expect(body.user.chapterIds).toEqual([]);
+    expect(body.user.chapterIds).not.toContain('unauthorized-chapter-access');
+  });
 });

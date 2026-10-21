@@ -166,20 +166,103 @@ describe('POST /api/auth/verify-otp fallback security', () => {
     expect(res.cookies.get(MEMBER_SESSION_COOKIE)?.value).toBeTruthy();
   });
 
-  it('ensures fallback JWT defaults to member role and NEVER carries admin role even for ADMIN_EMAIL', async () => {
+  it('refuses login with 503 for stale-Mongo case: user has Postgres record but Mongo claims totpEnabled: false', async () => {
     // Postgres is down
     (db.select as jest.Mock).mockImplementation(() => {
       throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
     });
 
-    // Known not to have 2FA in Mongo, but email matches ADMIN_EMAIL
+    // Stale Mongo doc: hasPostgresRecord is true (or has postgresId), but totpEnabled is false
+    const mockFindOne = jest.fn().mockResolvedValue({
+      _id: 'mongo-stale-user',
+      email: 'stale-user@example.com',
+      fullName: 'Stale User',
+      totpEnabled: false,
+      hasPostgresRecord: true,
+      postgresId: 'c8b4b724-4f81-4b11-92df-8f5539d997d4',
+      status: 'active',
+    });
+    (getMongoDb as jest.Mock).mockResolvedValue({
+      collection: jest.fn().mockReturnValue({
+        findOne: mockFindOne,
+      }),
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/auth/verify-otp', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({
+        email: 'stale-user@example.com',
+        code: '123456',
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toContain('Sign-in temporarily unavailable');
+    expect(res.cookies.get(MEMBER_SESSION_COOKIE)).toBeUndefined();
+  });
+
+  it('refuses login with 503 when user ever had 2FA', async () => {
+    // Postgres is down
+    (db.select as jest.Mock).mockImplementation(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    });
+
+    // User ever had 2FA
+    const mockFindOne = jest.fn().mockResolvedValue({
+      _id: 'mongo-user-ever-2fa',
+      email: 'ever-2fa@example.com',
+      fullName: 'Ever 2FA User',
+      totpEnabled: false,
+      everHad2fa: true,
+      status: 'active',
+    });
+    (getMongoDb as jest.Mock).mockResolvedValue({
+      collection: jest.fn().mockReturnValue({
+        findOne: mockFindOne,
+      }),
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/auth/verify-otp', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({
+        email: 'ever-2fa@example.com',
+        code: '123456',
+      }),
+    });
+
+    const res = await POST(req);
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toContain('Sign-in temporarily unavailable');
+    expect(res.cookies.get(MEMBER_SESSION_COOKIE)).toBeUndefined();
+  });
+
+  it('ensures fallback JWT defaults to member role and NEVER carries admin role from Mongo document', async () => {
+    // Postgres is down
+    (db.select as jest.Mock).mockImplementation(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    });
+
+    // Pure Mongo user with NO postgres record, known not to have 2FA, but carries elevated role in Mongo
     const mockFindOne = jest.fn().mockResolvedValue({
       _id: 'mongo-admin-user',
-      email: 'admin@sinet.africa',
-      fullName: 'Admin User',
+      email: 'mongo-elevated@example.com',
+      fullName: 'Mongo Elevated User',
       totpEnabled: false,
       status: 'active',
       role: 'super_admin',
+      roles: ['super_admin', 'chapter_lead'],
+      pathway: 'super_admin',
     });
     (getMongoDb as jest.Mock).mockResolvedValue({
       collection: jest.fn().mockReturnValue({
@@ -195,7 +278,7 @@ describe('POST /api/auth/verify-otp fallback security', () => {
         origin: 'http://localhost:3000',
       },
       body: JSON.stringify({
-        email: 'admin@sinet.africa',
+        email: 'mongo-elevated@example.com',
         code: '123456',
       }),
     });
@@ -215,5 +298,6 @@ describe('POST /api/auth/verify-otp fallback security', () => {
     expect(session?.roles).toEqual(['member']);
     expect(session?.roles).not.toContain('super_admin');
     expect(session?.roles).not.toContain('admin');
+    expect(session?.roles).not.toContain('chapter_lead');
   });
 });

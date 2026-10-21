@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
       pathway?: string;
       totpEnabled?: boolean;
       twoFactorEnabled?: boolean;
+      hasPostgresRecord?: boolean;
+      everHad2fa?: boolean;
     } | null = null;
 
     try {
@@ -74,6 +76,23 @@ export async function POST(request: NextRequest) {
               : typeof doc.twoFactorEnabled === 'boolean'
               ? doc.twoFactorEnabled
               : undefined;
+          const hasPostgresRecord = Boolean(
+            doc.hasPostgresRecord ||
+            doc.postgresId ||
+            doc.postgresUserId ||
+            doc.userId ||
+            doc.syncedToPostgres ||
+            doc.pgId ||
+            doc.source === 'postgres'
+          );
+          const everHad2fa = Boolean(
+            doc.totpEnabled === true ||
+            doc.twoFactorEnabled === true ||
+            doc.had2fa === true ||
+            doc.everHad2fa === true ||
+            doc.totpSecret ||
+            doc.totp_secret
+          );
           mongoMember = {
             _id: doc._id,
             fullName: doc.fullName as string,
@@ -83,6 +102,8 @@ export async function POST(request: NextRequest) {
             pathway: (doc.pathway as string) || 'member',
             totpEnabled: totp,
             twoFactorEnabled: totp,
+            hasPostgresRecord,
+            everHad2fa,
           };
         } else {
           // Check if user has an approved application
@@ -102,6 +123,20 @@ export async function POST(request: NextRequest) {
                 : typeof appData.twoFactorEnabled === 'boolean'
                 ? (appData.twoFactorEnabled as boolean)
                 : undefined;
+            const appHasPostgresRecord = Boolean(
+              app.hasPostgresRecord ||
+              app.postgresId ||
+              app.userId ||
+              app.syncedToPostgres ||
+              appData.hasPostgresRecord ||
+              appData.postgresId ||
+              appData.userId
+            );
+            const appEverHad2fa = Boolean(
+              appTotp === true ||
+              app.had2fa === true ||
+              appData.had2fa === true
+            );
             mongoMember = {
               _id: app._id,
               fullName: (appData.fullName as string) || (app.fullName as string) || normalizedEmail.split('@')[0],
@@ -111,6 +146,8 @@ export async function POST(request: NextRequest) {
               pathway: (app.pathway as string) || (app.role as string) || 'member',
               totpEnabled: appTotp,
               twoFactorEnabled: appTotp,
+              hasPostgresRecord: appHasPostgresRecord,
+              everHad2fa: appEverHad2fa,
             };
           }
         }
@@ -219,11 +256,22 @@ export async function POST(request: NextRequest) {
 
     // 3. Fallback when PostgreSQL is offline or user exists in MongoDB
     if (!userRecord) {
-      // P0 Security Item 1: If 2FA status cannot be determined or if user has 2FA enabled,
-      // fail closed with 503. Never issue a session in that state.
-      const isKnownNo2fa =
+      // 2FA Security: If 2FA status cannot be authoritatively determined, or if user has
+      // a Postgres record (whose 2FA secret is in Postgres and could be stale in Mongo),
+      // or if user ever had 2FA, or if user is configured admin, FAIL CLOSED with 503.
+      // Allow fallback sign-in ONLY for users who exist in Mongo alone and are known not to have 2FA.
+      const hasPostgresRecord = Boolean(mongoMember?.hasPostgresRecord);
+      const everHad2fa = Boolean(
+        mongoMember?.everHad2fa ||
+        mongoMember?.totpEnabled === true ||
+        mongoMember?.twoFactorEnabled === true
+      );
+      const isMongoAlone = Boolean(mongoMember && !hasPostgresRecord && !everHad2fa && !isConfiguredAdmin);
+      const isKnownNo2fa = Boolean(
+        isMongoAlone &&
         mongoMember &&
-        (mongoMember.totpEnabled === false || mongoMember.twoFactorEnabled === false);
+        (mongoMember.totpEnabled === false || mongoMember.twoFactorEnabled === false)
+      );
 
       if (!isKnownNo2fa) {
         return NextResponse.json(

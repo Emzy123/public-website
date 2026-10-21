@@ -22,7 +22,12 @@ const client =
   postgres(connectionString, {
     prepare: false,
     max: process.env.NODE_ENV === 'production' ? 5 : 5,
-    ssl: isLocal ? false : 'require',
+    ssl: isLocal
+      ? false
+      : {
+          rejectUnauthorized: true,
+          ...(process.env.DATABASE_CA_CERT ? { ca: process.env.DATABASE_CA_CERT } : {}),
+        },
     connect_timeout: 15,
     idle_timeout: 20,
   });

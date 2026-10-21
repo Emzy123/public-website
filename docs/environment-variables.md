@@ -32,7 +32,8 @@ Everything else is optional for local dev. Features that depend on missing keys 
 | `NEXT_PUBLIC_SITE_URL` | Your deployment URL. Use `http://localhost:3000` locally. |
 | `MONGODB_URI` | Your MongoDB connection string. Local: `mongodb://127.0.0.1:27017`. Atlas: copy from [MongoDB Atlas](https://cloud.mongodb.com) → Database → Connect → Drivers. |
 | `MONGODB_DB` | Database name, e.g. `sinet`. |
-| `DATABASE_URL` | PostgreSQL connection string (Drizzle ORM). Local: `postgresql://postgres@localhost:5432/sinet_dev`. In production (Vercel), must be a pooled endpoint (transaction mode) with verified TLS enabled via `?sslmode=require` or `?sslmode=verify-full`. |
+| `DATABASE_URL` | PostgreSQL connection string (Drizzle ORM). Local: `postgresql://postgres@localhost:5432/sinet_dev`. In production (Vercel), must be a pooled endpoint (transaction mode) with verified TLS enabled via `?sslmode=verify-full`. |
+| `DATABASE_CA_CERT` | Optional. Custom CA certificate PEM content for verifying PostgreSQL server certificates if using an internal or custom root CA. |
 
 ### Admin Authentication (required for `/admin`)
 
