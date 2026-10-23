@@ -135,6 +135,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run check:env` | Validate env configuration |
 | `npm run smoke` | Smoke-test API routes (server must be running) |
 | `npm run seed:db` | Seed MongoDB with static content |
+| `npm run db:migrate` | Apply Drizzle PostgreSQL migrations (`drizzle-kit migrate`). Manual only — never hooked to build or deploy. |
 | `make help` | List all Makefile shortcuts |
 
 Or use the Makefile:
@@ -218,6 +219,12 @@ GitHub Actions runs on push/PR to `master`:
 5. `npm run build`
 
 Run the same locally with `make ci`.
+
+## PostgreSQL migrations
+
+`npm run db:migrate` (`drizzle-kit migrate`) is **never** run by `npm run build`, `postbuild` (`next-sitemap`), Vercel, or GitHub Actions. Apply it by hand against the target `DATABASE_URL`.
+
+The repo ships a single checked-in migration, `drizzle/0000_organic_scrambler.sql`. There is no `drizzle-kit push` script in `package.json`. If a production database was created earlier with `drizzle-kit push`, tables already exist and the first `db:migrate` would try to re-apply `0000` and fail. Baseline first: confirm the live schema matches the `0000` snapshot, then insert that revision into Drizzle’s migrations table (or use `drizzle-kit baseline` if your CLI version exposes it) so migrate starts from an empty pending set.
 
 ## Admin dashboard
 

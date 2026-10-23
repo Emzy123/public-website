@@ -32,7 +32,7 @@ Everything else is optional for local dev. Features that depend on missing keys 
 | `NEXT_PUBLIC_SITE_URL` | Your deployment URL. Use `http://localhost:3000` locally. |
 | `MONGODB_URI` | Your MongoDB connection string. Local: `mongodb://127.0.0.1:27017`. Atlas: copy from [MongoDB Atlas](https://cloud.mongodb.com) → Database → Connect → Drivers. |
 | `MONGODB_DB` | Database name, e.g. `sinet`. |
-| `DATABASE_URL` | PostgreSQL connection string (Drizzle ORM). Local: `postgresql://postgres@localhost:5432/sinet_dev`. In production (Vercel), must be a pooled endpoint (transaction mode) with verified TLS enabled via `?sslmode=verify-full`. |
+| `DATABASE_URL` | PostgreSQL connection string (Drizzle ORM). Local: `postgresql://postgres@localhost:5432/sinet_dev`. In production (Vercel), must be a pooled endpoint (transaction mode) with verified TLS (`rejectUnauthorized: true`, optional `DATABASE_CA_CERT`). **Missing in production:** fatal at boot, whole site down. **Set but unreachable:** marketing/CMS stay up; Postgres routes return 503. |
 | `DATABASE_CA_CERT` | Optional. Custom CA certificate PEM content for verifying PostgreSQL server certificates if using an internal or custom root CA. |
 
 ### Admin Authentication (required for `/admin`)
@@ -42,6 +42,7 @@ Everything else is optional for local dev. Features that depend on missing keys 
 | `ADMIN_EMAIL` | The email address used to log in to the admin panel. |
 | `ADMIN_PASSWORD_HASH` | Run `npx tsx scripts/hash-admin-password.ts "your-password"` in the project root. Copy the full output (format: `salt:hash`). |
 | `ADMIN_SESSION_SECRET` | Generate with `openssl rand -base64 32`. Must be 32+ characters. |
+| `AUTH_SECRET` | Required in production (fatal at boot if missing). Member OTP/portal JWT secret. Generate with `openssl rand -base64 32`. Local development may fall back to `ADMIN_SESSION_SECRET`. |
 | `ADMIN_NOTIFY_EMAIL` | Optional. Email address to receive notifications when new submissions arrive. |
 
 ### Security: reCAPTCHA (required for waitlist form)

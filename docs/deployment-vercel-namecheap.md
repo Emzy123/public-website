@@ -56,7 +56,8 @@ Set these in Vercel Project Settings -> Environment Variables:
 2. Framework: Next.js.
 3. Build command: `npm run build`.
 4. Output: default Next.js output.
-5. Deploy main branch to production.
+5. Before the first membership/campaign deploy (and after schema changes), run `npm run db:migrate` against the production `DATABASE_URL` from a trusted machine. Do not add it to the Vercel build command.
+6. Deploy main branch to production.
 
 ## 4. Namecheap DNS -> Vercel
 
