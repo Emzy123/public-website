@@ -11,6 +11,7 @@ import {
 import { db } from '@/lib/db';
 import { chapters } from '@/lib/db/schema';
 import { inArray } from 'drizzle-orm';
+import { dedupeUnifiedApplications } from '@/lib/applications/dedupe';
 
 export interface UnifiedApplication {
   id: string;
@@ -34,6 +35,7 @@ export interface UnifiedApplication {
   reviewRemarks: string | null;
   createdAt: string;
   source: 'mongo' | 'postgres';
+  chapter?: string | null;
   documents?: { key: string; label: string; id: string; downloadUrl: string }[];
   documentCount?: number;
   rawData?: Record<string, unknown>;
@@ -178,6 +180,12 @@ export async function GET(request: NextRequest) {
           division: div,
           contributionPitch: pitch,
           photoUrl: photo,
+          chapter:
+            typeof data.chapter === 'string'
+              ? data.chapter
+              : typeof doc.chapter === 'string'
+                ? doc.chapter
+                : null,
           status: appStatus,
           reviewedBy: (doc.reviewedBy as string) || null,
           reviewedAt: doc.reviewedAt ? new Date(doc.reviewedAt as string | Date).toISOString() : null,
@@ -244,6 +252,7 @@ export async function GET(request: NextRequest) {
                 : String(app.reviewedAt)
               : null,
             source: 'postgres',
+            chapter: null,
             documents: pgDocs,
             documentCount: pgDocs.length,
           });
@@ -254,26 +263,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Sort all combined applications newest first
-    allApps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const uniqueApps = dedupeUnifiedApplications(allApps);
+    uniqueApps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Calculate aggregate metrics across both stores
-    const pendingCount = allApps.filter(
+    const pendingCount = uniqueApps.filter(
       (a) => a.status === 'submitted' || a.status === 'under_review'
     ).length;
-    const approvedCount = allApps.filter((a) => a.status === 'approved').length;
-    const rejectedCount = allApps.filter((a) => a.status === 'rejected').length;
+    const approvedCount = uniqueApps.filter((a) => a.status === 'approved').length;
+    const rejectedCount = uniqueApps.filter((a) => a.status === 'rejected').length;
 
     return NextResponse.json({
       success: true,
       postgresUnavailable,
-      applications: allApps,
-      total: allApps.length,
+      applications: uniqueApps,
+      total: uniqueApps.length,
       counts: {
         pending: pendingCount,
         approved: approvedCount,
         rejected: rejectedCount,
-        total: allApps.length,
+        total: uniqueApps.length,
       },
       links: linksList,
       moderator: {

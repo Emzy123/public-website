@@ -19,15 +19,13 @@ export interface AuthSession {
 }
 
 function getAuthSecretKey(): Uint8Array {
-  const secret =
-    process.env.AUTH_SECRET?.trim() ||
-    process.env.ADMIN_SESSION_SECRET?.trim();
+  const secret = process.env.AUTH_SECRET?.trim();
   if (secret) return new TextEncoder().encode(secret);
   if (isProductionMode()) {
-    throw new Error(
-      'Fatal: AUTH_SECRET or ADMIN_SESSION_SECRET must be configured in production for member session JWT security.'
-    );
+    throw new Error('Fatal: AUTH_SECRET must be configured in production for member session JWT security.');
   }
+  const fallback = process.env.ADMIN_SESSION_SECRET?.trim();
+  if (fallback) return new TextEncoder().encode(fallback);
   return new TextEncoder().encode('sinet-development-auth-secret-key-at-least-32-chars-long');
 }
 

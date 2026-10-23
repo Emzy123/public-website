@@ -5,6 +5,12 @@ import { eq, and, gt, desc } from 'drizzle-orm';
 import { Resend } from 'resend';
 import { SITE_URL } from '@/lib/site-config';
 import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
+import { isDevelopmentMode } from '@/lib/runtime/envMode';
+
+/** OTP/magic-link codes may be printed only in local development with an explicit opt-in. */
+export function mayLogAuthCodes(): boolean {
+  return process.env.NODE_ENV === 'development' && process.env.DEV_LOG_OTP === '1';
+}
 const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const MAX_ATTEMPTS = 5;
 const MONGO_TOKENS_COLLECTION = 'verification_tokens';
@@ -438,12 +444,27 @@ export function getAuthFromEmail(): string {
   return email;
 }
 
+export function isResendApiKeyUsable(apiKey: string | undefined): boolean {
+  return Boolean(apiKey?.trim() && !apiKey.includes('placeholder'));
+}
+
+function assertDeliverableAuthEmail(apiKey: string | undefined): asserts apiKey is string {
+  if (isResendApiKeyUsable(apiKey)) return;
+  if (isDevelopmentMode()) return;
+  throw new Error('RESEND_API_KEY is missing or invalid in Vercel.');
+}
+
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = getAuthFromEmail();
+  assertDeliverableAuthEmail(apiKey);
 
-  if (!apiKey || apiKey.includes('placeholder')) {
-    console.log(`[DEV EMAIL MOCK] To: ${email} | Verification Code: ${otp}`);
+  if (!isResendApiKeyUsable(apiKey)) {
+    if (mayLogAuthCodes()) {
+      console.log(`[DEV EMAIL MOCK] To: ${email} | Verification Code: ${otp}`);
+    } else if (isDevelopmentMode()) {
+      console.log('[DEV EMAIL MOCK] OTP generated (code omitted; set DEV_LOG_OTP=1 to print it).');
+    }
     return;
   }
 
@@ -478,9 +499,14 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 export async function sendMagicLinkEmail(email: string, url: string): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   const fromEmail = getAuthFromEmail();
+  assertDeliverableAuthEmail(apiKey);
 
-  if (!apiKey || apiKey.includes('placeholder')) {
-    console.log(`[DEV EMAIL MOCK] To: ${email} | Magic Link: ${url}`);
+  if (!isResendApiKeyUsable(apiKey)) {
+    if (mayLogAuthCodes()) {
+      console.log(`[DEV EMAIL MOCK] To: ${email} | Magic Link: ${url}`);
+    } else if (isDevelopmentMode()) {
+      console.log('[DEV EMAIL MOCK] Magic link generated (URL omitted; set DEV_LOG_OTP=1 to print it).');
+    }
     return;
   }
 

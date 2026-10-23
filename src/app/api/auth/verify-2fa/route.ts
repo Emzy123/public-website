@@ -40,9 +40,20 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Find user's secret or global ADMIN_TOTP_SECRET fallback
     const [user] = await db.select().from(users).where(eq(users.id, session.userId)).limit(1);
-    const secret = user?.totpSecret || process.env.ADMIN_TOTP_SECRET;
+    const secret = user?.totpSecret?.trim();
+
+    // Fail closed: never skip 2FA and never use ADMIN_TOTP_SECRET here.
+    // Admin dashboard MFA is /api/admin/auth/login via admin/lib/mfa.ts.
+    if (user?.totpEnabled && !secret) {
+      return NextResponse.json(
+        {
+          error:
+            'Two-factor authentication is enabled on this account but is not fully configured. Sign-in cannot continue. Contact an administrator.',
+        },
+        { status: 403 }
+      );
+    }
 
     if (!secret) {
       return NextResponse.json(

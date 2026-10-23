@@ -329,7 +329,9 @@ export async function POST(request: NextRequest) {
 
     // 4. Determine 2FA requirements
     const isAdmin = roles.includes('super_admin') || roles.includes('admin');
-    const requires2fa = isAdmin && (userRecord.totpEnabled || Boolean(process.env.ADMIN_TOTP_SECRET));
+    const requires2fa =
+      Boolean(userRecord.totpEnabled) ||
+      (isAdmin && Boolean(process.env.ADMIN_TOTP_SECRET?.trim()));
     const is2faAuthenticated = !requires2fa;
 
     // 5. Create session token & cookie
