@@ -7,6 +7,14 @@ import { createSession } from '@admin/lib/auth';
 import { SignJWT } from 'jose';
 import { getAdminSessionSecret } from '@/lib/runtime/secrets';
 
+jest.mock('@/lib/db', () => {
+  const actual = jest.requireActual('@/lib/db');
+  return {
+    ...actual,
+    pingPostgres: jest.fn().mockResolvedValue('degraded'),
+  };
+});
+
 describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
   const originalEnv = process.env;
 
@@ -62,6 +70,7 @@ describe('GET /api/health Endpoint Scoping & Auth Diagnostics', () => {
     expect(body.checks.authOtp.authFromEmail).toBe('configured');
     expect(body.checks.authOtp.senderDomain).toBe('sinet.africa');
     expect(body.checks.authOtp.resendApiKey).toBe('configured');
+    expect(body.checks.postgres).toBe('degraded');
   });
 
   it('authorized admin via live, non-expired sinet_admin_session cookie receives complete diagnostics', async () => {

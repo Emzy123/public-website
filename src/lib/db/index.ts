@@ -40,4 +40,23 @@ export const db = drizzle(client, { schema });
 export function isPostgresConfigured(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
+
+const POSTGRES_PING_TIMEOUT_MS = 2500;
+
+export async function pingPostgres(): Promise<'ok' | 'degraded' | 'error'> {
+  if (!isPostgresConfigured()) return 'degraded';
+  try {
+    await Promise.race([
+      client`select 1`,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('postgres ping timeout')), POSTGRES_PING_TIMEOUT_MS);
+      }),
+    ]);
+    return 'ok';
+  } catch {
+    // Never surface the driver message or connection string to callers.
+    return 'error';
+  }
+}
+
 export { client, schema, sanitizeDatabaseError };

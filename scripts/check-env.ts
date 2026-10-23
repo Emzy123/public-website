@@ -16,7 +16,7 @@ for (const file of ['.env', '.env.local']) {
   }
 }
 
-type Tier = 'pages' | 'contact' | 'waitlist' | 'admin';
+type Tier = 'pages' | 'contact' | 'waitlist' | 'admin' | 'membership';
 
 const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }> = {
   pages: {
@@ -40,6 +40,11 @@ const tiers: Record<Tier, { label: string; vars: string[]; anyOf?: string[][] }>
     label: 'Admin dashboard + CMS',
     vars: ['ADMIN_EMAIL', 'ADMIN_SESSION_SECRET', 'MONGODB_URI', 'MONGODB_DB'],
     anyOf: [['ADMIN_PASSWORD', 'ADMIN_PASSWORD_HASH']],
+  },
+  membership: {
+    label: 'Member auth, campaigns, portal (PostgreSQL)',
+    vars: ['DATABASE_URL', 'AUTH_FROM_EMAIL'],
+    anyOf: [['AUTH_SECRET', 'ADMIN_SESSION_SECRET']],
   },
 };
 
@@ -99,8 +104,10 @@ console.log(`  Unset:  ${optionalUnset.join(', ')}`);
 
 const maxTier = results.filter((r) => r.ready).pop();
 console.log('\n---');
-if (maxTier?.tier === 'admin') {
-  console.log('Ready for admin CMS + full local development.');
+if (maxTier?.tier === 'membership') {
+  console.log('Ready for admin CMS, membership auth, and campaign applications.');
+} else if (maxTier?.tier === 'admin') {
+  console.log('Ready for admin CMS + full local development. Set DATABASE_URL for member auth and campaigns.');
 } else if (maxTier?.tier === 'waitlist') {
   console.log('Ready for full local development (all forms). Admin needs ADMIN_EMAIL + password hash/plain.');
 } else if (maxTier?.tier === 'contact') {

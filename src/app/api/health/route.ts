@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
   }
 
   const { getMongoDb } = await import('@/lib/db/mongodb');
+  const { pingPostgres } = await import('@/lib/db');
 
   let mongo: 'ok' | 'degraded' | 'error' = 'degraded';
   if (process.env.MONGODB_URI?.trim()) {
@@ -61,6 +62,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const postgres = await pingPostgres();
+
   const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? 'ok' : 'degraded';
   const email = emailMissingFrom
@@ -70,8 +73,9 @@ export async function GET(request: NextRequest) {
       : 'degraded';
 
   const authOtp = await getAuthHealthDiagnostic();
-  const checks = { mongo, redis, email, authOtp };
-  const hasError = mongo === 'error' || email === 'error' || authOtp.status === 'error';
+  const checks = { mongo, postgres, redis, email, authOtp };
+  const hasError =
+    mongo === 'error' || postgres === 'error' || email === 'error' || authOtp.status === 'error';
 
   return NextResponse.json(
     {
