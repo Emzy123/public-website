@@ -12,8 +12,10 @@ export type * from '@admin/types/content';
 
 import { getCmsContent as getPublishedOrPreviewContent } from '@admin/lib/cms/repository';
 import type { CmsKey, CmsDataMap } from '@admin/types/content';
+import { gateUnsignedCmsContent } from '@/lib/compliance/unsigned-claims';
 
 /** Public-site CMS reader. Uses draft content when preview mode cookie is active. */
 export async function getCmsContent<K extends CmsKey>(key: K): Promise<CmsDataMap[K]> {
-  return getPublishedOrPreviewContent(key, { preview: isPreviewMode() });
+  const content = await getPublishedOrPreviewContent(key, { preview: isPreviewMode() });
+  return gateUnsignedCmsContent(content);
 }

@@ -35,6 +35,12 @@ export const FEATURE_FLAGS = {
    * claim in About page copy before re-enabling.
    */
   showMemberCounts: false,
+  /**
+   * Legal-approval gate for unsigned ₦ figures, scale stats, and construction
+   * claims in CMS defaults / published copy. Keep false until CEO/legal sign-off.
+   * Distinct from per-advert `legalApproval` hashes.
+   */
+  showUnsignedFinancialClaims: false,
 } as const;
 
 export type SocialKey = 'x' | 'linkedin' | 'facebook' | 'instagram' | 'whatsapp';
