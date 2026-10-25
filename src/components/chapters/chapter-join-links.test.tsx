@@ -31,4 +31,17 @@ describe('Chapter Join Link Routing', () => {
       expect(link.getAttribute('href')).not.toContain('/join/campus-ambassadors-2026');
     });
   });
+
+  it('validates chapter detail join link formats for ambassadors, members, and divisions', () => {
+    const chapter = FALLBACK_KOGI_CHAPTERS[0];
+    const quickJoinHref = `/join?role=community-member&chapter=${chapter.slug}`;
+    const divisionHref = `/join?role=community-member&chapter=${chapter.slug}&division=finance`;
+    const ambassadorHref = `/join?role=ambassador&chapter=${chapter.slug}`;
+
+    expect(quickJoinHref).not.toContain('/join/student-network');
+    expect(ambassadorHref).not.toContain('/join/campus-ambassadors-2026');
+    expect(quickJoinHref).toMatch(/^\/join\?role=community-member&chapter=[a-z0-9_-]+$/);
+    expect(ambassadorHref).toMatch(/^\/join\?role=ambassador&chapter=[a-z0-9_-]+$/);
+    expect(divisionHref).toMatch(/^\/join\?role=community-member&chapter=[a-z0-9_-]+&division=finance$/);
+  });
 });
