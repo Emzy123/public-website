@@ -54,7 +54,13 @@ export function classifyAuthError(error: unknown): { reason: AuthFailureReason; 
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
 
-  if (lower.includes('auth_from_email') || lower.includes('sender required')) {
+  if (
+    lower.includes('auth_from_email') ||
+    lower.includes('sender required') ||
+    lower.includes('missing from') ||
+    lower.includes('from email') ||
+    lower.includes('missing required field: from')
+  ) {
     return {
       reason: 'auth_from_email_missing',
       message: 'AUTH_FROM_EMAIL environment variable is missing or unconfigured in Vercel.',
@@ -65,7 +71,12 @@ export function classifyAuthError(error: unknown): { reason: AuthFailureReason; 
     lower.includes('resend.com/domains') ||
     lower.includes('only send testing emails') ||
     lower.includes('domain_not_verified') ||
-    (lower.includes('domain') && (lower.includes('not verified') || lower.includes('unverified')))
+    lower.includes('domain is not verified') ||
+    lower.includes('not verified') ||
+    lower.includes('unverified') ||
+    lower.includes('domain_not_found') ||
+    lower.includes('domain not found') ||
+    lower.includes('verify your domain')
   ) {
     return {
       reason: 'resend_domain_unverified',
@@ -73,7 +84,13 @@ export function classifyAuthError(error: unknown): { reason: AuthFailureReason; 
     };
   }
 
-  if (lower.includes('api key') || lower.includes('resend_api_key') || lower.includes('unauthorized') || lower.includes('api_key')) {
+  if (
+    lower.includes('api key') ||
+    lower.includes('resend_api_key') ||
+    lower.includes('unauthorized') ||
+    lower.includes('api_key') ||
+    lower.includes('invalid_api_key')
+  ) {
     return {
       reason: 'resend_api_key_missing',
       message: 'RESEND_API_KEY is missing or invalid in Vercel.',
@@ -122,9 +139,13 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
       if (doc && doc.length > 0) {
         const meta = (doc[0].metadata as Record<string, unknown>) || {};
         const failureReason = (meta.reason as AuthFailureReason) || 'provider_delivery_failed';
+        const failureMessage =
+          typeof meta.message === 'string' && meta.message
+            ? meta.message
+            : classifyAuthError(new Error(String(meta.error || ''))).message;
         return {
           reason: failureReason,
-          message: String(meta.error || 'Authentication OTP delivery failed.'),
+          message: failureMessage,
           error: String(meta.error || ''),
           emailDomain: doc[0].actor ? String(doc[0].actor).split('@')[1] : undefined,
           mode: meta.mode ? String(meta.mode) : undefined,
@@ -152,9 +173,13 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
       if (record) {
         const meta = (record.metadata as Record<string, unknown>) || {};
         const failureReason = (meta.reason as AuthFailureReason) || 'provider_delivery_failed';
+        const failureMessage =
+          typeof meta.message === 'string' && meta.message
+            ? meta.message
+            : classifyAuthError(new Error(String(meta.error || ''))).message;
         return {
           reason: failureReason,
-          message: String(meta.error || 'Authentication OTP delivery failed.'),
+          message: failureMessage,
           error: String(meta.error || ''),
           emailDomain: record.actorEmail ? record.actorEmail.split('@')[1] : undefined,
           timestamp: record.createdAt.toISOString(),

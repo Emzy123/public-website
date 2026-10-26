@@ -77,18 +77,20 @@ export async function POST(request: NextRequest) {
       error: rawError,
     });
 
+    const failureMeta = { mode, reason, message: structuredMessage, error: rawError };
+
     await writeAuditLog({
       action: 'auth.otp_failed',
       actor: email,
       ip,
-      metadata: { mode, reason, error: rawError },
+      metadata: failureMeta,
     });
     await writeAdminAudit({
       actorEmail: email,
       action: 'auth.otp_failed',
       resource: 'auth',
       ipAddress: ip,
-      metadata: { mode, reason, error: rawError },
+      metadata: failureMeta,
     });
 
     return NextResponse.json(
