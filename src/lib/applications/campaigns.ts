@@ -52,24 +52,8 @@ export async function getCampaignBySlug(slug: string): Promise<CampaignStatusInf
   }
 
   const now = new Date();
-  const isOpen = isCampaignLinkOpen(
-    {
-      status: campaign.status,
-      endsAt: campaign.endsAt,
-      seatLimit: campaign.seatLimit,
-      applicationCount: campaign.applicationCount,
-    },
-    now
-  );
-  const displayStatus = getCampaignLinkDisplayStatus(
-    {
-      status: campaign.status,
-      endsAt: campaign.endsAt,
-      seatLimit: campaign.seatLimit,
-      applicationCount: campaign.applicationCount,
-    },
-    now
-  );
+  const isOpen = isCampaignLinkOpen(campaign, now);
+  const displayStatus = getCampaignLinkDisplayStatus(campaign, now);
 
   let isAccepting = isOpen;
   let statusReason: string | undefined;
