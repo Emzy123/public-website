@@ -107,6 +107,7 @@ export type RegistrationLink = {
   name: string;
   slug: string;
   roles: ApplicationRole[];
+  isInviteOnly?: boolean;
   isOpen: boolean;
   status: RegistrationLinkStatus;
   expiresAt?: string;

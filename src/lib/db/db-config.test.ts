@@ -1,7 +1,7 @@
 /** @jest-environment node */
 
 describe('Postgres TLS verification configuration', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.resetModules();
@@ -10,7 +10,7 @@ describe('Postgres TLS verification configuration', () => {
   });
 
   afterAll(() => {
-    process.env = originalEnv;
+    process.env = { ...originalEnv };
     delete global.__postgresClient;
   });
 

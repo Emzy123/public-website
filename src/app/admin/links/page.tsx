@@ -24,6 +24,7 @@ function getDefaultExpiry(): string {
 const DEFAULT_FORM = {
   name: '',
   roles: ['volunteer', 'community-member'] as ApplicationRole[],
+  isInviteOnly: false,
   expiresAt: getDefaultExpiry(),
   quota: '100',
 };
@@ -40,6 +41,13 @@ export default function RegistrationLinksPage() {
   const [qrModalLink, setQrModalLink] = useState<RegistrationLink | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Edit roles state
+  const [isEditingRoles, setIsEditingRoles] = useState(false);
+  const [editingRoles, setEditingRoles] = useState<ApplicationRole[]>([]);
+  const [editingInviteOnly, setEditingInviteOnly] = useState(false);
+  const [savingRoles, setSavingRoles] = useState(false);
+  const [roleEditError, setRoleEditError] = useState('');
 
   const [form, setForm] = useState(DEFAULT_FORM);
 
@@ -64,6 +72,8 @@ export default function RegistrationLinksPage() {
   const loadDetail = async (link: RegistrationLink) => {
     setSelected(link);
     setDetail(null);
+    setIsEditingRoles(false);
+    setRoleEditError('');
     try {
       const res = await fetch(`/api/admin/registration-links/${link.slug}`);
       const data = await res.json();
@@ -115,6 +125,7 @@ export default function RegistrationLinksPage() {
         body: JSON.stringify({
           name: form.name,
           roles: form.roles,
+          isInviteOnly: form.isInviteOnly,
           expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
           quota: form.quota ? Number(form.quota) : null,
         }),
@@ -160,10 +171,75 @@ export default function RegistrationLinksPage() {
   };
 
   const toggleRole = (role: ApplicationRole) => {
-    setForm((f) => ({
-      ...f,
-      roles: f.roles.includes(role) ? f.roles.filter((r) => r !== role) : [...f.roles, role],
-    }));
+    setForm((f) => {
+      const willInclude = !f.roles.includes(role);
+      const newRoles = willInclude ? [...f.roles, role] : f.roles.filter((r) => r !== role);
+      const shouldBeInviteOnly = newRoles.includes('staff') ? true : f.isInviteOnly;
+      return {
+        ...f,
+        roles: newRoles,
+        isInviteOnly: shouldBeInviteOnly,
+      };
+    });
+  };
+
+  const startEditingRoles = (link: RegistrationLink) => {
+    setEditingRoles(link.roles || []);
+    setEditingInviteOnly(Boolean(link.isInviteOnly));
+    setRoleEditError('');
+    setIsEditingRoles(true);
+  };
+
+  const toggleEditingRole = (role: ApplicationRole) => {
+    setEditingRoles((prev) => {
+      const willInclude = !prev.includes(role);
+      const next = willInclude ? [...prev, role] : prev.filter((r) => r !== role);
+      if (next.includes('staff') && !editingInviteOnly) {
+        setEditingInviteOnly(true);
+      }
+      return next;
+    });
+    setRoleEditError('');
+  };
+
+  const saveRoles = async () => {
+    if (!selected) return;
+    if (editingRoles.length === 0) {
+      setRoleEditError('At least one role must be selected.');
+      return;
+    }
+    if (editingRoles.includes('staff') && !editingInviteOnly) {
+      setRoleEditError('Staff role can only be on links marked invite-only.');
+      return;
+    }
+
+    setSavingRoles(true);
+    setRoleEditError('');
+    try {
+      const res = await fetch('/api/admin/registration-links', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
+        body: JSON.stringify({
+          id: selected._id,
+          roles: editingRoles,
+          isInviteOnly: editingInviteOnly,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update roles');
+      setIsEditingRoles(false);
+      if (data.link) {
+        setSelected(data.link);
+      }
+      await load();
+    } catch (err) {
+      setRoleEditError(err instanceof Error ? err.message : 'Failed to update roles');
+    } finally {
+      setSavingRoles(false);
+    }
   };
 
   return (
@@ -190,12 +266,28 @@ export default function RegistrationLinksPage() {
               <span className="mb-2 block text-xs font-semibold uppercase text-[#7b7263]">Role scope</span>
               <div className="flex flex-wrap gap-2">
                 {ALL_APPLICATION_ROLES.map((role) => (
-                  <button key={role} type="button" onClick={() => toggleRole(role)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${form.roles.includes(role) ? 'border-[#0d1a4a] bg-[#0d1a4a] text-white' : 'border-[#e4dcc9] text-[#7b7263]'}`}>
+                  <button key={role} type="button" onClick={() => toggleRole(role)} className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${form.roles.includes(role) ? 'border-[#0d1a4a] bg-[#0d1a4a] text-white' : 'border-[#e4dcc9] text-[#7b7263]'}`}>
                     {ROLE_LABELS[role]}
                   </button>
                 ))}
               </div>
             </div>
+            <label className="flex items-center gap-2 cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={form.isInviteOnly}
+                onChange={(e) => {
+                  if (!e.target.checked && form.roles.includes('staff')) {
+                    return;
+                  }
+                  setForm({ ...form, isInviteOnly: e.target.checked });
+                }}
+                className="h-4 w-4 rounded border-slate-300 text-[#0d1a4a] focus:ring-[#0d1a4a]"
+              />
+              <span className="text-xs font-semibold text-[#0d1a4a]">
+                Invite-only link (required for Staff roles — excluded from public spotlights)
+              </span>
+            </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="mb-1 block text-xs font-semibold uppercase text-[#7b7263]">Optional expiry</span>
@@ -244,7 +336,14 @@ export default function RegistrationLinksPage() {
                       }`}
                     >
                       <td className="px-5 py-4 font-semibold text-[#0d1a4a]">
-                        <p>{link.name}</p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p>{link.name}</p>
+                          {link.isInviteOnly && (
+                            <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-purple-800">
+                              Invite Only
+                            </span>
+                          )}
+                        </div>
                         <p className="font-mono text-[10px] text-slate-400">/join/{link.slug}</p>
                       </td>
                       <td className="px-5 py-4 text-xs text-[#7b7263]">
@@ -309,7 +408,14 @@ export default function RegistrationLinksPage() {
           <div className="space-y-4">
             <AdminCard title={selected.name}>
               <div className="mb-3 flex items-center justify-between">
-                <StatusPill status={getCampaignLinkDisplayStatus(selected)} />
+                <div className="flex items-center gap-1.5">
+                  <StatusPill status={getCampaignLinkDisplayStatus(selected)} />
+                  {selected.isInviteOnly && (
+                    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                      Invite Only
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => setQrModalLink(selected)}
@@ -339,6 +445,104 @@ export default function RegistrationLinksPage() {
                 >
                   Preview Public Page ↗
                 </Link>
+              </div>
+
+              {/* Role Scope & Edit Roles Control */}
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase text-[#7b7263]">Role Scope</span>
+                  {!isEditingRoles && (
+                    <button
+                      type="button"
+                      onClick={() => startEditingRoles(selected)}
+                      className="text-xs font-bold text-[#d9a23c] hover:underline"
+                    >
+                      Edit Roles ✎
+                    </button>
+                  )}
+                </div>
+
+                {isEditingRoles ? (
+                  <div className="space-y-3 rounded-lg border border-[#e4dcc9] bg-[#fdfbf7] p-3">
+                    <p className="text-[11px] text-[#7b7263]">
+                      Select accepted applicant roles. Staff can only be on links marked invite-only.
+                    </p>
+                    {roleEditError && (
+                      <div className="rounded bg-red-50 p-2 text-xs text-red-700 border border-red-200">
+                        {roleEditError}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {ALL_APPLICATION_ROLES.map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => toggleEditingRole(role)}
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+                            editingRoles.includes(role)
+                              ? 'border-[#0d1a4a] bg-[#0d1a4a] text-white'
+                              : 'border-[#e4dcc9] text-[#7b7263] hover:border-slate-400 bg-white'
+                          }`}
+                        >
+                          {ROLE_LABELS[role]}
+                        </button>
+                      ))}
+                    </div>
+
+                    <label className="flex items-center gap-2 cursor-pointer pt-1">
+                      <input
+                        type="checkbox"
+                        checked={editingInviteOnly}
+                        onChange={(e) => {
+                          if (!e.target.checked && editingRoles.includes('staff')) {
+                            setRoleEditError('Staff role can only be on links marked invite-only. Remove Staff before making link public.');
+                            return;
+                          }
+                          setRoleEditError('');
+                          setEditingInviteOnly(e.target.checked);
+                        }}
+                        className="h-4 w-4 rounded border-slate-300 text-[#0d1a4a] focus:ring-[#0d1a4a]"
+                      />
+                      <span className="text-xs font-medium text-slate-800">
+                        Invite-only link (required for Staff)
+                      </span>
+                    </label>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={saveRoles}
+                        disabled={savingRoles || editingRoles.length === 0}
+                        className="rounded-lg bg-[#0d1a4a] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1a2d66] disabled:opacity-50"
+                      >
+                        {savingRoles ? 'Saving…' : 'Save Roles'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingRoles(false);
+                          setRoleEditError('');
+                        }}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.roles.map((r) => (
+                      <span key={r} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-800">
+                        {ROLE_LABELS[r]}
+                      </span>
+                    ))}
+                    {selected.isInviteOnly && (
+                      <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-800">
+                        Invite Only
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Quota & Conversion Stats */}

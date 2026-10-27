@@ -379,6 +379,9 @@ check "Admin adverts legal approval requires auth" "POST" "/api/admin/content/ad
 check "Admin announcements POST requires auth" "POST" "/api/admin/announcements" "401"
 check "Admin announcements PATCH requires auth" "PATCH" "/api/admin/announcements/ann-smoke-test-id" "401"
 check "Admin capacity audit requires auth" "GET" "/api/admin/capacity-audit" "401"
+check "Admin registration links GET requires auth" "GET" "/api/admin/registration-links" "401"
+check "Admin registration links POST requires auth" "POST" "/api/admin/registration-links" "401"
+check "Admin registration links PATCH requires auth" "PATCH" "/api/admin/registration-links" "401"
 
 echo ""
 echo "=========================================================="

@@ -1,10 +1,10 @@
 import { assertProductionSecrets } from './secrets';
 
 describe('assertProductionSecrets', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   afterEach(() => {
-    process.env = originalEnv;
+    process.env = { ...originalEnv };
   });
 
   it('throws Fatal when AUTH_SECRET is missing in production', () => {

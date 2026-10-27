@@ -14,7 +14,7 @@ jest.mock('@/lib/db', () => ({
 }));
 
 describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts)', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,7 +27,7 @@ describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process.env = { ...originalEnv };
   });
 
   it('detects count drift on Mongo links and does NOT update in dry-run mode', async () => {

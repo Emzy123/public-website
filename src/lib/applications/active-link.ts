@@ -36,7 +36,7 @@ export async function getActiveMembershipApplication(): Promise<ActiveApplicatio
     const mongo = await getMongoDb();
     const docs = await mongo
       .collection(REGISTRATION_LINKS_COLLECTION)
-      .find({ isOpen: true })
+      .find({ isOpen: true, isInviteOnly: { $ne: true } })
       .sort({ updatedAt: -1 })
       .limit(10)
       .toArray();
