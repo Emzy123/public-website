@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { formatWatDateTime } from '@/lib/date';
 
@@ -16,6 +16,8 @@ type AuditEntry = {
   createdAt: string;
 };
 
+const PAGE_SIZE = 25;
+
 export function AuditLogClient({
   initialLogs,
   databaseUnavailable = false,
@@ -25,16 +27,39 @@ export function AuditLogClient({
 }) {
   const [logs] = useState<AuditEntry[]>(initialLogs);
   const [actionFilter, setActionFilter] = useState('all');
+  const [actorFilter, setActorFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const uniqueActions = useMemo(() => {
     return Array.from(new Set(logs.map((l) => l.action))).sort();
   }, [logs]);
 
-  const filteredLogs = logs.filter((log) => {
-    if (actionFilter === 'all') return true;
-    return log.action === actionFilter;
-  });
+  const uniqueActors = useMemo(() => {
+    return Array.from(new Set(logs.map((l) => l.actorEmail).filter(Boolean))).sort();
+  }, [logs]);
+
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      if (actionFilter !== 'all' && log.action !== actionFilter) return false;
+      if (actorFilter !== 'all' && log.actorEmail !== actorFilter) return false;
+      if (dateFrom) {
+        const start = new Date(dateFrom).getTime();
+        if (new Date(log.createdAt).getTime() < start) return false;
+      }
+      if (dateTo) {
+        const end = new Date(dateTo).getTime() + 86400000;
+        if (new Date(log.createdAt).getTime() > end) return false;
+      }
+      return true;
+    });
+  }, [logs, actionFilter, actorFilter, dateFrom, dateTo]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageLogs = filteredLogs.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
   const getActionBadgeClass = (action: string) => {
     if (action.includes('approved') || action.includes('created')) return 'bg-emerald-100 text-emerald-800 border-emerald-300';
@@ -43,9 +68,16 @@ export function AuditLogClient({
     return 'bg-slate-100 text-slate-800 border-slate-300';
   };
 
+  function resetFilters() {
+    setActionFilter('all');
+    setActorFilter('all');
+    setDateFrom('');
+    setDateTo('');
+    setPage(0);
+  }
+
   return (
     <div className="min-h-screen bg-[#f7f5f0] text-slate-800">
-      {/* Header */}
       <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
@@ -68,7 +100,6 @@ export function AuditLogClient({
         </div>
       </header>
 
-      {/* Main Container */}
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-12">
         {databaseUnavailable && (
           <div role="alert" className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-900 shadow-sm flex items-start gap-3.5">
@@ -89,7 +120,7 @@ export function AuditLogClient({
           </div>
         )}
 
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-4">
           <div>
             <p className="font-mono text-xs font-bold uppercase tracking-widest text-amber-700">
               Governance & Records
@@ -102,25 +133,83 @@ export function AuditLogClient({
             </p>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Filter action:</span>
-            <select
-              value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none shadow-sm"
-            >
-              <option value="all">All Actions ({logs.length})</option>
-              {uniqueActions.map((action) => (
-                <option key={action} value={action}>
-                  {action.replace(/[._]/g, ' ').toUpperCase()} ({logs.filter((l) => l.action === action).length})
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-2" data-testid="audit-filters">
+            <label className="text-xs font-semibold text-slate-500">
+              Action
+              <select
+                value={actionFilter}
+                onChange={(e) => {
+                  setActionFilter(e.target.value);
+                  setPage(0);
+                }}
+                className="ml-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none shadow-sm"
+              >
+                <option value="all">All Actions</option>
+                {uniqueActions.map((action) => (
+                  <option key={action} value={action}>
+                    {action.replace(/[._]/g, ' ').toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-xs font-semibold text-slate-500">
+              Actor
+              <select
+                value={actorFilter}
+                onChange={(e) => {
+                  setActorFilter(e.target.value);
+                  setPage(0);
+                }}
+                className="ml-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 outline-none shadow-sm"
+              >
+                <option value="all">All Actors</option>
+                {uniqueActors.map((actor) => (
+                  <option key={actor} value={actor}>
+                    {actor}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-xs font-semibold text-slate-500">
+              From
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setPage(0);
+                }}
+                className="ml-1 rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800"
+              />
+            </label>
+
+            <label className="text-xs font-semibold text-slate-500">
+              To
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setPage(0);
+                }}
+                className="ml-1 rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-800"
+              />
+            </label>
+
+            {(actionFilter !== 'all' || actorFilter !== 'all' || dateFrom || dateTo) && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-xs font-semibold text-amber-700 underline"
+              >
+                Reset filters
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Audit Log Table */}
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -135,7 +224,7 @@ export function AuditLogClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
-                {filteredLogs.map((entry) => {
+                {pageLogs.map((entry) => {
                   const isExpanded = expandedId === entry.id;
                   return (
                     <React.Fragment key={entry.id}>
@@ -200,6 +289,36 @@ export function AuditLogClient({
           {filteredLogs.length === 0 && (
             <div className="p-8 text-center text-xs text-slate-500">
               No audit log entries matching this filter.
+            </div>
+          )}
+
+          {filteredLogs.length > 0 && (
+            <div
+              className="flex items-center justify-between border-t border-slate-200 px-5 py-3 text-xs text-slate-600"
+              data-testid="audit-pagination"
+            >
+              <span>
+                Showing {safePage * PAGE_SIZE + 1}–
+                {Math.min((safePage + 1) * PAGE_SIZE, filteredLogs.length)} of {filteredLogs.length}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={safePage <= 0}
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  className="rounded-lg border border-slate-200 px-3 py-1 font-semibold disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={safePage >= pageCount - 1}
+                  onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                  className="rounded-lg border border-slate-200 px-3 py-1 font-semibold disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>
