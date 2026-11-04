@@ -22,7 +22,7 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 ## Phase A — Sync and security gate (`agent/phase-a-security`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| A1 Git status / reflog / confirm security commits | pending | | Local ahead 15; tree clean; c58f0c2,016dafa,c042a6d,ea09959 present |
+| A1 Git status / reflog / confirm security commits | done | (pending) | See docs/agent/A1_GIT_REPORT.md; commits present; no uncommitted work to split |
 | A2 Postgres TLS verify + config test | done_on_master | 5620e59 / c58f0c2 | `rejectUnauthorized: true` + DATABASE_CA_CERT; `db-config.test.ts` |
 | A3 Member 2FA fail-closed + stale Mongo test | done_on_master | 8917588 / 5620e59 | |
 | A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | done_on_master | 016dafa + me tests | |
