@@ -18,7 +18,7 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
   1. Choose provider (Neon or Supabase) — still undecided.
   2. Create pooled connection string (`sslmode=verify-full` only, with optional `DATABASE_CA_CERT` if using a private root CA).
   3. Set `DATABASE_URL` (and optional `DATABASE_CA_CERT`) in Vercel.
-  4. From a trusted machine, baseline then `npm run db:migrate` (see `docs/ops/migrations.md` once shipped).
+  4. From a trusted machine, baseline then `npm run db:migrate` (see `docs/ops/migrations.md`).
   5. Confirm authorized health check shows Postgres `ok`.
 
 ### Human — Do not push from agent
@@ -40,6 +40,27 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
   1. Do not restore `forceExit: true` in `jest.config.ts`.
   2. Keep `globalTeardown` in `tests/setup/global-teardown.ts` to close active clients.
   3. In Phase B/C (when editorial/posts features are scheduled), mock Mongo in `posts.test.ts` or explicitly close worker connections in an `afterAll` hook with node environment flags.
+
+### Human — Remove Staff from public link + create staff invite link (B1)
+- **What:** Link `3fac46517ba6` (“Sinetworking Global Application 2026”) must not offer Staff on a public (non–invite-only) link. Create a separate staff-only invite link.
+- **Why:** Staff is invite-only; public Staff on that link was the security bug Edit roles now blocks server-side.
+- **Exact steps:**
+  1. Sign in at `/admin/login` as `admin@sinet.africa` with TOTP.
+  2. Open `/admin/links`.
+  3. Find **Sinetworking Global Application 2026** (id/slug containing `3fac46517ba6` or matching name). Confirm the status pill matches the public join API (`Open`/`accepting` vs `Closed`) — both use `getCampaignLinkDisplayStatus` / `isCampaignLinkOpen`.
+  4. Open the link detail → **Edit roles**.
+  5. Uncheck **Staff**. Leave invite-only **off** if this link stays public. Save. Confirm an audit entry appears under `/admin/audit`.
+  6. Click **Create link** → name e.g. `Staff invite 2026` → check **Staff** only → turn **Invite only** **on** (required) → set expiry/quota → Create.
+  7. Copy the new staff invite URL; share only with intended staff applicants (do not publish on the marketing site).
+
+### Human — Resend / OTP delivery (B5)
+- **What:** Sign-in OTP may fail in production until Resend domain + `AUTH_FROM_EMAIL` are correct.
+- **Why:** Client errors stay neutral (no enumeration); structured reason is only in authorized `/api/health` (`checks.authOtp`).
+- **Exact steps:**
+  1. In Resend → Domains → verify `sinet.africa` using Resend’s DNS records (leave root SPF alone — see `docs/ops/ENV.md`).
+  2. Set Vercel `AUTH_FROM_EMAIL` to a verified address, e.g. `SINet <no-reply@sinet.africa>`.
+  3. Confirm `RESEND_API_KEY` is set.
+  4. Call authorized health (`docs/ops/health-check.md`) and check `checks.authOtp` / last failure reason after a test OTP request.
 
 ---
 
