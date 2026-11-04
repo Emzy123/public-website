@@ -29,6 +29,9 @@ const SEED_PATHS = [
   '/sign-in',
 ];
 
+/** Intentional public 404s (noindex / retired routes) — do not fail the crawl. */
+const ALLOWED_404 = new Set(['/transparency']);
+
 function toPath(href, currentPath) {
   if (!href) return null;
   let raw = href.trim();
@@ -135,6 +138,12 @@ async function main() {
       if (next && !seen.has(next)) queue.push(next);
       ok += 1;
       process.stdout.write(`→ ${path} ${result.status}\n`);
+      continue;
+    }
+
+    if (result.status === 404 && ALLOWED_404.has(path.split('?')[0])) {
+      ok += 1;
+      process.stdout.write(`⊘ ${path} 404 (allowed intentional)\n`);
       continue;
     }
 
