@@ -15,6 +15,7 @@
     "setup": "bash scripts/setup.sh",
     "check:env": "tsx scripts/check-env.ts",
     "smoke": "bash scripts/smoke-test.sh",
+    "crawl": "node scripts/crawl-internal-links.mjs",
     "seed:db": "tsx scripts/seed.ts",
     "seed:cms": "tsx scripts/seed-cms.ts",
     "db:generate": "drizzle-kit generate",

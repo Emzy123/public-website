@@ -61,3 +61,5 @@ jobs:
             sleep 1
           done
           SMOKE_BASE_URL=http://localhost:3010 npm run smoke
+          # Crawl is also invoked at the end of smoke-test.sh; kept explicit for CI visibility.
+          SMOKE_BASE_URL=http://localhost:3010 npm run crawl
