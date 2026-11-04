@@ -39,7 +39,9 @@ debug-*.log
 next-env.d.ts
 
 # editor / agent / internal briefs (do not publish)
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 .kiro/
 .idea/
 sinet-*-prompt*.md

@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+# SINet Hard Rules
+
+## HARD RULES
+1. NEVER git push, merge to master, deploy, or change Vercel, DNS, Resend or database settings. The human reviews and pushes.
+2. One branch per phase: agent/phase-<letter>-<name>, each branched from the previous phase's branch. One commit per item, with a Conventional Commit message that includes the item number.
+3. Never weaken auth. 2FA fails closed. Degraded or fallback modes use only verified, restricted JWT claims, never Mongo roles. Never log OTPs, magic links, secrets, tokens or connection strings, except when NODE_ENV=development AND DEV_LOG_OTP=1.
+4. Never run migrations, deletes or scripts against production data. db:migrate never runs automatically (not in build, postinstall or CI). Data-changing operations ship as scripts with --dry-run as the default, plus docs.
+5. Legal gate: no investment, return, profit, loan, funding-promise, bonus, earnings, naira-figure or paid-slot claims on any public page. Never weaken the existing advert legal-approval gate. When unsure, hide the claim behind a feature flag, set it off, and log it in COPY_REVIEW.md.
+6. No new dependencies unless clearly necessary. Justify each one in PROGRESS.md. Prefer what's already installed.
+7. No secrets in code, tests or CI. CI actions pinned to commit SHAs, with permissions: contents: read.
+8. Every fix gets a test (unit, integration or smoke). Don't delete or skip existing tests to make things pass.
+9. Never delete user data. Dedupe is display-only.
+10. If something needs a human, write it in BLOCKERS.md (what, why, exact steps) and move on to the next item that doesn't depend on it.
