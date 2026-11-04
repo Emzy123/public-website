@@ -4,13 +4,16 @@
 import {
   createSessionToken,
   verifySessionToken,
-  IDLE_TIMEOUT,
-  SESSION_MAX_AGE,
   type AuthSession,
 } from './session';
+import { revokeSessionJti, resetSessionRevocationForTests } from './session-revocation';
 
 describe('Auth Session Management (JOSE JWT)', () => {
-  const mockUser: Omit<AuthSession, 'lastActive'> = {
+  beforeEach(() => {
+    resetSessionRevocationForTests();
+  });
+
+  const mockUser: Omit<AuthSession, 'lastActive' | 'jti'> = {
     userId: 'usr_abc123',
     email: 'student@fulokoja.edu.ng',
     phone: '+2348012345678',
@@ -61,5 +64,13 @@ describe('Auth Session Management (JOSE JWT)', () => {
   it('returns null for arbitrary malformed string', async () => {
     const result = await verifySessionToken('not-a-token');
     expect(result).toBeNull();
+  });
+
+  it('rejects a token whose jti was revoked server-side', async () => {
+    const token = await createSessionToken(mockUser);
+    const verified = await verifySessionToken(token);
+    expect(verified?.jti).toBeTruthy();
+    revokeSessionJti(verified!.jti!);
+    expect(await verifySessionToken(token)).toBeNull();
   });
 });

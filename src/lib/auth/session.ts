@@ -1,8 +1,9 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 import { cookies } from 'next/headers';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { isProductionMode } from '@/lib/runtime/envMode';
 import type { UserRole } from './roles';
+import { generateSessionJti, isSessionJtiRevoked } from './session-revocation';
 
 export const MEMBER_SESSION_COOKIE = 'sinet_member_session';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -16,6 +17,8 @@ export interface AuthSession {
   chapterIds: string[];
   is2faAuthenticated: boolean;
   lastActive: number;
+  /** Unique JWT id used for server-side revocation on logout. */
+  jti?: string;
 }
 
 function getAuthSecretKey(): Uint8Array {
@@ -29,8 +32,9 @@ function getAuthSecretKey(): Uint8Array {
   return new TextEncoder().encode('sinet-development-auth-secret-key-at-least-32-chars-long');
 }
 
-export async function createSessionToken(session: Omit<AuthSession, 'lastActive'>): Promise<string> {
+export async function createSessionToken(session: Omit<AuthSession, 'lastActive' | 'jti'> & { jti?: string }): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
+  const jti = session.jti || generateSessionJti();
   return new SignJWT({
     sub: session.userId,
     email: session.email,
@@ -41,6 +45,7 @@ export async function createSessionToken(session: Omit<AuthSession, 'lastActive'
     lastActive: now,
   })
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(jti)
     .setIssuedAt()
     .setIssuer('sinet-members')
     .setAudience('sinet-members')
@@ -56,6 +61,11 @@ export async function verifySessionToken(token: string): Promise<AuthSession | n
     });
 
     if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+      return null;
+    }
+
+    const jti = typeof payload.jti === 'string' ? payload.jti : undefined;
+    if (jti && isSessionJtiRevoked(jti)) {
       return null;
     }
 
@@ -78,9 +88,24 @@ export async function verifySessionToken(token: string): Promise<AuthSession | n
       chapterIds,
       is2faAuthenticated: Boolean(payload.is2faAuthenticated),
       lastActive,
+      jti,
     };
   } catch {
     return null;
+  }
+}
+
+/** Peek jti/exp from a cookie token without full verification (for logout revocation). */
+export function peekSessionClaims(token: string): { jti?: string; expMs?: number; userId?: string } {
+  try {
+    const payload = decodeJwt(token);
+    return {
+      jti: typeof payload.jti === 'string' ? payload.jti : undefined,
+      expMs: typeof payload.exp === 'number' ? payload.exp * 1000 : undefined,
+      userId: typeof payload.sub === 'string' ? payload.sub : undefined,
+    };
+  } catch {
+    return {};
   }
 }
 
