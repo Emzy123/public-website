@@ -7,6 +7,7 @@ import { AdminShell } from '@admin/components/AdminShell';
 import type { UnifiedApplication } from '@/app/api/admin/applications/route';
 import { StatusPill } from '@/components/ui/Badge';
 import { formatWatDate, formatWatDateTime } from '@/lib/date';
+import { ALL_APPLICATION_ROLES, ROLE_LABELS, type ApplicationRole } from '@/lib/types/membership';
 
 type ModeratorScope = {
   id: string;
@@ -34,6 +35,7 @@ export default function ApplicationsPageInner() {
   // Filters & Tabs
   const [activeTab, setActiveTab] = useState<'all' | 'submitted' | 'approved' | 'rejected'>('all');
   const [divisionFilter, setDivisionFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const [universityFilter, setUniversityFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -131,6 +133,13 @@ export default function ApplicationsPageInner() {
         if (activeTab === 'rejected' && app.status !== 'rejected') return false;
       }
       if (divisionFilter !== 'all' && app.division !== divisionFilter) return false;
+      if (roleFilter !== 'all') {
+        const roleSlug = String(app.division || '').toLowerCase().replace(/_/g, '-');
+        const rawRole = String((app.rawData as { role?: string } | undefined)?.role || '').toLowerCase();
+        if (roleSlug !== roleFilter && rawRole !== roleFilter && app.division !== roleFilter) {
+          return false;
+        }
+      }
       if (universityFilter !== 'all' && app.universityName !== universityFilter) return false;
       if (startDate) {
         const start = new Date(startDate).getTime();
@@ -142,7 +151,7 @@ export default function ApplicationsPageInner() {
       }
       return true;
     });
-  }, [applications, activeTab, divisionFilter, universityFilter, startDate, endDate]);
+  }, [applications, activeTab, divisionFilter, roleFilter, universityFilter, startDate, endDate]);
 
   // Open drawer for an application
   const openReviewDrawer = (app: UnifiedApplication, initialTab: 'responses' | 'documents' | 'decision' = 'responses') => {
@@ -508,13 +517,29 @@ export default function ApplicationsPageInner() {
             <span className="absolute left-3 top-2 text-xs text-slate-400">🔍</span>
           </div>
 
+          {/* Role filter — full application role enum (B4) */}
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            aria-label="Filter by application role"
+            data-testid="applications-role-filter"
+            className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
+          >
+            <option value="all">All Roles</option>
+            {ALL_APPLICATION_ROLES.map((role) => (
+              <option key={role} value={role}>
+                {ROLE_LABELS[role as ApplicationRole]}
+              </option>
+            ))}
+          </select>
+
           {/* Division / Pathway Filter */}
           <select
             value={divisionFilter}
             onChange={(e) => setDivisionFilter(e.target.value)}
             className="rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-1.5 text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600"
           >
-            <option value="all">All Divisions &amp; Roles</option>
+            <option value="all">All Divisions</option>
             {divisionOptions.length > 0 ? (
               divisionOptions.map((div) => (
                 <option key={div} value={div}>
@@ -566,13 +591,14 @@ export default function ApplicationsPageInner() {
             />
           </div>
 
-          {(startDate || endDate || divisionFilter !== 'all' || universityFilter !== 'all' || searchQuery) && (
+          {(startDate || endDate || divisionFilter !== 'all' || roleFilter !== 'all' || universityFilter !== 'all' || searchQuery) && (
             <button
               type="button"
               onClick={() => {
                 setStartDate('');
                 setEndDate('');
                 setDivisionFilter('all');
+                setRoleFilter('all');
                 setUniversityFilter('all');
                 setSearchQuery('');
               }}
