@@ -28,7 +28,9 @@ describe('Postgres TLS verification configuration', () => {
     expect(mockPostgres).toHaveBeenCalled();
     const options = mockPostgres.mock.calls[0][1];
 
-    // Certificate verification must be strictly ON ({ rejectUnauthorized: true })
+    // Certificate verification must be strictly ON ({ rejectUnauthorized: true }).
+    // The postgres driver sets rejectUnauthorized=false when ssl === 'require'
+    // (see node_modules/postgres/src/connection.js) — never pass the string form.
     expect(typeof options.ssl).toBe('object');
     expect(options.ssl).not.toBeNull();
     expect(options.ssl.rejectUnauthorized).toBe(true);
