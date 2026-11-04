@@ -127,7 +127,9 @@ export default async function MemberVerificationPage({
     ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
     : false;
 
-  const isActive = record.status === 'active';
+  const isRevoked = record.status === 'suspended';
+  const isValid = record.status === 'active' && !isRevoked;
+  const credentialLabel = isValid ? 'Valid' : isRevoked ? 'Revoked' : 'Pending';
   const divisionInfo = record.division
     ? STUDENT_DIVISION_INFO[record.division as StudentDivision]
     : null;
@@ -152,13 +154,19 @@ export default async function MemberVerificationPage({
             </div>
             <div
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                isActive
+                isValid
                   ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40'
-                  : 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40'
+                  : isRevoked
+                    ? 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40'
+                    : 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40'
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              {isActive ? 'Active Member' : 'Pending Verification'}
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isValid ? 'bg-emerald-400' : isRevoked ? 'bg-rose-400' : 'bg-amber-400'
+                }`}
+              />
+              {credentialLabel}
             </div>
           </div>
 
@@ -205,11 +213,18 @@ export default async function MemberVerificationPage({
 
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Student Division
+                Role
               </p>
               <p className="mt-1 font-medium text-amber-300">
-                {divisionInfo?.name || 'General Student Network'}
+                {divisionInfo?.name || 'Community Member'}
               </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Status
+              </p>
+              <p className="mt-1 font-medium text-slate-200">{credentialLabel}</p>
             </div>
 
             <div>
