@@ -25,9 +25,9 @@ const revokedJtis = new Map<string, DenylistEntry>();
 
 function pruneDenylist(now = Date.now()) {
   if (revokedJtis.size <= 500) return;
-  for (const [jti, entry] of revokedJtis) {
+  Array.from(revokedJtis.entries()).forEach(([jti, entry]) => {
     if (entry.expiresAtMs <= now) revokedJtis.delete(jti);
-  }
+  });
 }
 
 export function hashSessionToken(jti: string): string {
