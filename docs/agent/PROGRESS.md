@@ -3,7 +3,7 @@
 Source of truth for session restarts. Continue from the first unfinished item.
 
 **Last updated:** 2026-11-04  
-**Current branch:** (creating `agent/phase-a-security`)  
+**Current branch:** `agent/phase-a-security` → next `agent/phase-b-paths`  
 **New dependencies this session:** none yet
 
 ## Definition of Done (per item)
@@ -22,18 +22,18 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 ## Phase A — Sync and security gate (`agent/phase-a-security`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| A1 Git status / reflog / confirm security commits | done | (pending) | See docs/agent/A1_GIT_REPORT.md; commits present; no uncommitted work to split |
-| A2 Postgres TLS verify + config test | done_on_master | 5620e59 / c58f0c2 | `rejectUnauthorized: true` + DATABASE_CA_CERT; `db-config.test.ts` |
+| A1 Git status / reflog / confirm security commits | done | 79913a6 | See docs/agent/A1_GIT_REPORT.md |
+| A2 Postgres TLS verify + config test | done | 6cba401 (+5620e59) | Proof: ssl require => rejectUnauthorized false; docs/ops/postgres-tls.md |
 | A3 Member 2FA fail-closed + stale Mongo test | done_on_master | 8917588 / 5620e59 | |
 | A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | done_on_master | 016dafa + me tests | |
 | A5 OTP/magic-link logging allowlist | done_on_master | 8917588 | |
 | A6 Boot: AUTH_SECRET + DATABASE_URL fatal in prod | done_on_master | e4b4826 | |
-| A7 `/api/health` public vs authorized + ops doc | partial | e4b4826 | Need `docs/ops` authorized-check doc |
+| A7 `/api/health` public vs authorized + ops doc | done | 78003e3 (+e4b4826) | docs/ops/health-check.md |
 | A8 Admin applications display-only dedupe | done_on_master | (dedupe.ts) | |
-| A9 `db:migrate` manual + `docs/ops/migrations.md` | partial | 5c614ac | Need ops/migrations.md |
+| A9 `db:migrate` manual + `docs/ops/migrations.md` | done | 10283d0 (+5c614ac) | docs/ops/migrations.md |
 | A10 CI smoke SHA-pinned, no secrets | done_on_master | fd811d0 | |
-| A11 Logout + server-side JWT revocation | pending | | Cookie clear only today |
-| A12 `docs/ops/ENV.md` | pending | | |
+| A11 Logout + server-side JWT revocation | done | c9704e6 / eca1b8a | jti denylist + sessions delete; logout tests |
+| A12 `docs/ops/ENV.md` | done | 24c115e | |
 
 ---
 
@@ -107,3 +107,20 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 
 ## Phase summaries
 (Appended at end of each phase.)
+
+
+## Phase A summary
+- **Branch:** `agent/phase-a-security`
+- **Commits (this phase):** 8b8032e phase-0; 79913a6 A1; 6cba401 A2; 78003e3 A7; 10283d0 A9; c9704e6 A11; eca1b8a A11 fix; 24c115e A12
+- **Inherited from master:** A3–A6, A8, A10 (c58f0c2…fd811d0)
+- **Tests added:** logout.test.ts; session revocation cases
+- **DoD (2026-11-04):**
+  - typecheck: pass
+  - lint: pass (2 pre-existing hook warnings)
+  - npm test: 59 passed suites / 5 failed (Postgres integration: campaigns, gamification, member-id, moderation-guards, pulse) — docker compose provides Mongo only, no local Postgres
+  - A11 unit: 7/7 pass
+  - next build: pass
+  - smoke: 59 passed, 2 failed (`/api/join/finance-analysts-cohort-1`, `/api/join/student-enterprise-fellows` → campaign not found with unreachable Postgres on :9)
+- **Risks:** Multi-instance logout denylist is process-local until sessions row delete is reachable; document in BLOCKERS if needed.
+- **Human:** none new beyond existing Postgres/DNS blockers.
+
