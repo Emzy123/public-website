@@ -154,16 +154,26 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 - **Branch:** `agent/phase-a-followups`
 - **Commits:**
   - ac4a944: test(db): assert driver-resolved rejectUnauthorized and exact local hostname matching (1)
-  - c86634d: fix(db): remove duplicate export of createPostgresClient and isLocalDatabaseHost (1)
   - 06eb394: fix(rate-limit): use trusted right-most IP or platform header to prevent spoof bypass (4)
   - 5fd9b20: test(db): auto-seed local test database in globalSetup and skip if absent (3)
+  - c86634d: fix(db): remove duplicate export of createPostgresClient and isLocalDatabaseHost (1)
   - 03f0234: docs(auth): document session TTL and cross-instance revocation window during Postgres outage (5)
+  - e786f07: docs(agent): scope PROGRESS.md to Phase A on this branch (6)
+  - 171efbe: docs(ops): create Phase A release checklist and runbook (7)
+  - 308b4aa: test(db): fix it.each callback signature type in hostname match test (1)
 - **DoD Verification Results:**
-  - Driver-resolved TLS options asserted and passed (`rejectUnauthorized === true` on real client options).
-  - Exact hostname matching verified (localhost.example.com, Neon, Supabase are non-local).
+  - `npm test`: 64 passed suites / 64 total (516 tests passed / 516 total, 0 failed) with local Postgres & Mongo up
+  - `npm run typecheck`: clean pass (0 errors)
+  - `npm run lint`: pass (0 errors, 2 pre-existing react-hooks/exhaustive-deps warnings)
+  - `next build`: pass (optimized build & next-sitemap generated)
+  - `npm run smoke`: 61 passed / 0 failed
+- **Key Verifications:**
+  - Driver-resolved TLS options asserted and passed (`rejectUnauthorized === true` on real client options for require/verify-full/none/CA).
+  - Exact hostname matching verified (localhost.example.com, 127.0.0.1.example, Neon, Supabase are non-local).
   - Self-seeding Jest test fixture: fresh Postgres database dropped, recreated, migrated, and passed `npm test` without manual seed.
   - Rate limit IP spoofing prevented using trusted platform header or right-most forwarded-for IP.
   - Member (7d / 30m idle) and Admin (2h) TTL documented in BLOCKERS.md along with cross-instance revocation window during Postgres downtime.
+  - Production release checklist and runbook created in `docs/ops/RELEASE-phase-a.md`.
 
 
 

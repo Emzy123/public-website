@@ -9,6 +9,8 @@ This document details the release checklist, required environment variables, ver
 The following 35 commits encompass Phase A security gates, resilience enhancements, operational tooling, and follow-up verifications:
 
 ```text
+308b4aa test(db): fix it.each callback signature type in hostname match test (1)
+171efbe docs(ops): create Phase A release checklist and runbook (7)
 e786f07 docs(agent): scope PROGRESS.md to Phase A on this branch (6)
 03f0234 docs(auth): document session TTL and cross-instance revocation window during Postgres outage (5)
 c86634d fix(db): remove duplicate export of createPostgresClient and isLocalDatabaseHost (1)
