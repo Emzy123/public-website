@@ -33,6 +33,14 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
   - **Revocation Window During Postgres Outage:** The in-memory `revokedJtis` denylist is process-local. Cross-instance token invalidation across serverless instances relies on deleting the active session row from the PostgreSQL `sessions` table. While PostgreSQL is down or unreachable, a logged-out member token stays valid on other serverless instances for up to that TTL (idle timeout of 30 minutes or hard max of 7 days). Privileged operations remain safe because 2FA elevation requires PostgreSQL (which fails closed with 503), and degraded fallback sessions strictly clamp permissions to the verified member role only.
 - **Verification Rate Limiting (B2):** The `/verify` route rate limit counter is stored in Upstash Redis (`sinet:verify-member-credential`) and holds across all serverless instances. In production, if Upstash credentials are not set, it fails closed with HTTP 429. In development/testing without Upstash, it falls back to a process-local in-memory Map.
 
+### Architecture Note — Jest Open Handles Without forceExit (Item 5)
+- **What:** With `forceExit: true` removed from `jest.config.ts` and `globalTeardown` closing singleton Postgres and MongoDB connection pools, all 66 test suites (531 tests) pass, but the Jest test worker event loop retains open handles.
+- **Why:** During `src/lib/posts/posts.test.ts`, `posts.ts` catches a missing Postgres `posts` table (unmigrated in Phase A) and dynamically imports `@/lib/db/mongodb`, initializing a MongoDB client whose topology monitoring timers/keep-alive sockets keep the Jest worker thread active. In Jest, `globalTeardown` runs in the master process only after all worker processes have exited, so open handles in worker processes block master process shutdown.
+- **Exact steps:**
+  1. Do not restore `forceExit: true` in `jest.config.ts`.
+  2. Keep `globalTeardown` in `tests/setup/global-teardown.ts` to close active clients.
+  3. In Phase B/C (when editorial/posts features are scheduled), mock Mongo in `posts.test.ts` or explicitly close worker connections in an `afterAll` hook with node environment flags.
+
 ---
 
 ## Resolved / N/A

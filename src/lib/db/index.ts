@@ -63,6 +63,13 @@ export function isPostgresConfigured(): boolean {
   return Boolean(process.env.DATABASE_URL?.trim());
 }
 
+export async function closePostgresClient(): Promise<void> {
+  if (global.__postgresClient) {
+    await global.__postgresClient.end({ timeout: 1 }).catch(() => {});
+    global.__postgresClient = undefined;
+  }
+}
+
 const POSTGRES_PING_TIMEOUT_MS = 2500;
 
 export async function pingPostgres(): Promise<'ok' | 'degraded' | 'error'> {

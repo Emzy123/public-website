@@ -172,3 +172,16 @@ export async function getMongoDb(): Promise<Db> {
   return client.db(dbName);
 }
 
+export async function closeMongoConnection(): Promise<void> {
+  if (clientPromise) {
+    try {
+      const client = await clientPromise;
+      await client.close();
+    } catch {
+      // ignore
+    } finally {
+      clientPromise = null;
+    }
+  }
+}
+

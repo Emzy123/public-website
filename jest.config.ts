@@ -4,8 +4,8 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   testTimeout: 20000,
-  forceExit: true,
   globalSetup: '<rootDir>/tests/setup/global-setup.ts',
+  globalTeardown: '<rootDir>/tests/setup/global-teardown.ts',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
