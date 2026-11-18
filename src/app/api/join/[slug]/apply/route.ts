@@ -155,10 +155,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
         if (msg.includes('not found')) {
           return NextResponse.json({ error: msg }, { status: 404 });
         }
+        console.warn('[Apply] Database write failed:', sanitizeDatabaseError(err));
         return NextResponse.json(
           {
             error: 'We could not save your application. Please try again.',
-            reason: sanitizeDatabaseError(err),
           },
           { status: 503 }
         );
@@ -350,13 +350,10 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       throw insertError;
     }
   } catch (error) {
-    console.error('Campaign application submission error:', error);
-    const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;
+    console.error('Campaign application submission error:', sanitizeDatabaseError(error));
     return NextResponse.json(
       {
         error: 'We could not save your application. Please try again.',
-        reason: sanitizeDatabaseError(error),
-        ...(details ? { details } : {}),
       },
       { status: 503 }
     );

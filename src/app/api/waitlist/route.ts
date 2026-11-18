@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       : 'Unable to process your request. Please try again later.';
 
     return NextResponse.json(
-      publicFormError(safeMessage, isDevelopmentMode() ? errMessage : undefined),
+      publicFormError(safeMessage),
       { status: 500 }
     );
   }

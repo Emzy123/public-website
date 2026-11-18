@@ -133,9 +133,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;
     return NextResponse.json(
-      { success: false, ...publicFormError('Unable to send your message. Please try again.', details) },
+      { success: false, ...publicFormError('Unable to send your message. Please try again.') },
       { status: 502 }
     );
   }

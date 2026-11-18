@@ -111,7 +111,7 @@ export async function POST(
 
     if (isUuid && !isPostgresConfigured()) {
       return NextResponse.json(
-        { error: 'database_unavailable', reason: 'Primary database is not configured or unavailable' },
+        { error: 'database_unavailable' },
         { status: 503 }
       );
     }
@@ -124,9 +124,10 @@ export async function POST(
         .where(eq(applications.id, params.id));
       app = foundApp;
     } catch (dbErr) {
+      console.warn('[AdminReview] Database query failed:', sanitizeDatabaseError(dbErr));
       if (isUuid) {
         return NextResponse.json(
-          { error: 'database_unavailable', reason: sanitizeDatabaseError(dbErr) },
+          { error: 'database_unavailable' },
           { status: 503 }
         );
       }
@@ -178,8 +179,9 @@ export async function POST(
     }
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
     if (isUuid) {
+      console.error('Application review action error:', sanitizeDatabaseError(error));
       return NextResponse.json(
-        { error: 'database_unavailable', reason: sanitizeDatabaseError(error) },
+        { error: 'database_unavailable' },
         { status: 503 }
       );
     }

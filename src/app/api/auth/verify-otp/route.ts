@@ -274,11 +274,11 @@ export async function POST(request: NextRequest) {
       );
 
       if (!isKnownNo2fa) {
+        console.warn('[VerifyOTP] Postgres down and user status unconfirmed:', sanitizeDatabaseError(postgresError));
         return NextResponse.json(
           {
             error: 'Sign-in temporarily unavailable',
             message: 'Sign-in temporarily unavailable. Please try again later or contact support.',
-            reason: sanitizeDatabaseError(postgresError),
           },
           { status: 503 }
         );

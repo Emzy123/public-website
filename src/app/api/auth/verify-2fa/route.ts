@@ -96,11 +96,10 @@ export async function POST(request: NextRequest) {
     setSessionCookie(response, elevatedToken);
     return response;
   } catch (error) {
-    console.error('[Verify2FA] Database error during 2FA verification:', error);
+    console.error('[Verify2FA] Database error during 2FA verification:', sanitizeDatabaseError(error));
     return NextResponse.json(
       {
         error: 'Authentication service temporarily unavailable. Please retry shortly.',
-        reason: sanitizeDatabaseError(error),
       },
       { status: 503 }
     );

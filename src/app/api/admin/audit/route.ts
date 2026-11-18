@@ -48,11 +48,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof ForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error('Failed to retrieve audit log:', error);
+    console.error('Failed to retrieve audit log:', sanitizeDatabaseError(error));
     return NextResponse.json(
       {
         error: 'Institutional audit log is temporarily unavailable. Please retry shortly.',
-        reason: sanitizeDatabaseError(error),
       },
       { status: 503 }
     );

@@ -62,12 +62,11 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Member verification error:', error);
+    console.error('Member verification error:', sanitizeDatabaseError(error));
     return NextResponse.json(
       {
         valid: false,
         error: 'Verification service temporarily unavailable. Please retry shortly.',
-        reason: sanitizeDatabaseError(error),
       },
       { status: 503 }
     );
