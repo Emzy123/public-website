@@ -153,8 +153,8 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
     const mockPostgresCampaign = {
       campaign: {
         id: 'camp-pg-002',
-        slug: 'student-network',
-        name: 'Student Network Cohort',
+        slug: 'test-membership',
+        name: 'Test Membership (Evergreen)',
         description: 'University campus members',
         targetRole: 'member',
         isAccepting: true,
@@ -168,7 +168,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
     jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue(mockPostgresCampaign as any);
     jest.spyOn(campaignsModule, 'submitCampaignApplication').mockRejectedValue(pgConnectionError);
 
-    const req = new NextRequest('http://localhost:3000/api/join/student-network/apply', {
+    const req = new NextRequest('http://localhost:3000/api/join/test-membership/apply', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
@@ -187,7 +187,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
       }),
     });
 
-    const res = await postJoinApply(req, { params: { slug: 'student-network' } });
+    const res = await postJoinApply(req, { params: { slug: 'test-membership' } });
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('We could not save your application. Please try again.');

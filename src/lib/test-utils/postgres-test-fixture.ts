@@ -13,9 +13,9 @@ export async function ensurePostgresTestFixture(): Promise<{
   reason?: string;
 }> {
   const url = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/sinet_dev';
-  if (!isLocalDatabaseHost(url)) {
+  if (!isLocalDatabaseHost(url) || process.env.NODE_ENV === 'production') {
     throw new Error(
-      `Refusing to seed database: DATABASE_URL (${url}) is not a recognized local development database.`
+      `Refusing to seed test fixture: DATABASE_URL (${url}) is not a recognized local development database or NODE_ENV is production.`
     );
   }
 

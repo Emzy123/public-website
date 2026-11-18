@@ -1,4 +1,4 @@
-import { db } from '../src/lib/db';
+import { db, isLocalDatabaseHost } from '../src/lib/db';
 import { universities, chapters, badges, campaigns } from '../src/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -9,7 +9,7 @@ const KOGI_UNIVERSITIES = [
     campusCode: 'FULOKOJA',
     state: 'Kogi',
     slug: 'fulokoja',
-    description: 'Federal University Lokoja Chapter of the Student Investment Network.',
+    description: 'Federal University Lokoja Chapter of the Student Network.',
   },
   {
     name: 'Prince Abubakar Audu University, Anyigba',
@@ -17,7 +17,7 @@ const KOGI_UNIVERSITIES = [
     campusCode: 'PAAU',
     state: 'Kogi',
     slug: 'paau',
-    description: 'Prince Abubakar Audu University (Anyigba) Chapter of the Student Investment Network.',
+    description: 'Prince Abubakar Audu University (Anyigba) Chapter of the Student Network.',
   },
   {
     name: 'Confluence University of Science and Technology, Osara',
@@ -33,7 +33,7 @@ const KOGI_UNIVERSITIES = [
     campusCode: 'KSUK',
     state: 'Kogi',
     slug: 'ksuk',
-    description: 'Kogi State University Kabba Chapter of the Student Investment Network.',
+    description: 'Kogi State University Kabba Chapter of the Student Network.',
   },
   {
     name: 'Salem University, Lokoja',
@@ -41,7 +41,7 @@ const KOGI_UNIVERSITIES = [
     campusCode: 'SALEM',
     state: 'Kogi',
     slug: 'salem',
-    description: 'Salem University Lokoja Chapter of the Student Investment Network.',
+    description: 'Salem University Lokoja Chapter of the Student Network.',
   },
   {
     name: 'Al-Bayan University, Ankpa',
@@ -49,7 +49,7 @@ const KOGI_UNIVERSITIES = [
     campusCode: 'ALBAYAN',
     state: 'Kogi',
     slug: 'albayan',
-    description: 'Al-Bayan University Ankpa Chapter of the Student Investment Network.',
+    description: 'Al-Bayan University Ankpa Chapter of the Student Network.',
   },
 ];
 
@@ -93,6 +93,13 @@ const INITIAL_BADGES = [
 ];
 
 export async function seedMembersDatabase() {
+  const url = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/sinet_dev';
+  if (!isLocalDatabaseHost(url) || process.env.NODE_ENV === 'production') {
+    throw new Error(
+      `Refusing to seed database: DATABASE_URL (${url}) is not a recognized local development database or NODE_ENV is production.`
+    );
+  }
+
   console.log('Seeding initial Kogi State universities and chapters...');
 
   for (const uniData of KOGI_UNIVERSITIES) {
@@ -151,9 +158,9 @@ export async function seedMembersDatabase() {
   console.log('Seeding initial campaigns...');
   const INITIAL_CAMPAIGNS = [
     {
-      slug: 'student-network',
-      name: 'Student Investment Network — Membership (Evergreen)',
-      description: 'Always-open entry pathway into the Student Investment Network. Join your campus chapter and select your student division: Student Finance, Student Enterprise, or Governance & Records.',
+      slug: 'test-membership',
+      name: 'Test Membership (Evergreen)',
+      description: 'Always-open entry pathway into the Student Network. Join your campus chapter and select your student division: Student Finance, Student Enterprise, or Governance & Records.',
       targetRole: 'member' as const,
       status: 'active' as const,
       seatLimit: null,
