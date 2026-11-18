@@ -14,8 +14,21 @@ describe('Postgres TLS verification configuration', () => {
     delete global.__postgresClient;
   });
 
-  it('proves non-local connections enforce verified TLS with rejectUnauthorized: true', () => {
-    process.env.DATABASE_URL = 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=verify-full';
+  it.each([
+    {
+      description: 'sslmode=require',
+      url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=require',
+    },
+    {
+      description: 'sslmode=verify-full',
+      url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=verify-full',
+    },
+    {
+      description: 'no sslmode parameter',
+      url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb',
+    },
+  ])('enforces rejectUnauthorized: true for non-local $description', ({ url }) => {
+    process.env.DATABASE_URL = url;
 
     const mockPostgres = jest.fn().mockReturnValue({});
     jest.doMock('postgres', () => mockPostgres);
@@ -37,8 +50,21 @@ describe('Postgres TLS verification configuration', () => {
     expect(options.ssl).not.toBe('require');
   });
 
-  it('supports custom CA certificate via DATABASE_CA_CERT', () => {
-    process.env.DATABASE_URL = 'postgresql://user:secret@custom-host.internal:5432/neondb';
+  it.each([
+    {
+      description: 'sslmode=require with CA cert',
+      url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=require',
+    },
+    {
+      description: 'sslmode=verify-full with CA cert',
+      url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=verify-full',
+    },
+    {
+      description: 'no sslmode with CA cert',
+      url: 'postgresql://user:secret@custom-host.internal:5432/neondb',
+    },
+  ])('attaches ca when DATABASE_CA_CERT is set for $description', ({ url }) => {
+    process.env.DATABASE_URL = url;
     process.env.DATABASE_CA_CERT = '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----';
 
     const mockPostgres = jest.fn().mockReturnValue({});

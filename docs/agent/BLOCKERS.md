@@ -16,7 +16,7 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
 - **Why:** Membership, campaigns, audit, verify DB path, and role grants need Postgres.
 - **Exact steps:**
   1. Choose provider (Neon or Supabase) — still undecided.
-  2. Create pooled connection string (`sslmode=verify-full` or require + `DATABASE_CA_CERT`).
+  2. Create pooled connection string (`sslmode=verify-full` only, with optional `DATABASE_CA_CERT` if using a private root CA).
   3. Set `DATABASE_URL` (and optional `DATABASE_CA_CERT`) in Vercel.
   4. From a trusted machine, baseline then `npm run db:migrate` (see `docs/ops/migrations.md` once shipped).
   5. Confirm authorized health check shows Postgres `ok`.

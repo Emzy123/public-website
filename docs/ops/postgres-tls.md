@@ -22,6 +22,6 @@ ssl: {
 }
 ```
 
-Works with Neon or Supabase pooled URLs. Prefer `sslmode=verify-full` in `DATABASE_URL` and set `DATABASE_CA_CERT` when the provider requires a custom CA.
+Works with Neon or Supabase pooled URLs. Recommend `sslmode=verify-full` only in `DATABASE_URL` (never `sslmode=require`), and set `DATABASE_CA_CERT` when the provider requires a custom CA.
 
 Covered by `src/lib/db/db-config.test.ts`.
