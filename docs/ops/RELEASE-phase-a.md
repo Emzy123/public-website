@@ -9,6 +9,7 @@ This document details the release checklist, required environment variables, ver
 The following 35 commits encompass Phase A security gates, resilience enhancements, operational tooling, and follow-up verifications:
 
 ```text
+c21fcc5 docs(agent): finalize Phase A follow-ups verification summary and checklist (7)
 308b4aa test(db): fix it.each callback signature type in hostname match test (1)
 171efbe docs(ops): create Phase A release checklist and runbook (7)
 e786f07 docs(agent): scope PROGRESS.md to Phase A on this branch (6)
