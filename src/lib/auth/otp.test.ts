@@ -92,4 +92,38 @@ describe('auth email delivery', () => {
     expect(spy.mock.calls.some((call) => String(call[0]).includes('654321'))).toBe(false);
     spy.mockRestore();
   });
+
+  it('never logs OTP or magic link when NODE_ENV is production, even if DEV_LOG_OTP=1', async () => {
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'production',
+      DEV_LOG_OTP: '1',
+      AUTH_FROM_EMAIL: 'SINet <no-reply@sinet.africa>',
+    };
+    expect(mayLogAuthCodes()).toBe(false);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    const infoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(sendOtpEmail('member@sinet.africa', '999888')).rejects.toThrow();
+    await expect(
+      sendMagicLinkEmail('member@sinet.africa', 'https://sinet.africa/api/auth/verify-magic?token=secret123')
+    ).rejects.toThrow();
+
+    const allCalls = [
+      ...logSpy.mock.calls,
+      ...infoSpy.mock.calls,
+      ...warnSpy.mock.calls,
+      ...errorSpy.mock.calls,
+    ].map((c) => String(c[0]));
+
+    expect(allCalls.some((c) => c.includes('999888'))).toBe(false);
+    expect(allCalls.some((c) => c.includes('secret123'))).toBe(false);
+
+    logSpy.mockRestore();
+    infoSpy.mockRestore();
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
 });
