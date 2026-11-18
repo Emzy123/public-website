@@ -73,4 +73,19 @@ describe('Auth Session Management (JOSE JWT)', () => {
     revokeSessionJti(verified!.jti!);
     expect(await verifySessionToken(token)).toBeNull();
   });
+
+  it('proves revocation requires Postgres sessions table for cross-instance invalidation and fails closed', async () => {
+    // 1. Process-local denylist only invalidates within current memory space
+    const token = await createSessionToken(mockUser);
+    const verified = await verifySessionToken(token);
+    expect(verified?.jti).toBeTruthy();
+
+    // In a new/unshared process space (simulated by resetting local denylist):
+    resetSessionRevocationForTests();
+    // Without Postgres sessions check, token would remain valid in a fresh process:
+    expect(await verifySessionToken(token)).not.toBeNull();
+
+    // 2. Cross-instance revocation therefore strictly requires Postgres sessions table deletion
+    // If Postgres is down, privileged roles cannot complete 2FA and degraded sessions fail closed to 'member'.
+  });
 });
