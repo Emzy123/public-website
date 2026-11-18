@@ -76,4 +76,4 @@ export async function pingPostgres(): Promise<'ok' | 'degraded' | 'error'> {
   }
 }
 
-export { client, schema, sanitizeDatabaseError, createPostgresClient, isLocalDatabaseHost };
+export { client, schema, sanitizeDatabaseError };
