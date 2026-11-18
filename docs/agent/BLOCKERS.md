@@ -26,6 +26,10 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
 - **Why:** Hard rule 1.
 - **Exact steps:** Human reviews each `agent/phase-*` branch in order and pushes.
 
+### Architecture Note — Multi-Instance Session Revocation & /verify Rate Limiting
+- **Session Revocation (A11):** The in-memory `revokedJtis` denylist is process-local. Cross-instance token invalidation across serverless functions requires deleting the row from the PostgreSQL `sessions` table. If PostgreSQL is unreachable, privileged operations fail closed (2FA cannot complete with 503, and fallback sessions strictly grant the 'member' role).
+- **Verification Rate Limiting (B2):** The `/verify` route rate limit counter is stored in Upstash Redis (`sinet:verify-member-credential`) and holds across all serverless instances. In production, if Upstash credentials are not set, it fails closed with HTTP 429. In development/testing without Upstash, it falls back to a process-local in-memory Map.
+
 ---
 
 ## Resolved / N/A
