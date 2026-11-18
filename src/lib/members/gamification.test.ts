@@ -11,7 +11,14 @@ import { db } from '@/lib/db';
 import { users, memberProfiles, memberIds, userRoles, userBadges, notifications } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-describe('Gamification & Badges Engine', () => {
+const isPostgresUp = process.env.POSTGRES_TEST_DB_AVAILABLE !== '0';
+const describeWithPostgres = isPostgresUp ? describe : describe.skip;
+
+if (!isPostgresUp) {
+  console.warn(`[SKIP] ${__filename}: Skipped because PostgreSQL is absent or unreachable on localhost:5432.`);
+}
+
+describeWithPostgres('Gamification & Badges Engine', () => {
   it('awards a badge to a member and creates an in-portal notification', async () => {
     const uniquePhone = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
     const [user] = await db

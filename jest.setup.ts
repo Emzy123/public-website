@@ -14,3 +14,12 @@ if (typeof (global as unknown as { structuredClone: unknown }).structuredClone =
     return JSON.parse(JSON.stringify(obj));
   };
 }
+
+if (typeof (global as any).setImmediate === 'undefined') {
+  (global as any).setImmediate = (fn: (...args: any[]) => void, ...args: any[]) => setTimeout(fn, 0, ...args);
+}
+
+if (typeof (global as any).clearImmediate === 'undefined') {
+  (global as any).clearImmediate = (id: any) => clearTimeout(id);
+}
+

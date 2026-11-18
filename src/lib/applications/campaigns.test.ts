@@ -11,7 +11,14 @@ import { db } from '@/lib/db';
 import { universities, users, userRoles, memberProfiles, userBadges, campaigns, applications } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
-describe('Campaigns & Applications Service Layer', () => {
+const isPostgresUp = process.env.POSTGRES_TEST_DB_AVAILABLE !== '0';
+const describeWithPostgres = isPostgresUp ? describe : describe.skip;
+
+if (!isPostgresUp) {
+  console.warn(`[SKIP] ${__filename}: Skipped because PostgreSQL is absent or unreachable on localhost:5432.`);
+}
+
+describeWithPostgres('Campaigns & Applications Service Layer', () => {
   it('correctly resolves active evergreen campaign status', async () => {
     const info = await getCampaignBySlug('student-network');
     expect(info).not.toBeNull();
