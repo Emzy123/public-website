@@ -8,14 +8,19 @@ const connectionString =
 
 /**
  * Determines whether a database connection string points to a local development instance.
- * Must match only localhost, 127.0.0.1, ::1, and the docker-compose service host ('postgres'/'sinet-postgres'),
- * as an exact hostname. Non-local hosts (e.g. localhost.example.com, Neon, Supabase) return false.
+ * Must match only localhost, 127.0.0.1, ::1, and (in non-production only) docker-compose service
+ * hostnames ('postgres'/'sinet-postgres'), as an exact hostname.
+ * Non-local hosts (e.g. localhost.example.com, Neon, Supabase) return false.
  */
 export function isLocalDatabaseHost(urlStr?: string): boolean {
   if (!urlStr?.trim()) return true;
   try {
     const rawHostname = new URL(urlStr).hostname.replace(/^\[|\]$/g, '').toLowerCase();
-    const localHosts = new Set(['localhost', '127.0.0.1', '::1', 'postgres', 'sinet-postgres']);
+    const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
+    if (process.env.NODE_ENV !== 'production') {
+      localHosts.add('postgres');
+      localHosts.add('sinet-postgres');
+    }
     return localHosts.has(rawHostname);
   } catch {
     return false;
