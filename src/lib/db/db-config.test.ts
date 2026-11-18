@@ -78,7 +78,7 @@ describe('isLocalDatabaseHost exact hostname matching', () => {
     ['postgresql://postgres@sinet-postgres:5432/sinet_dev', true, 'sinet-postgres (docker container)'],
     ['', true, 'empty / unset URL default'],
     [undefined, true, 'undefined default'],
-  ])('matches local hostname for %s (%s)', (url, expected) => {
+  ])('matches local hostname for %s (%s)', (url, expected, _label) => {
     expect(isLocalDatabaseHost(url)).toBe(expected);
   });
 
