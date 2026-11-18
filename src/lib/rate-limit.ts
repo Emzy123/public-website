@@ -39,18 +39,30 @@ export function checkRateLimit(
 }
 
 export function getClientKey(req: Request): string {
-  const vercelIp = req.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim();
-  if (vercelIp) return vercelIp;
-
-  const cfIp = req.headers.get('cf-connecting-ip')?.trim();
-  if (cfIp) return cfIp;
+  const reqIp = (req as unknown as { ip?: string }).ip;
+  if (reqIp?.trim()) return reqIp.trim();
 
   const realIp = req.headers.get('x-real-ip')?.trim();
   if (realIp) return realIp;
 
-  const forwarded = req.headers.get('x-forwarded-for');
-  const first = forwarded?.split(',')[0]?.trim();
-  return first || 'unknown';
+  const cfIp = req.headers.get('cf-connecting-ip')?.trim();
+  if (cfIp) return cfIp;
+
+  const vercelForwarded = req.headers.get('x-vercel-forwarded-for')?.trim();
+  if (vercelForwarded) {
+    const parts = vercelForwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const rightMost = parts[parts.length - 1];
+    if (rightMost) return rightMost;
+  }
+
+  const forwarded = req.headers.get('x-forwarded-for')?.trim();
+  if (forwarded) {
+    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const rightMost = parts[parts.length - 1];
+    if (rightMost) return rightMost;
+  }
+
+  return 'unknown';
 }
 
 export function getRateLimitHeaders(result: { ok: true } | { ok: false; retryAfterSec: number }): Record<string, string> {

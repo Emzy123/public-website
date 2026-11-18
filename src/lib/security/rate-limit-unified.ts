@@ -80,15 +80,31 @@ export async function enforceRateLimit(
 }
 
 export function getClientIp(request: Request): string {
-  // Prefer platform-managed headers when present (Vercel).
-  const vercelForwarded = request.headers.get('x-vercel-forwarded-for');
-  if (vercelForwarded) {
-    return vercelForwarded.split(',')[0]?.trim() || 'unknown';
+  // 1. NextRequest.ip (populated by Next.js / Vercel Edge runtime)
+  const nextRequestIp = (request as unknown as { ip?: string }).ip;
+  if (nextRequestIp?.trim()) {
+    return nextRequestIp.trim();
   }
 
+  // 2. x-real-ip header (set by trusted reverse proxy / Vercel edge)
   const realIp = request.headers.get('x-real-ip');
   if (realIp?.trim()) return realIp.trim();
 
+  // 3. x-vercel-forwarded-for (Vercel platform header - right-most trusted entry)
+  const vercelForwarded = request.headers.get('x-vercel-forwarded-for');
+  if (vercelForwarded?.trim()) {
+    const parts = vercelForwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const rightMost = parts[parts.length - 1];
+    if (rightMost) return rightMost;
+  }
+
+  // 4. x-forwarded-for (standard proxy header - right-most trusted entry, never left-most client spoof)
   const forwarded = request.headers.get('x-forwarded-for');
-  return forwarded?.split(',')[0]?.trim() ?? 'unknown';
+  if (forwarded?.trim()) {
+    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
+    const rightMost = parts[parts.length - 1];
+    if (rightMost) return rightMost;
+  }
+
+  return 'unknown';
 }
