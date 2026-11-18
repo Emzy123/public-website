@@ -27,7 +27,10 @@ Items that need a human, CEO, legal, or environment decision. Agent continues on
 - **Exact steps:** Human reviews each `agent/phase-*` branch in order and pushes.
 
 ### Architecture Note — Multi-Instance Session Revocation & /verify Rate Limiting
-- **Session Revocation (A11):** The in-memory `revokedJtis` denylist is process-local. Cross-instance token invalidation across serverless functions requires deleting the row from the PostgreSQL `sessions` table. If PostgreSQL is unreachable, privileged operations fail closed (2FA cannot complete with 503, and fallback sessions strictly grant the 'member' role).
+- **Session Revocation & Cross-Instance Window (A11 / Follow-up 5):**
+  - **Member JWT Expiry:** Hard expiration is 7 days (`SESSION_MAX_AGE = 60 * 60 * 24 * 7` seconds in `src/lib/auth/session.ts:9`), with an idle timeout of 30 minutes (`IDLE_TIMEOUT = 60 * 30` seconds in `src/lib/auth/session.ts:10`).
+  - **Admin JWT Expiry:** Hard expiration is 2 hours (`SESSION_MAX_AGE = 60 * 60 * 2` seconds in `admin/lib/auth.ts:8` and `src/middleware.ts:8`).
+  - **Revocation Window During Postgres Outage:** The in-memory `revokedJtis` denylist is process-local. Cross-instance token invalidation across serverless instances relies on deleting the active session row from the PostgreSQL `sessions` table. While PostgreSQL is down or unreachable, a logged-out member token stays valid on other serverless instances for up to that TTL (idle timeout of 30 minutes or hard max of 7 days). Privileged operations remain safe because 2FA elevation requires PostgreSQL (which fails closed with 503), and degraded fallback sessions strictly clamp permissions to the verified member role only.
 - **Verification Rate Limiting (B2):** The `/verify` route rate limit counter is stored in Upstash Redis (`sinet:verify-member-credential`) and holds across all serverless instances. In production, if Upstash credentials are not set, it fails closed with HTTP 429. In development/testing without Upstash, it falls back to a process-local in-memory Map.
 
 ---
