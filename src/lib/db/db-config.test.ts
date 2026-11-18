@@ -1,18 +1,21 @@
 /** @jest-environment node */
 
-describe('Postgres TLS verification configuration', () => {
-  const originalEnv = { ...process.env };
+import { createPostgresClient, isLocalDatabaseHost } from './index';
+import type postgres from 'postgres';
 
-  beforeEach(() => {
-    jest.resetModules();
-    delete global.__postgresClient;
-    process.env = { ...originalEnv };
+describe('Postgres TLS verification configuration (Driver-Resolved)', () => {
+  const activeClients: postgres.Sql[] = [];
+
+  afterAll(async () => {
+    for (const sql of activeClients) {
+      await sql.end({ timeout: 0 }).catch(() => {});
+    }
   });
 
-  afterAll(() => {
-    process.env = { ...originalEnv };
-    delete global.__postgresClient;
-  });
+  function trackClient(sql: postgres.Sql): postgres.Sql {
+    activeClients.push(sql);
+    return sql;
+  }
 
   it.each([
     {
@@ -27,27 +30,13 @@ describe('Postgres TLS verification configuration', () => {
       description: 'no sslmode parameter',
       url: 'postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb',
     },
-  ])('enforces rejectUnauthorized: true for non-local $description', ({ url }) => {
-    process.env.DATABASE_URL = url;
+  ])('asserts sql.options.ssl.rejectUnauthorized === true on real client for $description', ({ url }) => {
+    const sql = trackClient(createPostgresClient(url));
+    const ssl = sql.options.ssl as { rejectUnauthorized?: boolean };
 
-    const mockPostgres = jest.fn().mockReturnValue({});
-    jest.doMock('postgres', () => mockPostgres);
-    jest.doMock('drizzle-orm/postgres-js', () => ({
-      drizzle: jest.fn().mockReturnValue({}),
-    }));
-
-    require('./index');
-
-    expect(mockPostgres).toHaveBeenCalled();
-    const options = mockPostgres.mock.calls[0][1];
-
-    // Certificate verification must be strictly ON ({ rejectUnauthorized: true }).
-    // The postgres driver sets rejectUnauthorized=false when ssl === 'require'
-    // (see node_modules/postgres/src/connection.js) — never pass the string form.
-    expect(typeof options.ssl).toBe('object');
-    expect(options.ssl).not.toBeNull();
-    expect(options.ssl.rejectUnauthorized).toBe(true);
-    expect(options.ssl).not.toBe('require');
+    expect(typeof ssl).toBe('object');
+    expect(ssl).not.toBeNull();
+    expect(ssl.rejectUnauthorized).toBe(true);
   });
 
   it.each([
@@ -64,39 +53,43 @@ describe('Postgres TLS verification configuration', () => {
       url: 'postgresql://user:secret@custom-host.internal:5432/neondb',
     },
   ])('attaches ca when DATABASE_CA_CERT is set for $description', ({ url }) => {
-    process.env.DATABASE_URL = url;
-    process.env.DATABASE_CA_CERT = '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----';
+    const caCert = '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----';
+    const sql = trackClient(createPostgresClient(url, caCert));
+    const ssl = sql.options.ssl as { rejectUnauthorized?: boolean; ca?: string };
 
-    const mockPostgres = jest.fn().mockReturnValue({});
-    jest.doMock('postgres', () => mockPostgres);
-    jest.doMock('drizzle-orm/postgres-js', () => ({
-      drizzle: jest.fn().mockReturnValue({}),
-    }));
-
-    require('./index');
-
-    expect(mockPostgres).toHaveBeenCalled();
-    const options = mockPostgres.mock.calls[0][1];
-
-    expect(options.ssl).toEqual({
+    expect(ssl).toEqual({
       rejectUnauthorized: true,
-      ca: '-----BEGIN CERTIFICATE-----\nTEST_CA_DATA\n-----END CERTIFICATE-----',
+      ca: caCert,
     });
   });
 
   it('keeps local dev connections unencrypted (ssl: false)', () => {
-    process.env.DATABASE_URL = 'postgresql://postgres@localhost:5432/sinet_dev';
+    const sql = trackClient(createPostgresClient('postgresql://postgres@localhost:5432/sinet_dev'));
+    expect(sql.options.ssl).toBe(false);
+  });
+});
 
-    const mockPostgres = jest.fn().mockReturnValue({});
-    jest.doMock('postgres', () => mockPostgres);
-    jest.doMock('drizzle-orm/postgres-js', () => ({
-      drizzle: jest.fn().mockReturnValue({}),
-    }));
+describe('isLocalDatabaseHost exact hostname matching', () => {
+  it.each([
+    ['postgresql://postgres@localhost:5432/sinet_dev', true, 'localhost'],
+    ['postgresql://postgres@127.0.0.1:5432/sinet_dev', true, '127.0.0.1'],
+    ['postgresql://postgres@[::1]:5432/sinet_dev', true, '::1 (bracketed IPv6)'],
+    ['postgresql://postgres@postgres:5432/sinet_dev', true, 'postgres (docker-compose service)'],
+    ['postgresql://postgres@sinet-postgres:5432/sinet_dev', true, 'sinet-postgres (docker container)'],
+    ['', true, 'empty / unset URL default'],
+    [undefined, true, 'undefined default'],
+  ])('matches local hostname for %s (%s)', (url, expected) => {
+    expect(isLocalDatabaseHost(url)).toBe(expected);
+  });
 
-    require('./index');
-
-    expect(mockPostgres).toHaveBeenCalled();
-    const options = mockPostgres.mock.calls[0][1];
-    expect(options.ssl).toBe(false);
+  it.each([
+    ['postgresql://user:secret@localhost.example.com:5432/db', 'localhost.example.com'],
+    ['postgresql://user:secret@127.0.0.1.example:5432/db', '127.0.0.1.example'],
+    ['postgresql://user:secret@127.0.0.1.nip.io:5432/db', '127.0.0.1.nip.io'],
+    ['postgresql://user:secret@ep-cool-proj.us-east-2.aws.neon.tech/neondb?sslmode=require', 'Neon serverless Postgres host'],
+    ['postgresql://user:secret@aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require', 'Supabase transaction pooler host'],
+    ['postgresql://user:secret@remote-postgres-box.internal:5432/prod', 'remote internal host'],
+  ])('asserts non-local host %s is NOT local (%s)', (url) => {
+    expect(isLocalDatabaseHost(url)).toBe(false);
   });
 });
