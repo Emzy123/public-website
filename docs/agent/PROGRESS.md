@@ -2,9 +2,9 @@
 
 Source of truth for session restarts. Continue from the first unfinished item.
 
-**Last updated:** 2026-11-04  
-**Current branch:** `agent/phase-a-security` → next `agent/phase-b-paths`  
-**New dependencies this session:** none yet
+**Last updated:** 2026-11-18  
+**Current branch:** `agent/phase-a-verify`  
+**New dependencies this session:** none
 
 ## Definition of Done (per item)
 typecheck · lint · full `npm test` · `next build` · smoke — record summary lines below each item.
@@ -14,55 +14,55 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 ## Phase 0 — First actions
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| 0.1 Rules `.cursor/rules/sinet.mdc` + AGENTS.md sync | in_progress | | |
-| 0.2 PROGRESS / BLOCKERS / COPY_REVIEW | in_progress | | |
+| 0.1 Rules `.cursor/rules/sinet.mdc` + AGENTS.md sync | done | 8b8032e | |
+| 0.2 PROGRESS / BLOCKERS / COPY_REVIEW | done | 8b8032e | |
 
 ---
 
-## Phase A — Sync and security gate (`agent/phase-a-security`)
+## Phase A — Sync and security gate (`agent/phase-a-security` & `agent/phase-a-verify`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
 | A1 Git status / reflog / confirm security commits | done | 79913a6 | See docs/agent/A1_GIT_REPORT.md |
-| A2 Postgres TLS verify + config test | done | 6cba401 (+5620e59) | Proof: ssl require => rejectUnauthorized false; docs/ops/postgres-tls.md |
-| A3 Member 2FA fail-closed + stale Mongo test | done_on_master | 8917588 / 5620e59 | |
-| A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | done_on_master | 016dafa + me tests | |
-| A5 OTP/magic-link logging allowlist | done_on_master | 8917588 | |
-| A6 Boot: AUTH_SECRET + DATABASE_URL fatal in prod | done_on_master | e4b4826 | |
+| A2 Postgres TLS verify + config test | done | 6cba401 (+5620e59, 746662f) | Proof: ssl require => rejectUnauthorized false; docs/ops/postgres-tls.md; unit tests for require/verify-full/none |
+| A3 Member 2FA fail-closed + stale Mongo test | done_on_master | 8917588 / 5620e59 | Verified in verify-otp & verify-2fa suites |
+| A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | done_on_master | 016dafa + me tests | Verified in me/route.test.ts |
+| A5 OTP/magic-link logging allowlist | done | 8917588 (+a53aa8a) | Verified never logs when NODE_ENV=production |
+| A6 Boot: AUTH_SECRET + DATABASE_URL fatal in prod | done_on_master | e4b4826 | Verified in secrets.test.ts & boot check |
 | A7 `/api/health` public vs authorized + ops doc | done | 78003e3 (+e4b4826) | docs/ops/health-check.md |
-| A8 Admin applications display-only dedupe | done_on_master | (dedupe.ts) | |
-| A9 `db:migrate` manual + `docs/ops/migrations.md` | done | 10283d0 (+5c614ac) | docs/ops/migrations.md |
-| A10 CI smoke SHA-pinned, no secrets | done_on_master | fd811d0 | |
-| A11 Logout + server-side JWT revocation | done | c9704e6 / eca1b8a | jti denylist + sessions delete; logout tests |
-| A12 `docs/ops/ENV.md` | done | 24c115e | |
+| A8 Admin applications display-only dedupe | done_on_master | (dedupe.ts) | Display-only, never deletes user data |
+| A9 `db:migrate` manual + `docs/ops/migrations.md` | done | 10283d0 (+5c614ac) | Local migration verified against local postgres |
+| A10 CI smoke SHA-pinned, no secrets | done_on_master | fd811d0 | Verified permissions: contents: read |
+| A11 Logout + server-side JWT revocation | done | c9704e6 / eca1b8a (+5922fc7) | jti denylist + sessions delete; cross-instance Postgres dependency verified |
+| A12 `docs/ops/ENV.md` | done | 24c115e | Updated docs/ops/ENV.md |
 
 ---
 
 ## Phase B — Broken paths (`agent/phase-b-paths`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| B1 Edit link roles + Staff invite-only + Closed bug | partial | 9378622 / 2fa2faa | Need BLOCKERS UI steps for link 3fac46517ba6 |
-| B2 `/verify` public check + rate limit + footer | partial | verify/[memberId] exists | Need `/verify` index; confirm footer |
-| B3 `/admin/audit` fix + pagination/filters + smoke | partial | page exists | Filters incomplete (action only); need actor/date + pagination + smoke |
-| B4 Applications role filter = full enum | pending | | |
-| B5 Sign-in OTP neutral errors | done_on_master | e0e27da0 | Confirm BLOCKERS for Resend |
-| B6 Regression smokes (redirects, join, /me 401) | partial | 5062ffb | Expand smoke |
-| B7 Crawl script + CI | pending | | |
+| B1 Edit link roles + Staff invite-only + Closed bug | done | 0ae6b2d (+9378622/2fa2faa) | BLOCKERS UI steps shipped |
+| B2 `/verify` public check + rate limit + footer | done | fa66f48 (+34c46a0) | /verify index + public API strip PII + rate limit docs |
+| B3 `/admin/audit` fix + pagination/filters + smoke | done | 4d983b7 | actor/date/pagination + client test |
+| B4 Applications role filter = full enum | done | 24e3b17 | ALL_APPLICATION_ROLES dropdown |
+| B5 Sign-in OTP neutral errors | done | 0ae6b2d (+0e27da0) | Resend steps in BLOCKERS (fixed 0e27da0 typo) |
+| B6 Regression smokes (redirects, join, /me 401) | done | 96596ff | returns/investor-journey/me/verify/footer |
+| B7 Crawl script + CI | done | a064ee8 / 96b75ca | crawl-internal-links.mjs in smoke+CI |
 
 ---
 
 ## Phase C — Trust, content, polish (`agent/phase-c-content`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| C1 Delete 40% advert script (dry-run default) | pending | | |
-| C2 Compliance copy + Disclaimer + regex | pending | | |
-| C3 Numbers behind legal flag OFF | partial | 2dd6351 | Verify chapter counts |
-| C4 hello@sinet.africa + privacy trim + terms COPY_REVIEW | pending | | investment interest still in privacy |
-| C5 News polish | pending | | Submit Lead still present |
-| C6 Gallery empty + a11y names | pending | | |
-| C7 SEO generateMetadata + duplicate title test | pending | | |
-| C8 One primary CTA + pillar anchors | pending | | |
-| C9 Mobile Playwright screenshots | pending | | |
-| C10 `/join` closed state + get notified | pending | | |
+| C1 Delete 40% advert script (dry-run default) | done | fdd1813 | delete-earn-40-advert.ts with --dry-run default |
+| C2 Compliance copy + Disclaimer + regex | done | 83f0191 | Neutralized vocab, added Disclaimer, risk regex |
+| C3 Numbers behind legal flag OFF | done | 2dd6351 | Scale stats & claims gated |
+| C4 hello@sinet.africa + privacy trim + terms COPY_REVIEW | done | 2cde990 | hello@sinet.africa, removed interest amount |
+| C5 News polish | done | abfcf82 | Share a story CTA, removed Report, brand tokens |
+| C6 Gallery empty + a11y names | done | 363cf78 | Agriculture empty state, unique a11y tile names |
+| C7 SEO generateMetadata + duplicate title test | done | 6002248 | Strip duplicate SINet title suffixes + test |
+| C8 One primary CTA + pillar anchors | done | e22c28d | Single Get Notified modal with role select |
+| C9 Mobile Playwright screenshots | done | c220f14 | 375/430/768 viewport screenshots in e2e |
+| C10 `/join` closed state + get notified | done | e22c28d | Integrated with C8 role selector modal |
 
 ---
 
@@ -123,4 +123,30 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
   - smoke: 59 passed, 2 failed (`/api/join/finance-analysts-cohort-1`, `/api/join/student-enterprise-fellows` → campaign not found with unreachable Postgres on :9)
 - **Risks:** Multi-instance logout denylist is process-local until sessions row delete is reachable; document in BLOCKERS if needed.
 - **Human:** none new beyond existing Postgres/DNS blockers.
+
+
+## Phase A Verification summary (`agent/phase-a-verify`)
+- **Branch:** `agent/phase-a-verify`
+- **Commits:**
+  - 58f3b6e: chore(docker): add dev-only postgres service to docker-compose (1)
+  - 746662f: test(db): verify rejectUnauthorized with require, verify-full, and CA cert (3)
+  - a53aa8a: test(auth): prove no OTP or magic link is logged when NODE_ENV is production (9)
+  - 5922fc7: test(auth): verify cross-instance revocation dependency on Postgres sessions table (7)
+  - 34c46a0: docs(verify): document rate limit counter store and serverless semantics (8)
+- **DoD Verification Results:**
+  - `npm test`: 64 passed suites / 64 total (495 tests passed / 495 total, 0 failed) with local Postgres & Mongo up
+  - `npm run typecheck`: clean pass (0 errors)
+  - `npm run lint`: pass (0 errors, 2 pre-existing react-hooks/exhaustive-deps warnings)
+  - `next build`: pass (optimized build & next-sitemap generated)
+  - `npm run smoke`: 61 passed / 0 failed
+  - `crawl`: script not present on Phase A (introduced in Phase B `a064ee8`)
+- **Key Findings:**
+  - Step 3 (TLS): node_modules/postgres sets rejectUnauthorized:false when ssl is a string ('require'/'allow'/'prefer'). `src/lib/db/index.ts` passes ssl object `{ rejectUnauthorized: true }`, ensuring verified TLS regardless of sslmode parameter.
+  - Step 4 (Unreachable Postgres): Server boots cleanly; public pages return 200; member/campaign APIs return 503; 2FA fails closed. Missing AUTH_SECRET / DATABASE_URL is fatal at boot.
+  - Step 5 (Stale-Mongo 2FA): Refuses login with 503 for stale-Mongo cases; denies missing totpSecret; verifies only member's own totpSecret.
+  - Step 6 (Degraded /me): Roles and chapter IDs come strictly from verified JWT claims; elevated Mongo roles ignored.
+  - Step 7 (Revocation): In-memory jti denylist is process-local; cross-instance revocation relies on Postgres sessions table. Privileged roles fail closed when Postgres is down.
+  - Step 8 (/verify Rate Limit): Counter stored in Upstash Redis; holds across serverless instances. Fails closed with 429 when Upstash unconfigured in production.
+  - Step 9 (OTP Logging): Allowlist requires NODE_ENV=development AND DEV_LOG_OTP=1; strictly blocked in production.
+
 
