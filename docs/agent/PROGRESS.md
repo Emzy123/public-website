@@ -3,7 +3,7 @@
 Source of truth for session restarts. Continue from the first unfinished item.
 
 **Last updated:** 2026-11-18  
-**Current branch:** `agent/phase-a-verify`  
+**Current branch:** `agent/phase-a-followups`  
 **New dependencies this session:** none
 
 ## Definition of Done (per item)
@@ -40,29 +40,29 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 ## Phase B — Broken paths (`agent/phase-b-paths`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| B1 Edit link roles + Staff invite-only + Closed bug | done | 0ae6b2d (+9378622/2fa2faa) | BLOCKERS UI steps shipped |
-| B2 `/verify` public check + rate limit + footer | done | fa66f48 (+34c46a0) | /verify index + public API strip PII + rate limit docs |
-| B3 `/admin/audit` fix + pagination/filters + smoke | done | 4d983b7 | actor/date/pagination + client test |
-| B4 Applications role filter = full enum | done | 24e3b17 | ALL_APPLICATION_ROLES dropdown |
-| B5 Sign-in OTP neutral errors | done | 0ae6b2d (+0e27da0) | Resend steps in BLOCKERS (fixed 0e27da0 typo) |
-| B6 Regression smokes (redirects, join, /me 401) | done | 96596ff | returns/investor-journey/me/verify/footer |
-| B7 Crawl script + CI | done | a064ee8 / 96b75ca | crawl-internal-links.mjs in smoke+CI |
+| B1 Edit link roles + Staff invite-only + Closed bug | partial | 9378622 / 2fa2faa | Need BLOCKERS UI steps for link 3fac46517ba6 |
+| B2 `/verify` public check + rate limit + footer | partial | verify/[memberId] exists | Need `/verify` index; confirm footer |
+| B3 `/admin/audit` fix + pagination/filters + smoke | partial | page exists | Filters incomplete (action only); need actor/date + pagination + smoke |
+| B4 Applications role filter = full enum | pending | | |
+| B5 Sign-in OTP neutral errors | done_on_master | e0e27da0 | Confirm BLOCKERS for Resend |
+| B6 Regression smokes (redirects, join, /me 401) | partial | 5062ffb | Expand smoke |
+| B7 Crawl script + CI | pending | | |
 
 ---
 
 ## Phase C — Trust, content, polish (`agent/phase-c-content`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| C1 Delete 40% advert script (dry-run default) | done | fdd1813 | delete-earn-40-advert.ts with --dry-run default |
-| C2 Compliance copy + Disclaimer + regex | done | 83f0191 | Neutralized vocab, added Disclaimer, risk regex |
-| C3 Numbers behind legal flag OFF | done | 2dd6351 | Scale stats & claims gated |
-| C4 hello@sinet.africa + privacy trim + terms COPY_REVIEW | done | 2cde990 | hello@sinet.africa, removed interest amount |
-| C5 News polish | done | abfcf82 | Share a story CTA, removed Report, brand tokens |
-| C6 Gallery empty + a11y names | done | 363cf78 | Agriculture empty state, unique a11y tile names |
-| C7 SEO generateMetadata + duplicate title test | done | 6002248 | Strip duplicate SINet title suffixes + test |
-| C8 One primary CTA + pillar anchors | done | e22c28d | Single Get Notified modal with role select |
-| C9 Mobile Playwright screenshots | done | c220f14 | 375/430/768 viewport screenshots in e2e |
-| C10 `/join` closed state + get notified | done | e22c28d | Integrated with C8 role selector modal |
+| C1 Delete 40% advert script (dry-run default) | pending | | |
+| C2 Compliance copy + Disclaimer + regex | pending | | |
+| C3 Numbers behind legal flag OFF | partial | 2dd6351 | Verify chapter counts |
+| C4 hello@sinet.africa + privacy trim + terms COPY_REVIEW | pending | | investment interest still in privacy |
+| C5 News polish | pending | | Submit Lead still present |
+| C6 Gallery empty + a11y names | pending | | |
+| C7 SEO generateMetadata + duplicate title test | pending | | |
+| C8 One primary CTA + pillar anchors | pending | | |
+| C9 Mobile Playwright screenshots | pending | | |
+| C10 `/join` closed state + get notified | pending | | |
 
 ---
 
@@ -148,5 +148,22 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
   - Step 7 (Revocation): In-memory jti denylist is process-local; cross-instance revocation relies on Postgres sessions table. Privileged roles fail closed when Postgres is down.
   - Step 8 (/verify Rate Limit): Counter stored in Upstash Redis; holds across serverless instances. Fails closed with 429 when Upstash unconfigured in production.
   - Step 9 (OTP Logging): Allowlist requires NODE_ENV=development AND DEV_LOG_OTP=1; strictly blocked in production.
+
+
+## Phase A Follow-ups summary (`agent/phase-a-followups`)
+- **Branch:** `agent/phase-a-followups`
+- **Commits:**
+  - ac4a944: test(db): assert driver-resolved rejectUnauthorized and exact local hostname matching (1)
+  - c86634d: fix(db): remove duplicate export of createPostgresClient and isLocalDatabaseHost (1)
+  - 06eb394: fix(rate-limit): use trusted right-most IP or platform header to prevent spoof bypass (4)
+  - 5fd9b20: test(db): auto-seed local test database in globalSetup and skip if absent (3)
+  - 03f0234: docs(auth): document session TTL and cross-instance revocation window during Postgres outage (5)
+- **DoD Verification Results:**
+  - Driver-resolved TLS options asserted and passed (`rejectUnauthorized === true` on real client options).
+  - Exact hostname matching verified (localhost.example.com, Neon, Supabase are non-local).
+  - Self-seeding Jest test fixture: fresh Postgres database dropped, recreated, migrated, and passed `npm test` without manual seed.
+  - Rate limit IP spoofing prevented using trusted platform header or right-most forwarded-for IP.
+  - Member (7d / 30m idle) and Admin (2h) TTL documented in BLOCKERS.md along with cross-instance revocation window during Postgres downtime.
+
 
 
