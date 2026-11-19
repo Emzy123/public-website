@@ -38,31 +38,52 @@ export function checkRateLimit(
   return { ok: true };
 }
 
-export function getClientKey(req: Request): string {
-  const reqIp = (req as unknown as { ip?: string }).ip;
-  if (reqIp?.trim()) return reqIp.trim();
+export function getClientIp(requestOrHeaders: Request | Headers): string {
+  if (!requestOrHeaders) return 'unknown';
 
-  const realIp = req.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp;
+  let headers: Headers;
+  let nextRequestIp: string | undefined;
 
-  const cfIp = req.headers.get('cf-connecting-ip')?.trim();
-  if (cfIp) return cfIp;
+  if ('headers' in requestOrHeaders && requestOrHeaders.headers) {
+    headers = requestOrHeaders.headers;
+    nextRequestIp = (requestOrHeaders as unknown as { ip?: string }).ip;
+  } else {
+    headers = requestOrHeaders as Headers;
+  }
 
-  const vercelForwarded = req.headers.get('x-vercel-forwarded-for')?.trim();
-  if (vercelForwarded) {
+  // 1. NextRequest.ip (populated by Next.js / Vercel Edge runtime)
+  if (nextRequestIp?.trim()) {
+    return nextRequestIp.trim();
+  }
+
+  // 2. x-real-ip header (set by trusted reverse proxy / Vercel edge)
+  const realIp = headers.get('x-real-ip');
+  if (realIp?.trim()) {
+    return realIp.trim();
+  }
+
+  // 3. x-vercel-forwarded-for (Vercel platform header - platform-set leftmost client IP entry)
+  const vercelForwarded = headers.get('x-vercel-forwarded-for');
+  if (vercelForwarded?.trim()) {
     const parts = vercelForwarded.split(',').map((p) => p.trim()).filter(Boolean);
-    const rightMost = parts[parts.length - 1];
-    if (rightMost) return rightMost;
+    const leftmost = parts[0];
+    if (leftmost) return leftmost;
   }
 
-  const forwarded = req.headers.get('x-forwarded-for')?.trim();
-  if (forwarded) {
+  // 4. x-forwarded-for (platform-set leftmost client IP entry on Vercel)
+  const forwarded = headers.get('x-forwarded-for');
+  if (forwarded?.trim()) {
     const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
-    const rightMost = parts[parts.length - 1];
-    if (rightMost) return rightMost;
+    const leftmost = parts[0];
+    if (leftmost) return leftmost;
   }
 
+  // Fixed fallback bucket — never trust arbitrary client-supplied headers (e.g. cf-connecting-ip or custom headers)
   return 'unknown';
+}
+
+export function getClientKey(req: Request | Headers): string {
+  return getClientIp(req);
 }
 
 export function getRateLimitHeaders(result: { ok: true } | { ok: false; retryAfterSec: number }): Record<string, string> {

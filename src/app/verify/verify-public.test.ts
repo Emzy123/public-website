@@ -3,9 +3,13 @@
  */
 import { NextRequest } from 'next/server';
 import { GET as getVerify } from '@/app/api/verify/[memberId]/route';
+import MemberVerificationPage from './[memberId]/page';
 import * as memberIdModule from '@/lib/members/member-id';
 import * as rateLimit from '@/lib/security/rate-limit-unified';
 
+jest.mock('next/headers', () => ({
+  headers: jest.fn().mockReturnValue(new Headers({ 'x-real-ip': '127.0.0.1' })),
+}));
 jest.mock('@/lib/members/member-id');
 jest.mock('@/lib/security/rate-limit-unified', () => ({
   enforceRateLimit: jest.fn().mockResolvedValue({ ok: true, headers: {} }),
@@ -80,14 +84,47 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     expect(body.member.credential).toBe('revoked');
   });
 
-  it('rate-limits verification requests', async () => {
+  it('rate-limits verification requests and fails closed (429) with friendly message', async () => {
     (rateLimit.enforceRateLimit as jest.Mock).mockResolvedValue({
       ok: false,
+      retryAfterSec: 60,
       headers: { 'Retry-After': '60' },
     });
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001');
     const res = await getVerify(req, { params: { memberId: 'SIN-FULOKOJA-24-0001' } });
     expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.valid).toBe(false);
+    expect(body.error).toBe('Too many verification requests. Please slow down.');
+  });
+
+  it('renders a friendly user-facing page message when rate limit is exceeded, not a raw error', async () => {
+    (rateLimit.enforceRateLimit as jest.Mock).mockResolvedValue({
+      ok: false,
+      retryAfterSec: 60,
+      headers: { 'Retry-After': '60' },
+    });
+
+    const jsx = await MemberVerificationPage({
+      params: { memberId: 'SIN-FULOKOJA-24-0001' },
+      searchParams: {},
+    });
+
+    const text = extractText(jsx);
+    expect(text).toContain('Too Many Verification Requests');
+    expect(text).toContain('Request Limit Exceeded');
+    expect(text).toContain('Retry Verification');
+    expect(text).not.toContain('ECONNREFUSED');
+    expect(text).not.toContain('stack');
   });
 });
+
+function extractText(node: unknown): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (!node || typeof node !== 'object') return '';
+  if (Array.isArray(node)) return node.map(extractText).join(' ');
+  const props = (node as { props?: Record<string, unknown> }).props;
+  if (!props) return '';
+  return extractText(props.children);
+}
