@@ -94,9 +94,16 @@ const INITIAL_BADGES = [
 
 export async function seedMembersDatabase() {
   const url = process.env.DATABASE_URL || 'postgresql://postgres@localhost:5432/sinet_dev';
+  const host = (() => {
+    try {
+      return new URL(url).hostname || '<redacted>';
+    } catch {
+      return '<redacted>';
+    }
+  })();
   if (!isLocalDatabaseHost(url) || process.env.NODE_ENV === 'production') {
     throw new Error(
-      `Refusing to seed database: DATABASE_URL (${url}) is not a recognized local development database or NODE_ENV is production.`
+      `Refusing to seed database: DATABASE_URL host (${host}) is not a recognized local development database or NODE_ENV is production.`
     );
   }
 

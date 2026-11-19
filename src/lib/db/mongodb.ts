@@ -1,5 +1,6 @@
 import { MongoClient, Db } from 'mongodb';
 import { Resolver } from 'node:dns';
+import { sanitizeDatabaseError } from './sanitize-error';
 
 let clientPromise: Promise<MongoClient> | null = null;
 let lastConnectError: unknown = null;
@@ -34,8 +35,8 @@ function convertMongoSrvToDirectUri(srvUri: string): string | null {
     if (!params.has('authSource')) params.set('authSource', 'admin');
 
     return `mongodb://${credentials}${hostname}:27017${pathname}?${params.toString()}`;
-  } catch (err) {
-    console.warn('Failed to convert Mongo SRV URI:', err);
+  } catch {
+    console.warn('Failed to convert Mongo SRV URI (parse failure)');
     return null;
   }
 }
@@ -113,8 +114,13 @@ async function connectMongoWithFallback(): Promise<MongoClient> {
   let lastErr: unknown = null;
 
   for (const candidate of candidates) {
-    // Redact password from connection strings in logging for security
-    const loggedCandidate = candidate.replace(/\/\/([^:]+):([^@]+)@/, '//$1:<redacted>@');
+    const host = (() => {
+      try {
+        return new URL(candidate).hostname || '<redacted>';
+      } catch {
+        return '<redacted>';
+      }
+    })();
     try {
       const client = new MongoClient(candidate, {
         connectTimeoutMS: timeoutMS,
@@ -123,7 +129,7 @@ async function connectMongoWithFallback(): Promise<MongoClient> {
       await client.connect();
       return client;
     } catch (err) {
-      console.warn(`MongoDB candidate connection failed for: ${loggedCandidate}. Error:`, err);
+      console.warn(`MongoDB candidate connection failed for host: ${host}. Error:`, sanitizeDatabaseError(err));
       lastErr = err;
       if (isDevRuntime()) break;
     }
