@@ -3,11 +3,27 @@
 Source of truth for session restarts. Continue from the first unfinished item.
 
 **Last updated:** 2026-11-20  
-**Current branch:** `agent/phase-b-hotfix`  
-**New dependencies this session:** none
+**Current branch:** `agent/brand-foundation`  
+**New dependencies this session:** `sharp` (devDependency — explicitly required to build reproducible brand assets in `scripts/brand/build-assets.mjs`)
 
 ## Definition of Done (per item)
 typecheck · lint · full `npm test` · `next build` · smoke — record summary lines below each item.
+
+---
+
+## Brand Foundation Phase (`agent/brand-foundation`)
+| Item | Status | Commit | Notes |
+|------|--------|--------|-------|
+| 1. Source logo in brand/source + BRAND.md | done | 8bed79a | 1280x853 JPEG moved to brand/source/logo.jpg |
+| 2. Asset set build script + public assets | done | pending | scripts/brand/build-assets.mjs, lockups, icons, og-image |
+| 3. Centralized Logo component | pending | | src/components/brand/Logo.tsx |
+| 4. Design tokens (Tailwind + CSS vars) | pending | | tailwind.config.ts & globals.css |
+| 5. Fonts (Sora & Inter via next/font/google) | pending | | Self-hosted at build |
+| 6. Contrast WCAG AA unit test | pending | | Unit test for semantic pairs & gold-500 restriction |
+| 7. Tagline update | pending | | "Building Africa's Future Systems" |
+| 8. Metadata icons & og-image links | pending | | Point openGraph/twitter/icons |
+| 9. Gates verification | pending | | npm ci, typecheck, lint, jest, build, smoke, crawl, assets 200 |
+| 10. Playwright screenshots check | pending | | Check availability and capture / & /about |
 
 ---
 
