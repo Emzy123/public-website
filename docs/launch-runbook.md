@@ -32,11 +32,23 @@ npx next start -p 3010
   - `GET http://localhost:3010/api/waitlist` returns `{ csrfToken: ... }`
   - `GET http://localhost:3010/api/contact` returns `405`
   - `GET http://localhost:3010/api/academy` returns `405`
+  - `GET http://localhost:3010/api/health` returns `{ ok: true, status: "healthy" }`
+  - Authorized health (`x-health-token` or admin cookie) includes `checks.mongo` and `checks.postgres`
 
-- With **real production env values** set (MongoDB, reCAPTCHA, CSRF, Resend):
-  - Submit one waitlist form (expect redirect to `/waitlist/success`)
+- Apply membership schema before enabling OTP/campaigns. `npm run db:migrate` is **manual only** — it is not part of `npm run build`, `postbuild`, Vercel deploy, or GitHub Actions.
+
+```bash
+npm run db:migrate
+```
+
+If production tables were created with `drizzle-kit push` rather than migrate, do **not** run `db:migrate` until the baseline is recorded (see `docs/development.md`). Missing `DATABASE_URL` in production is fatal at boot (whole site down). An unreachable Postgres host leaves marketing/CMS up and returns 503 only on Postgres routes.
+
+- With **real production env values** set (MongoDB, PostgreSQL `DATABASE_URL`, reCAPTCHA, CSRF, Resend, `AUTH_FROM_EMAIL`):
+  - Public `/waitlist` permanently redirects to `/membership`; the waitlist API remains for legacy clients
   - Submit one contact form (expect DB insert + email notification)
   - Submit one academy interest form (expect DB insert)
+  - Request one member OTP at `/sign-in` (email delivered; no `[DEV EMAIL MOCK]` in production logs)
+  - Open an active `/join` campaign and confirm capacity + application receipt
 
 ### Vercel Preview (production-like)
 
@@ -53,6 +65,8 @@ npx next start -p 3010
 - Confirm Vercel production build is green.
 - Confirm all required production env vars are set.
 - Confirm `ADMIN_EMAIL`, `ADMIN_PASSWORD_HASH`, and `ADMIN_SESSION_SECRET` are set in the **Production** environment, then sign in at `/admin`.
+- Confirm `DATABASE_URL` is a pooled Postgres endpoint and `npm run db:migrate` has been applied.
+- Confirm `AUTH_FROM_EMAIL` and a non-placeholder `RESEND_API_KEY`. Prefer a dedicated `AUTH_SECRET` for member sessions.
 - Validate MongoDB network access and credentials.
 - Validate Resend API key, sender identity, and recipient inbox.
 - Run form checks (waitlist, contact, academy) on production preview.
@@ -63,8 +77,8 @@ npx next start -p 3010
 
 - Promote latest stable deployment to production.
 - Validate homepage and primary CTA render after cache warm-up.
-- Submit one controlled waitlist + contact + academy event.
-- Confirm DB inserts and email delivery.
+- Submit one controlled contact + academy event, plus one member OTP (or campaign application if a live link is open).
+- Confirm Mongo inserts, Postgres campaign/OTP writes, and email delivery.
 - Confirm social share links and OG preview response.
 
 ## T+1h Monitoring

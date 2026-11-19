@@ -56,6 +56,7 @@ npx vercel env pull .env.local
 |----------|---------|---------------|------------------------------|
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin, sitemap, metadataBase, CSRF validation | `http://localhost:3000` | CSRF origin checks fail |
 | `MONGODB_URI` / `MONGODB_DB` | Primary database for CMS, applications, team, reps | `mongodb://localhost:27017` / `sinet` | Form submissions fail (500); CMS uses static defaults |
+| `DATABASE_URL` | PostgreSQL for members, campaigns, OTP tokens, audit | `postgresql://postgres@localhost:5432/sinet_dev` | Member auth, campaigns, and portal fall back or fail |
 | `ADMIN_EMAIL` | Admin login email for `/admin/login` | `admin@sinet.africa` | Cannot authenticate to `/admin` |
 | `ADMIN_PASSWORD_HASH` | Scrypt hash (`<salt>:<hash>`) for admin login | Safe dev hash (`admin123456`) | Cannot authenticate to `/admin` |
 | `ADMIN_SESSION_SECRET` | 32+ char secret for admin session JWT cookies | `local_dev_admin_session_secret...` | Admin session cookies cannot be signed |

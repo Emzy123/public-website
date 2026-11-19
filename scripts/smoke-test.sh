@@ -333,6 +333,40 @@ check_chapter_join_links() {
 }
 check_chapter_join_links
 
+# 8f. Link Status Single Source of Truth Checks
+check_link_status_consistency() {
+  local closed_res
+  closed_res=$(curl -s "${BASE_URL}/api/join/finance-analysts-cohort-1" 2>/dev/null || echo "{}")
+  local closed_accepting
+  closed_accepting=$(echo "$closed_res" | grep -o '"accepting":false' || echo "")
+  local closed_status
+  closed_status=$(echo "$closed_res" | grep -o '"status":"Closed"' || echo "")
+
+  if [ -n "$closed_accepting" ] && [ -n "$closed_status" ]; then
+    echo "✓ /api/join/finance-analysts-cohort-1 returns accepting:false and status:'Closed'"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ /api/join/finance-analysts-cohort-1 did not return accepting:false and status:'Closed': ${closed_res}"
+    FAIL=$((FAIL + 1))
+  fi
+
+  local open_res
+  open_res=$(curl -s "${BASE_URL}/api/join/student-enterprise-fellows" 2>/dev/null || echo "{}")
+  local open_accepting
+  open_accepting=$(echo "$open_res" | grep -o '"accepting":true' || echo "")
+  local open_status
+  open_status=$(echo "$open_res" | grep -o '"status":"Open"' || echo "")
+
+  if [ -n "$open_accepting" ] && [ -n "$open_status" ]; then
+    echo "✓ /api/join/student-enterprise-fellows returns accepting:true and status:'Open'"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ /api/join/student-enterprise-fellows did not return accepting:true and status:'Open': ${open_res}"
+    FAIL=$((FAIL + 1))
+  fi
+}
+check_link_status_consistency
+
 
 # 9. Admin API Authentication Barriers (unauthenticated must return 401)
 check "Admin content API requires auth" "GET" "/api/admin/content/about" "401"
@@ -345,6 +379,9 @@ check "Admin adverts legal approval requires auth" "POST" "/api/admin/content/ad
 check "Admin announcements POST requires auth" "POST" "/api/admin/announcements" "401"
 check "Admin announcements PATCH requires auth" "PATCH" "/api/admin/announcements/ann-smoke-test-id" "401"
 check "Admin capacity audit requires auth" "GET" "/api/admin/capacity-audit" "401"
+check "Admin registration links GET requires auth" "GET" "/api/admin/registration-links" "401"
+check "Admin registration links POST requires auth" "POST" "/api/admin/registration-links" "401"
+check "Admin registration links PATCH requires auth" "PATCH" "/api/admin/registration-links" "401"
 
 echo ""
 echo "=========================================================="

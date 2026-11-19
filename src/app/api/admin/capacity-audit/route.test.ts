@@ -125,4 +125,42 @@ describe('GET /api/admin/capacity-audit route', () => {
     expect(rawString).not.toContain('phone');
     expect(rawString).not.toContain('pitch');
   });
+
+  it('includes sanitized postgresError and mongoError in summary without leaking URLs or credentials', async () => {
+    const mockAuditResult = {
+      countDrift: [],
+      zeroLimits: [],
+      summary: {
+        mongoLinksScanned: 2,
+        postgresCampaignsScanned: 0,
+        mismatchCount: 0,
+        zeroLimitCount: 0,
+        mongoConnected: true,
+        postgresConnected: false,
+        postgresError: 'DATABASE_URL not set',
+      },
+    };
+
+    jest.spyOn(capacityAuditModule, 'performCapacityAudit').mockResolvedValue(mockAuditResult);
+
+    const req = new NextRequest('http://localhost:3000/api/admin/capacity-audit', {
+      method: 'GET',
+      headers: {
+        'x-health-token': 'valid-test-health-token-12345',
+      },
+    });
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.summary.postgresConnected).toBe(false);
+    expect(data.summary.postgresError).toBe('DATABASE_URL not set');
+
+    // Security check: ensure no URLs, hosts, passwords
+    const rawString = JSON.stringify(data);
+    expect(rawString).not.toContain('password');
+    expect(rawString).not.toContain('postgresql://');
+    expect(rawString).not.toContain('mongodb://');
+  });
 });

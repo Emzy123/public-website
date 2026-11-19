@@ -8,18 +8,25 @@ export async function generateMetadata({
 }: {
   params: { memberId: string };
 }): Promise<Metadata> {
-  const record = await getVerifiedMemberRecord(params.memberId);
-  if (!record) {
+  try {
+    const record = await getVerifiedMemberRecord(params.memberId);
+    if (!record) {
+      return {
+        title: 'Credential Verification — SINet',
+        description: 'Verify digital membership credentials on SINet.',
+      };
+    }
+
     return {
-      title: 'Credential Verification — SINet',
-      description: 'Verify digital membership credentials on SINet.',
+      title: `Verify Member: ${record.fullName} (${record.fullMemberId}) — SINet`,
+      description: `Official digital credential verification for ${record.fullName}, ${record.universityName || 'SINet'}.`,
+    };
+  } catch {
+    return {
+      title: 'Verification Temporarily Unavailable — SINet',
+      description: 'Digital credential verification service is temporarily unavailable.',
     };
   }
-
-  return {
-    title: `Verify Member: ${record.fullName} (${record.fullMemberId}) — SINet`,
-    description: `Official digital credential verification for ${record.fullName}, ${record.universityName || 'SINet'}.`,
-  };
 }
 
 export default async function MemberVerificationPage({
@@ -29,7 +36,57 @@ export default async function MemberVerificationPage({
   params: { memberId: string };
   searchParams: { sig?: string };
 }) {
-  const record = await getVerifiedMemberRecord(params.memberId);
+  let record: Awaited<ReturnType<typeof getVerifiedMemberRecord>> = null;
+  let isUnavailable = false;
+
+  try {
+    record = await getVerifiedMemberRecord(params.memberId);
+  } catch (err) {
+    console.warn('[VerifyPage] Database query failed for member ID:', err);
+    isUnavailable = true;
+  }
+
+  if (isUnavailable) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#071026] px-4 py-16 text-center text-white">
+        <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl backdrop-blur-md">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <p className="mt-5 font-mono text-xs uppercase tracking-widest text-amber-400">
+            Service Unavailable
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">
+            Verification Temporarily Unavailable
+          </h1>
+          <p className="mt-4 text-xs leading-relaxed text-slate-300">
+            The credential registry database is currently unreachable. Please retry your verification in a few minutes.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={`/verify/${encodeURIComponent(params.memberId)}`}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-amber-500 px-6 text-xs font-semibold text-slate-950 transition hover:bg-amber-400"
+            >
+              Retry Verification
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-white/10 px-6 text-xs font-semibold text-white transition hover:bg-white/20"
+            >
+              Go to Homepage
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!record) {
     return (

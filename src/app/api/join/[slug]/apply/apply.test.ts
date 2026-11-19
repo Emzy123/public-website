@@ -725,5 +725,45 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       const data = await res.json();
       expect(data.success).toBe(true);
     });
+
+    it('returns 503 instead of 400 when database insert fails in Postgres campaign submission', async () => {
+      jest.spyOn(campaignsModule, 'getCampaignBySlug').mockResolvedValue({
+        campaign: {
+          id: 'camp-123',
+          slug: 'test-campaign',
+          name: 'Test Campaign',
+          targetRole: 'community-member',
+          status: 'active',
+          seatLimit: 100,
+          applicationCount: 10,
+        } as any,
+        isAccepting: true,
+      });
+
+      jest.spyOn(campaignsModule, 'submitCampaignApplication').mockRejectedValue(
+        new Error('Failed query: insert into "applications" - connection terminated unexpectedly')
+      );
+
+      const validCampaignBody = {
+        fullName: 'John Doe',
+        email: 'john@example.com',
+        phone: '+2348012345678',
+        universityId: '550e8400-e29b-41d4-a716-446655440000',
+        programme: 'Economics',
+        level: '300',
+        division: 'student_finance',
+        contributionPitch: 'I want to build financial models and learn market analysis with fellow students.',
+        codeOfConductAccepted: true,
+      };
+
+      const req = new NextRequest('http://localhost:3000/api/join/test-campaign/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validCampaignBody),
+      });
+
+      const res = await POST(req, { params: { slug: 'test-campaign' } });
+      expect(res.status).toBe(503);
+    });
   });
 });

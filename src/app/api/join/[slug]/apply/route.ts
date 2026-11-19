@@ -16,6 +16,8 @@ import {
   addCampaignWaitlist,
   submitCampaignApplication,
 } from '@/lib/applications/campaigns';
+import { sanitizeDatabaseError } from '@/lib/db';
+import { logPostgresFallbackWrite } from '@/lib/audit/fallback-log';
 import {
   LINK_WAITLIST_COLLECTION,
   REGISTRATION_LINKS_COLLECTION,
@@ -144,7 +146,22 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
         if (msg.includes('deadline')) {
           return NextResponse.json({ error: msg, status: 'Expired' }, { status: 410 });
         }
-        return NextResponse.json({ error: msg }, { status: 400 });
+        if (msg.includes('Selected university is not valid') || msg.includes('not valid or accredited')) {
+          return NextResponse.json({ error: msg }, { status: 400 });
+        }
+        if (msg.includes('not accepting')) {
+          return NextResponse.json({ error: msg }, { status: 403 });
+        }
+        if (msg.includes('not found')) {
+          return NextResponse.json({ error: msg }, { status: 404 });
+        }
+        console.warn('[Apply] Database write failed:', sanitizeDatabaseError(err));
+        return NextResponse.json(
+          {
+            error: 'We could not save your application. Please try again.',
+          },
+          { status: 503 }
+        );
       }
     }
 
@@ -292,6 +309,7 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
 
       const insert = await db.collection('applications').insertOne(application);
       const applicationId = String(insert.insertedId);
+      await logPostgresFallbackWrite('application', applicationId);
 
       const attached = await attachDocumentsToApplication(docIds, params.slug, role, applicationId);
       if (!attached.ok) {
@@ -332,10 +350,11 @@ export async function POST(request: NextRequest, { params }: { params: { slug: s
       throw insertError;
     }
   } catch (error) {
-    console.error('Campaign application submission error:', error);
-    const details = isDevelopmentMode() && error instanceof Error ? error.message : undefined;
+    console.error('Campaign application submission error:', sanitizeDatabaseError(error));
     return NextResponse.json(
-      { error: 'We could not save your application. Please try again.', ...(details ? { details } : {}) },
+      {
+        error: 'We could not save your application. Please try again.',
+      },
       { status: 503 }
     );
   }

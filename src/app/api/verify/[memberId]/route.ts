@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/member-id';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
+import { sanitizeDatabaseError } from '@/lib/db';
 
 export async function GET(
   request: NextRequest,
@@ -61,10 +62,13 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Member verification error:', error);
+    console.error('Member verification error:', sanitizeDatabaseError(error));
     return NextResponse.json(
-      { valid: false, error: 'Verification service temporarily unavailable.' },
-      { status: 500 }
+      {
+        valid: false,
+        error: 'Verification service temporarily unavailable. Please retry shortly.',
+      },
+      { status: 503 }
     );
   }
 }

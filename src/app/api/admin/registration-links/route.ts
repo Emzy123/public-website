@@ -55,10 +55,18 @@ export async function POST(request: NextRequest) {
   try {
     const parsed = createRegistrationLinkSchema.safeParse(await request.json());
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid link configuration', issues: parsed.error.flatten() }, { status: 400 });
+      const firstError = parsed.error.issues[0]?.message || 'Invalid link configuration';
+      return NextResponse.json({ error: firstError, issues: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { name, roles, expiresAt, quota } = parsed.data;
+    const { name, roles, expiresAt, quota, isInviteOnly } = parsed.data;
+    if (roles.includes('staff') && !isInviteOnly) {
+      return NextResponse.json(
+        { error: 'Staff role can only be assigned to links marked as invite-only.' },
+        { status: 400 }
+      );
+    }
+
     const now = new Date();
     const db = await getMongoDb();
 
@@ -80,6 +88,7 @@ export async function POST(request: NextRequest) {
       name,
       slug,
       roles,
+      isInviteOnly: Boolean(isInviteOnly),
       isOpen: true,
       status: 'open' as const,
       expiresAt: expiresAt ? new Date(expiresAt) : undefined,
@@ -95,7 +104,7 @@ export async function POST(request: NextRequest) {
       action: 'registration_link.create',
       actor: session.email,
       resource: `registration_link:${insert.insertedId}`,
-      metadata: { name, slug, roles },
+      metadata: { name, slug, roles, isInviteOnly: Boolean(isInviteOnly) },
     });
 
     return NextResponse.json({ success: true, link: serialiseRegistrationLink({ ...doc, _id: insert.insertedId }) }, { status: 201 });
@@ -114,18 +123,33 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const parsed = updateRegistrationLinkSchema.safeParse(await request.json());
-    if (!parsed.success) return NextResponse.json({ error: 'Invalid update' }, { status: 400 });
+    if (!parsed.success) {
+      const firstError = parsed.error.issues[0]?.message || 'Invalid update';
+      return NextResponse.json({ error: firstError, issues: parsed.error.flatten() }, { status: 400 });
+    }
 
-    const { id, name, roles, isOpen, expiresAt, quota } = parsed.data;
+    const { id, name, roles, isInviteOnly, isOpen, expiresAt, quota } = parsed.data;
     if (!ObjectId.isValid(id)) return NextResponse.json({ error: 'Invalid link id' }, { status: 400 });
 
     const db = await getMongoDb();
     const existing = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ _id: new ObjectId(id) });
     if (!existing) return NextResponse.json({ error: 'Link not found' }, { status: 404 });
 
+    // Validate staff invite-only constraint
+    const effectiveRoles = roles !== undefined ? roles : (existing.roles || []);
+    const effectiveInviteOnly = isInviteOnly !== undefined ? isInviteOnly : Boolean(existing.isInviteOnly);
+
+    if (effectiveRoles.includes('staff') && !effectiveInviteOnly) {
+      return NextResponse.json(
+        { error: 'Staff role can only be assigned to links marked as invite-only.' },
+        { status: 400 }
+      );
+    }
+
     const update: Record<string, unknown> = { updatedAt: new Date() };
     if (name !== undefined) update.name = name;
     if (roles !== undefined) update.roles = roles;
+    if (isInviteOnly !== undefined) update.isInviteOnly = isInviteOnly;
     if (expiresAt !== undefined) update.expiresAt = expiresAt ? new Date(expiresAt) : null;
     if (quota !== undefined) update.quota = quota ?? null;
     if (isOpen !== undefined) {
@@ -140,8 +164,20 @@ export async function PATCH(request: NextRequest) {
       action: 'registration_link.update',
       actor: session.email,
       resource: `registration_link:${id}`,
-      metadata: update,
-      previousValue: { isOpen: existing.isOpen, status: existing.status },
+      metadata: {
+        linkName: existing.name,
+        slug: existing.slug,
+        roles: update.roles ?? existing.roles,
+        isInviteOnly: update.isInviteOnly ?? existing.isInviteOnly,
+        isOpen: update.isOpen ?? existing.isOpen,
+        changedFields: Object.keys(update).filter((k) => k !== 'updatedAt'),
+      },
+      previousValue: {
+        roles: existing.roles,
+        isInviteOnly: existing.isInviteOnly,
+        isOpen: existing.isOpen,
+        status: existing.status,
+      },
     });
 
     return NextResponse.json({ success: true, link: serialiseRegistrationLink(updated!) });

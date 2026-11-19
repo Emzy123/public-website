@@ -66,7 +66,8 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => Boolean(id));
 
     const isAdmin = roles.includes('super_admin') || roles.includes('admin');
-    const requires2fa = isAdmin && (user.totpEnabled || Boolean(process.env.ADMIN_TOTP_SECRET));
+    const requires2fa =
+      Boolean(user.totpEnabled) || (isAdmin && Boolean(process.env.ADMIN_TOTP_SECRET?.trim()));
     const is2faAuthenticated = !requires2fa;
 
     const sessionToken = await createSessionToken({

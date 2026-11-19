@@ -8,6 +8,7 @@ import {
   getLinkDisplayStatus,
   normalizeStatus,
   parseExpiryDate,
+  parseStartDate,
   getEffectiveCapacityLimit,
 } from './link-status';
 
@@ -265,6 +266,25 @@ describe('Shared Link & Campaign Status Engine (Single Source of Truth)', () => 
         applicationCount: 20,
       };
       expect(getCampaignLinkDisplayStatus(link, baseNow)).toBe('Open');
+    });
+
+    it('returns Closed and isCampaignLinkOpen false when startsAt is in the future', () => {
+      const futureLink = {
+        status: 'active',
+        isOpen: true,
+        startsAt: '2026-11-01T00:00:00Z', // opens next month
+        expiresAt: '2026-12-01T00:00:00Z',
+        quota: 50,
+        applicationCount: 0,
+      };
+      expect(isCampaignLinkOpen(futureLink, baseNow)).toBe(false);
+      expect(getCampaignLinkDisplayStatus(futureLink, baseNow)).toBe('Closed');
+    });
+
+    it('parses start date-only strings as 00:00:00 Africa/Lagos (UTC+1)', () => {
+      const parsed = parseStartDate('2026-11-01');
+      expect(parsed).not.toBeNull();
+      expect(parsed?.toISOString()).toBe('2026-10-31T23:00:00.000Z');
     });
   });
 });

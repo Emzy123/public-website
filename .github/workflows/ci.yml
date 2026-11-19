@@ -6,14 +6,17 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -38,3 +41,23 @@ jobs:
         env:
           # Minimal env for Next.js build (no secrets required for static pages)
           NEXT_PUBLIC_SITE_URL: https://sinet.africa
+
+      - name: Smoke against production server
+        env:
+          NEXT_PUBLIC_SITE_URL: http://localhost:3010
+          # Literal CI fixtures (not GitHub secrets). Required because AUTH_SECRET and
+          # DATABASE_URL are fatal at production boot. DATABASE_URL is a closed port so
+          # Postgres stays unreachable; marketing routes still 200.
+          AUTH_SECRET: ci-local-placeholder-not-a-production-secret-32
+          DATABASE_URL: postgresql://postgres@127.0.0.1:9/unused
+        run: |
+          npx next start -p 3010 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -sf http://localhost:3010/api/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          SMOKE_BASE_URL=http://localhost:3010 npm run smoke

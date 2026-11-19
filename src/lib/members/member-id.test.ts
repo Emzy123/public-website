@@ -56,75 +56,86 @@ describe('Digital Member ID & QR Code Engine', () => {
     expect(dataUrl).toContain('data:image/png;base64,');
   });
 
-  it('atomically mints unique sequential Member IDs for a campus chapter', async () => {
-    const uniquePhone1 = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
-    const uniquePhone2 = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
+  (process.env.POSTGRES_TEST_DB_AVAILABLE !== '0' ? describe : describe.skip)(
+    'PostgreSQL Database Dependent Operations',
+    () => {
+      beforeAll(() => {
+        if (process.env.POSTGRES_TEST_DB_AVAILABLE === '0') {
+          console.warn('[SKIP] member-id.test.ts: Skipped DB operations because PostgreSQL is absent.');
+        }
+      });
 
-    const [user1] = await db
-      .insert(users)
-      .values({ email: `mint-test-1-${Date.now()}@fulokoja.edu.ng`, phone: uniquePhone1 })
-      .returning();
+      it('atomically mints unique sequential Member IDs for a campus chapter', async () => {
+        const uniquePhone1 = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const uniquePhone2 = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
 
-    const [user2] = await db
-      .insert(users)
-      .values({ email: `mint-test-2-${Date.now()}@fulokoja.edu.ng`, phone: uniquePhone2 })
-      .returning();
+        const [user1] = await db
+          .insert(users)
+          .values({ email: `mint-test-1-${Date.now()}@fulokoja.edu.ng`, phone: uniquePhone1 })
+          .returning();
 
-    const testCampus = 'TESTCAMPUS';
-    const record1 = await mintMemberId({ userId: user1.id, campusCode: testCampus });
-    const record2 = await mintMemberId({ userId: user2.id, campusCode: testCampus });
+        const [user2] = await db
+          .insert(users)
+          .values({ email: `mint-test-2-${Date.now()}@fulokoja.edu.ng`, phone: uniquePhone2 })
+          .returning();
 
-    expect(record1.campusCode).toBe(testCampus);
-    expect(record2.campusCode).toBe(testCampus);
+        const testCampus = 'TESTCAMPUS';
+        const record1 = await mintMemberId({ userId: user1.id, campusCode: testCampus });
+        const record2 = await mintMemberId({ userId: user2.id, campusCode: testCampus });
 
-    // Format check: SIN-[CAMPUS]-[YY]-[SEQ:4]
-    const yy = getCurrentYearPrefix();
-    expect(record1.memberId).toMatch(new RegExp(`^SIN-${testCampus}-${yy}-\\d{4}$`));
-    expect(record2.memberId).toMatch(new RegExp(`^SIN-${testCampus}-${yy}-\\d{4}$`));
+        expect(record1.campusCode).toBe(testCampus);
+        expect(record2.campusCode).toBe(testCampus);
 
-    // Sequence check: second record has sequence exactly 1 greater than first record
-    expect(record2.sequenceNumber).toBe(record1.sequenceNumber + 1);
+        // Format check: SIN-[CAMPUS]-[YY]-[SEQ:4]
+        const yy = getCurrentYearPrefix();
+        expect(record1.memberId).toMatch(new RegExp(`^SIN-${testCampus}-${yy}-\\d{4}$`));
+        expect(record2.memberId).toMatch(new RegExp(`^SIN-${testCampus}-${yy}-\\d{4}$`));
 
-    // Deduplication check: re-minting for user1 returns the same existing record
-    const record1Again = await mintMemberId({ userId: user1.id, campusCode: testCampus });
-    expect(record1Again.memberId).toBe(record1.memberId);
-  });
+        // Sequence check: second record has sequence exactly 1 greater than first record
+        expect(record2.sequenceNumber).toBe(record1.sequenceNumber + 1);
 
-  it('retrieves complete verified record for public verification page', async () => {
-    const [uni] = await db.select().from(universities).limit(1);
-    const [chapter] = await db
-      .select()
-      .from(chapters)
-      .where(eq(chapters.universityId, uni.id))
-      .limit(1);
+        // Deduplication check: re-minting for user1 returns the same existing record
+        const record1Again = await mintMemberId({ userId: user1.id, campusCode: testCampus });
+        expect(record1Again.memberId).toBe(record1.memberId);
+      });
 
-    const testEmail = `verified-record-${Date.now()}@uni.edu.ng`;
-    const testPhone = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
-    const [user] = await db.insert(users).values({ email: testEmail, phone: testPhone }).returning();
+      it('retrieves complete verified record for public verification page', async () => {
+        const [uni] = await db.select().from(universities).limit(1);
+        const [chapter] = await db
+          .select()
+          .from(chapters)
+          .where(eq(chapters.universityId, uni.id))
+          .limit(1);
 
-    await db.insert(memberProfiles).values({
-      userId: user.id,
-      fullName: 'Amina Test Ibrahim',
-      chapterId: chapter?.id || null,
-      division: 'student_finance',
-      programme: 'B.Sc Economics',
-      level: '300',
-      status: 'active',
-      referralCode: `SIN${Date.now().toString().slice(-6)}`,
-      profileCompletenessPct: 80,
-    });
+        const testEmail = `verified-record-${Date.now()}@uni.edu.ng`;
+        const testPhone = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
+        const [user] = await db.insert(users).values({ email: testEmail, phone: testPhone }).returning();
 
-    const minted = await mintMemberId({
-      userId: user.id,
-      campusCode: uni.campusCode,
-    });
+        await db.insert(memberProfiles).values({
+          userId: user.id,
+          fullName: 'Amina Test Ibrahim',
+          chapterId: chapter?.id || null,
+          division: 'student_finance',
+          programme: 'B.Sc Economics',
+          level: '300',
+          status: 'active',
+          referralCode: `SIN${Date.now().toString().slice(-6)}`,
+          profileCompletenessPct: 80,
+        });
 
-    const verified = await getVerifiedMemberRecord(minted.memberId);
-    expect(verified).not.toBeNull();
-    expect(verified?.fullName).toBe('Amina Test Ibrahim');
-    expect(verified?.fullMemberId).toBe(minted.memberId);
-    expect(verified?.division).toBe('student_finance');
-    expect(verified?.signature).toBeDefined();
-    expect(verified?.verificationUrl).toContain(minted.memberId);
-  });
+        const minted = await mintMemberId({
+          userId: user.id,
+          campusCode: uni.campusCode,
+        });
+
+        const verified = await getVerifiedMemberRecord(minted.memberId);
+        expect(verified).not.toBeNull();
+        expect(verified?.fullName).toBe('Amina Test Ibrahim');
+        expect(verified?.fullMemberId).toBe(minted.memberId);
+        expect(verified?.division).toBe('student_finance');
+        expect(verified?.signature).toBeDefined();
+        expect(verified?.verificationUrl).toContain(minted.memberId);
+      });
+    }
+  );
 });

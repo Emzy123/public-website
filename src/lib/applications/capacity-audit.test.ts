@@ -1,8 +1,9 @@
 /**
  * @jest-environment node
  */
-import { performCapacityAudit } from './capacity-audit';
+import { performCapacityAudit, sanitizeDatabaseError } from './capacity-audit';
 import { getMongoDb } from '@/lib/db/mongodb';
+import { db } from '@/lib/db';
 
 jest.mock('@/lib/db/mongodb');
 jest.mock('@/lib/db', () => ({
@@ -13,7 +14,7 @@ jest.mock('@/lib/db', () => ({
 }));
 
 describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts)', () => {
-  const originalEnv = process.env;
+  const originalEnv = { ...process.env };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -26,7 +27,7 @@ describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    process.env = { ...originalEnv };
   });
 
   it('detects count drift on Mongo links and does NOT update in dry-run mode', async () => {
@@ -198,5 +199,92 @@ describe('Capacity & Drift Audit Service (src/lib/applications/capacity-audit.ts
     );
     // Closed link must not be in zeroLimits
     expect(result.zeroLimits.find((z) => z.slug === 'closed-zero-link')).toBeUndefined();
+  });
+
+  describe('sanitizeDatabaseError', () => {
+    it('sanitizes connection refused errors without exposing hosts or ports', () => {
+      const err = new Error('connect ECONNREFUSED 127.0.0.1:5432');
+      expect(sanitizeDatabaseError(err)).toBe('connection refused');
+    });
+
+    it('sanitizes authentication failures without leaking user or password', () => {
+      const err = new Error('password authentication failed for user "postgres" with password "supersecret"');
+      expect(sanitizeDatabaseError(err)).toBe('auth failed');
+      expect(sanitizeDatabaseError(err)).not.toContain('supersecret');
+      expect(sanitizeDatabaseError(err)).not.toContain('postgres');
+    });
+
+    it('sanitizes SSL/TLS errors without leaking connection string', () => {
+      const err = new Error('server does not support SSL, but SSL was required');
+      expect(sanitizeDatabaseError(err)).toBe('SSL required');
+    });
+
+    it('sanitizes timeout errors without leaking connection parameters', () => {
+      const err = new Error('Connection timeout exceeded after 15000ms');
+      expect(sanitizeDatabaseError(err)).toBe('timeout');
+    });
+
+    it('sanitizes DNS/host not found errors', () => {
+      const err = new Error('getaddrinfo ENOTFOUND ep-cool-database-1234.us-east-2.aws.neon.tech');
+      expect(sanitizeDatabaseError(err)).toBe('host not found (DNS lookup failed)');
+      expect(sanitizeDatabaseError(err)).not.toContain('neon.tech');
+    });
+  });
+
+  describe('connection error reporting in summary', () => {
+    it('reports postgresError: "DATABASE_URL not set" when DATABASE_URL is empty', async () => {
+      process.env.DATABASE_URL = '';
+      (getMongoDb as jest.Mock).mockResolvedValue({
+        collection: jest.fn().mockReturnValue({
+          find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
+        }),
+      });
+
+      const result = await performCapacityAudit({ apply: false });
+
+      expect(result.summary.postgresConnected).toBe(false);
+      expect(result.summary.postgresError).toBe('DATABASE_URL not set');
+    });
+
+    it('reports sanitized postgresError: "connection refused" when Postgres connection fails', async () => {
+      process.env.DATABASE_URL = 'postgresql://user:pass@remotehost:5432/sinet';
+      (getMongoDb as jest.Mock).mockResolvedValue({
+        collection: jest.fn().mockReturnValue({
+          find: jest.fn().mockReturnValue({ toArray: jest.fn().mockResolvedValue([]) }),
+        }),
+      });
+      (db.select as jest.Mock).mockImplementation(() => {
+        throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
+      });
+
+      const result = await performCapacityAudit({ apply: false });
+
+      expect(result.summary.postgresConnected).toBe(false);
+      expect(result.summary.postgresError).toBe('connection refused');
+    });
+
+    it('reports mongoError: "MONGODB_URI not set" when MONGODB_URI is empty', async () => {
+      delete process.env.MONGODB_URI;
+      delete process.env.MONGODB_URI_DIRECT;
+      process.env.DATABASE_URL = '';
+
+      const result = await performCapacityAudit({ apply: false });
+
+      expect(result.summary.mongoConnected).toBe(false);
+      expect(result.summary.mongoError).toBe('MONGODB_URI not set');
+    });
+
+    it('reports sanitized mongoError: "auth failed" when Mongo throws authentication failure', async () => {
+      process.env.MONGODB_URI = 'mongodb://user:secret@mongohost:27017';
+      process.env.DATABASE_URL = '';
+      (getMongoDb as jest.Mock).mockRejectedValue(
+        new Error('MongoServerError: Authentication failed for user admin')
+      );
+
+      const result = await performCapacityAudit({ apply: false });
+
+      expect(result.summary.mongoConnected).toBe(false);
+      expect(result.summary.mongoError).toBe('auth failed');
+    });
   });
 });

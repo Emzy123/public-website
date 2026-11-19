@@ -9,11 +9,12 @@
  * Contains NO personal data (no applicant names, emails, phones, or pitch contents).
  */
 
-import { getMongoDb } from '@/lib/db/mongodb';
 import { db } from '@/lib/db';
 import * as schema from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { normalizeStatus } from '@/lib/applications/link-status';
+import { sanitizeDatabaseError } from '@/lib/db/sanitize-error';
+export { sanitizeDatabaseError };
 
 export interface CapacityDriftMismatch {
   store: 'MongoDB' | 'PostgreSQL';
@@ -35,17 +36,21 @@ export interface ZeroLimitEntry {
   note: string;
 }
 
+export interface CapacityAuditSummary {
+  mongoLinksScanned: number;
+  postgresCampaignsScanned: number;
+  mismatchCount: number;
+  zeroLimitCount: number;
+  mongoConnected: boolean;
+  postgresConnected: boolean;
+  mongoError?: string;
+  postgresError?: string;
+}
+
 export interface CapacityAuditResult {
   countDrift: CapacityDriftMismatch[];
   zeroLimits: ZeroLimitEntry[];
-  summary: {
-    mongoLinksScanned: number;
-    postgresCampaignsScanned: number;
-    mismatchCount: number;
-    zeroLimitCount: number;
-    mongoConnected: boolean;
-    postgresConnected: boolean;
-  };
+  summary: CapacityAuditSummary;
 }
 
 export async function performCapacityAudit(options: { apply?: boolean } = {}): Promise<CapacityAuditResult> {
@@ -57,14 +62,16 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
   let postgresCampaignsScanned = 0;
   let mongoConnected = false;
   let postgresConnected = false;
+  let mongoError: string | undefined;
+  let postgresError: string | undefined;
 
   // 1. Scan MongoDB registration_links
   if (process.env.MONGODB_URI?.trim() || process.env.MONGODB_URI_DIRECT?.trim()) {
     try {
+      const { getMongoDb } = await import('@/lib/db/mongodb');
       const mongo = await getMongoDb();
-      mongoConnected = true;
-
       const links = await mongo.collection('registration_links').find({}).toArray();
+      mongoConnected = true;
       mongoLinksScanned = links.length;
 
       for (const link of links) {
@@ -144,15 +151,19 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
         }
       }
     } catch (err) {
-      console.warn('[CapacityAudit] MongoDB query failed:', err instanceof Error ? err.message : err);
+      mongoConnected = false;
+      mongoError = sanitizeDatabaseError(err);
+      console.warn('[CapacityAudit] MongoDB query failed:', mongoError);
     }
+  } else {
+    mongoError = 'MONGODB_URI not set';
   }
 
   // 2. Scan PostgreSQL campaigns
   if (process.env.DATABASE_URL?.trim()) {
     try {
-      postgresConnected = true;
       const campaigns = await db.select().from(schema.campaigns);
+      postgresConnected = true;
       postgresCampaignsScanned = campaigns.length;
 
       for (const campaign of campaigns) {
@@ -200,8 +211,12 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
         }
       }
     } catch (err) {
-      console.warn('[CapacityAudit] PostgreSQL query failed:', err instanceof Error ? err.message : err);
+      postgresConnected = false;
+      postgresError = sanitizeDatabaseError(err);
+      console.warn('[CapacityAudit] PostgreSQL query failed:', postgresError);
     }
+  } else {
+    postgresError = 'DATABASE_URL not set';
   }
 
   return {
@@ -214,6 +229,8 @@ export async function performCapacityAudit(options: { apply?: boolean } = {}): P
       zeroLimitCount: zeroLimits.length,
       mongoConnected,
       postgresConnected,
+      ...(mongoError ? { mongoError } : {}),
+      ...(postgresError ? { postgresError } : {}),
     },
   };
 }

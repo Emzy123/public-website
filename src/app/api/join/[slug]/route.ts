@@ -4,19 +4,27 @@ import { ObjectId } from 'mongodb';
 import { getMongoDb } from '@/lib/db/mongodb';
 import {
   REGISTRATION_LINKS_COLLECTION,
-  isLinkAcceptingApplications,
   maybeAutoCloseLink,
-  serialiseRegistrationLink,
 } from '@/lib/registration-links';
+import {
+  isCampaignLinkOpen,
+  getCampaignLinkDisplayStatus,
+} from '@/lib/applications/link-status';
 import { csrfProtect } from '@/lib/csrf';
 
 export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
   try {
+    const slug = params.slug?.trim() || '';
+    if (!slug) {
+      return NextResponse.json({ error: 'Registration campaign not found' }, { status: 404 });
+    }
+
     // 1. Check PostgreSQL campaigns first (Phase 1 source of truth)
     try {
-      const campaignInfo = await getCampaignBySlug(params.slug);
+      const campaignInfo = await getCampaignBySlug(slug);
       if (campaignInfo) {
         const { campaign, isAccepting, statusReason, seatsRemaining } = campaignInfo;
+        const displayStatus = campaignInfo.displayStatus ?? getCampaignLinkDisplayStatus(campaign);
         const response = NextResponse.json({
           campaign: {
             id: campaign.id,
@@ -34,7 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
             slug: campaign.slug,
             roles: [campaign.targetRole],
             accepting: isAccepting,
-            status: campaignInfo.displayStatus ?? campaign.status,
+            status: displayStatus,
           },
         });
         await csrfProtect(request, response);
@@ -47,19 +55,27 @@ export async function GET(request: NextRequest, { params }: { params: { slug: st
     // 2. Fall back to legacy MongoDB registration links if present
     try {
       const db = await getMongoDb();
-      const link = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
+      const escaped = slug.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const link = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({
+        $or: [
+          { slug },
+          { slug: { $regex: new RegExp(`^${escaped}$`, 'i') } },
+        ],
+      });
       if (link) {
         if (link.isOpen) await maybeAutoCloseLink(db, link as typeof link & { _id: ObjectId });
-        const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ slug: params.slug });
-        const accepting = isLinkAcceptingApplications(refreshed!);
+        const refreshed = await db.collection(REGISTRATION_LINKS_COLLECTION).findOne({ _id: link._id });
+        const target = refreshed || link;
+        const accepting = isCampaignLinkOpen(target);
+        const status = getCampaignLinkDisplayStatus(target);
 
         const response = NextResponse.json({
           link: {
-            name: refreshed!.name,
-            slug: refreshed!.slug,
-            roles: refreshed!.roles,
+            name: target.name,
+            slug: target.slug,
+            roles: target.roles,
             accepting,
-            status: serialiseRegistrationLink(refreshed!).status,
+            status,
           },
         });
         await csrfProtect(request, response);

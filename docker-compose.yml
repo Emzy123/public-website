@@ -1,8 +1,9 @@
-# Local MongoDB for development. Not used in production (Atlas).
+# Local MongoDB and PostgreSQL for development. Not used in production.
 # Usage: docker compose up -d
 # Then set in .env.local:
 #   MONGODB_URI=mongodb://localhost:27017
 #   MONGODB_DB=sinet
+#   DATABASE_URL=postgresql://postgres@localhost:5432/sinet_dev
 
 services:
   mongodb:
@@ -18,5 +19,43 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres:
+    image: postgres:16-alpine
+    container_name: sinet-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: sinet_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sinet_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: sinet-redis
+    ports:
+      - "6379:6379"
+
+  serverless-redis-http:
+    image: hiett/serverless-redis-http:latest
+    container_name: sinet-upstash-redis
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: dev-upstash-token
+      SRH_CONNECTION_STRING: "redis://redis:6379"
+    ports:
+      - "8079:80"
+    depends_on:
+      - redis
+
 volumes:
   mongodb_data:
+  postgres_data:
+

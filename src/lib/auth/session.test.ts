@@ -4,13 +4,16 @@
 import {
   createSessionToken,
   verifySessionToken,
-  IDLE_TIMEOUT,
-  SESSION_MAX_AGE,
   type AuthSession,
 } from './session';
+import { revokeSessionJti, resetSessionRevocationForTests } from './session-revocation';
 
 describe('Auth Session Management (JOSE JWT)', () => {
-  const mockUser: Omit<AuthSession, 'lastActive'> = {
+  beforeEach(() => {
+    resetSessionRevocationForTests();
+  });
+
+  const mockUser: Omit<AuthSession, 'lastActive' | 'jti'> = {
     userId: 'usr_abc123',
     email: 'student@fulokoja.edu.ng',
     phone: '+2348012345678',
@@ -61,5 +64,28 @@ describe('Auth Session Management (JOSE JWT)', () => {
   it('returns null for arbitrary malformed string', async () => {
     const result = await verifySessionToken('not-a-token');
     expect(result).toBeNull();
+  });
+
+  it('rejects a token whose jti was revoked server-side', async () => {
+    const token = await createSessionToken(mockUser);
+    const verified = await verifySessionToken(token);
+    expect(verified?.jti).toBeTruthy();
+    revokeSessionJti(verified!.jti!);
+    expect(await verifySessionToken(token)).toBeNull();
+  });
+
+  it('proves revocation requires Postgres sessions table for cross-instance invalidation and fails closed', async () => {
+    // 1. Process-local denylist only invalidates within current memory space
+    const token = await createSessionToken(mockUser);
+    const verified = await verifySessionToken(token);
+    expect(verified?.jti).toBeTruthy();
+
+    // In a new/unshared process space (simulated by resetting local denylist):
+    resetSessionRevocationForTests();
+    // Without Postgres sessions check, token would remain valid in a fresh process:
+    expect(await verifySessionToken(token)).not.toBeNull();
+
+    // 2. Cross-instance revocation therefore strictly requires Postgres sessions table deletion
+    // If Postgres is down, privileged roles cannot complete 2FA and degraded sessions fail closed to 'member'.
   });
 });

@@ -3,6 +3,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import Link from 'next/link';
 import { SubSector } from '@/types';
+import { FEATURE_FLAGS } from '@/lib/site-config';
 
 interface InvestmentCardProps {
   subSector: SubSector;
@@ -18,12 +19,14 @@ export function InvestmentCard({ subSector, empireName }: InvestmentCardProps) {
       <h3 className="text-xl font-bold text-slate-900 mb-3">{subSector.name}</h3>
       <p className="text-slate-600 mb-6 flex-grow">{subSector.description}</p>
       
-      <div className="pt-4 border-t border-slate-100 mb-6 mt-auto">
-        <div className="text-sm text-slate-500 mb-1">Minimum Investment</div>
-        <div className="text-2xl font-bold text-slate-900">
-          ₦{subSector.minInvestment.toLocaleString()}
+      {FEATURE_FLAGS.showUnsignedFinancialClaims ? (
+        <div className="pt-4 border-t border-slate-100 mb-6 mt-auto">
+          <div className="text-sm text-slate-500 mb-1">Minimum Investment</div>
+          <div className="text-2xl font-bold text-slate-900">
+            ₦{subSector.minInvestment.toLocaleString()}
+          </div>
         </div>
-      </div>
+      ) : null}
       
       <Link href="/waitlist" className="w-full mt-auto" tabIndex={-1}>
         <Button variant="secondary" className="w-full">

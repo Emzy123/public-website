@@ -5,6 +5,7 @@
 - Vercel account with access to the `sinet` project.
 - Namecheap access for `sinet.africa`.
 - Production MongoDB Atlas cluster and credentials.
+- Production PostgreSQL database with transaction-mode connection pooler and verified TLS (TODO: Confirm provider choice, e.g. Neon serverless Postgres or Supabase).
 - Resend domain verified and API key available.
 - GA4 property and measurement ID.
 
@@ -19,6 +20,14 @@ Set these in Vercel Project Settings -> Environment Variables:
 - `ADMIN_PASSWORD_HASH=...` (generate with `npx tsx scripts/hash-admin-password.ts "your-password"`)
 - `ADMIN_SESSION_SECRET=...` (generate with `openssl rand -base64 32`)
 - `ADMIN_TOTP_SECRET=...` (**required in production** — authenticator app TOTP secret)
+- PostgreSQL (required for student applications, campus cohorts, credential verification, and audit logs):
+  - `DATABASE_URL=...`
+    - **Provider**: TODO: Confirm production provider choice (e.g., Neon serverless Postgres with pooling or Supabase with transaction pooler).
+    - **Connection Pooling**: Because Next.js route handlers execute as serverless functions on Vercel, connections must use a **transaction-mode pooler** (e.g., PgBouncer on port 6543 or Neon `-pooler` connection string).
+    - **Prepared Statements**: The application database client in `src/lib/db/index.ts` is configured with `prepare: false` to ensure compatibility with transaction-mode poolers.
+    - **TLS/SSL Verification**: Must enforce verified TLS in production. Standard cloud providers (Neon `*.neon.tech` and Supabase transaction poolers `*.pooler.supabase.com`) use publicly trusted Let's Encrypt certificates and accept `verify-full` / `rejectUnauthorized: true` natively. If connecting to a host requiring an internal or private root authority, supply the certificate PEM via `DATABASE_CA_CERT`.
+    - **Example format**: `postgresql://<user>:<password>@<pooled-host>:5432/<db>?sslmode=verify-full`
+  - `DATABASE_CA_CERT=...` (optional; custom CA PEM if connecting to a host with a self-signed or enterprise root certificate)
 - MongoDB (required by `POST /api/contact` and `POST /api/academy`):
 - `MONGODB_URI=...`
 - `MONGODB_DB=sinet`
@@ -47,7 +56,8 @@ Set these in Vercel Project Settings -> Environment Variables:
 2. Framework: Next.js.
 3. Build command: `npm run build`.
 4. Output: default Next.js output.
-5. Deploy main branch to production.
+5. Before the first membership/campaign deploy (and after schema changes), run `npm run db:migrate` against the production `DATABASE_URL` from a trusted machine. Do not add it to the Vercel build command.
+6. Deploy main branch to production.
 
 ## 4. Namecheap DNS -> Vercel
 

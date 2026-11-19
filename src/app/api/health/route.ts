@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthHealthDiagnostic } from '@/lib/auth/otp';
+import { getMongoDb } from '@/lib/db/mongodb';
+import { pingPostgres } from '@/lib/db';
+import { verifySession } from '@admin/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,7 +17,6 @@ async function isAuthorizedAdmin(request: NextRequest): Promise<boolean> {
   const adminCookie = request.cookies.get('sinet_admin_session')?.value;
   if (adminCookie) {
     try {
-      const { verifySession } = await import('@admin/lib/auth');
       const session = await verifySession(adminCookie);
       if (session?.email) {
         const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
@@ -48,8 +50,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: true, status: 'healthy' }, { status: 200 });
   }
 
-  const { getMongoDb } = await import('@/lib/db/mongodb');
-
   let mongo: 'ok' | 'degraded' | 'error' = 'degraded';
   if (process.env.MONGODB_URI?.trim()) {
     try {
@@ -61,6 +61,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  const postgres = await pingPostgres();
+
   const redis =
     process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? 'ok' : 'degraded';
   const email = emailMissingFrom
@@ -70,8 +72,9 @@ export async function GET(request: NextRequest) {
       : 'degraded';
 
   const authOtp = await getAuthHealthDiagnostic();
-  const checks = { mongo, redis, email, authOtp };
-  const hasError = mongo === 'error' || email === 'error' || authOtp.status === 'error';
+  const checks = { mongo, postgres, redis, email, authOtp };
+  const hasError =
+    mongo === 'error' || postgres === 'error' || email === 'error' || authOtp.status === 'error';
 
   return NextResponse.json(
     {

@@ -4,6 +4,8 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   testTimeout: 20000,
+  globalSetup: '<rootDir>/tests/setup/global-setup.ts',
+  globalTeardown: '<rootDir>/tests/setup/global-teardown.ts',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -15,7 +17,7 @@ const config: Config = {
     }],
   },
   transformIgnorePatterns: [
-    '/node_modules/(?!(jose|sanitize-html|htmlparser2|entities|dom-serializer|domelementtype|domhandler|domutils)/)',
+    '/node_modules/(?!(jose|sanitize-html|htmlparser2|entities|dom-serializer|domelementtype|domhandler|domutils|bson)/)',
   ],
   collectCoverageFrom: [
     'src/lib/**/*.{ts,tsx}',

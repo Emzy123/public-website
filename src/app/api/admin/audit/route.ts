@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError, ForbiddenError } from '@/lib/auth/guards';
-import { db } from '@/lib/db';
+import { db, sanitizeDatabaseError } from '@/lib/db';
 import { auditLog } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 
@@ -48,10 +48,12 @@ export async function GET(request: NextRequest) {
     if (error instanceof ForbiddenError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
-    console.error('Failed to retrieve audit log:', error);
+    console.error('Failed to retrieve audit log:', sanitizeDatabaseError(error));
     return NextResponse.json(
-      { error: 'Failed to retrieve institutional audit log.' },
-      { status: 500 }
+      {
+        error: 'Institutional audit log is temporarily unavailable. Please retry shortly.',
+      },
+      { status: 503 }
     );
   }
 }

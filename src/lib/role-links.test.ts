@@ -376,6 +376,7 @@ describe('Role Deep Links & Membership Names', () => {
       const linkInput = {
         name: 'SINet HQ Operations Staff Onboarding',
         roles: ['staff'],
+        isInviteOnly: true,
         quota: 5,
         expiresAt: new Date(Date.now() + 7 * 86400 * 1000).toISOString(),
       };

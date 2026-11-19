@@ -30,11 +30,38 @@ export type AuditEntry = {
   createdAt: Date;
 };
 
+const SENSITIVE_METADATA_KEYS = new Set([
+  'otp',
+  'code',
+  'token',
+  'magic',
+  'magicLink',
+  'url',
+  'password',
+  'secret',
+  'totp',
+]);
+
+function scrubAuditMetadata(
+  metadata: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!metadata) return metadata;
+  const clean: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    if (SENSITIVE_METADATA_KEYS.has(key) || /otp|token|secret|password/i.test(key)) {
+      continue;
+    }
+    clean[key] = value;
+  }
+  return clean;
+}
+
 export async function writeAuditLog(entry: Omit<AuditEntry, 'createdAt'>): Promise<void> {
   try {
     const db = await getMongoDb();
     await db.collection('auditLogs').insertOne({
       ...entry,
+      metadata: scrubAuditMetadata(entry.metadata),
       createdAt: new Date(),
     });
   } catch (error) {

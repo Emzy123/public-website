@@ -12,7 +12,7 @@ import {
 import { ALL_APPLICATION_ROLES } from '@/lib/types/membership';
 
 import { requireRole, AuthError, ForbiddenError } from '@/lib/auth/guards';
-import { db, isPostgresConfigured } from '@/lib/db';
+import { db, isPostgresConfigured, sanitizeDatabaseError } from '@/lib/db';
 import { applications, campaigns, universities } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -114,6 +114,15 @@ export async function GET(
     }
 
     // 2. Fall back to PostgreSQL applications
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
+
+    if (isUuid && !isPostgresConfigured()) {
+      return NextResponse.json(
+        { error: 'database_unavailable' },
+        { status: 503 }
+      );
+    }
+
     if (isPostgresConfigured()) {
       try {
         const [pgApp] = await db
@@ -186,13 +195,25 @@ export async function GET(
           return response;
         }
       } catch (err) {
-        console.warn('[AdminApps] PostgreSQL detail query failed:', err);
+        console.warn('[AdminApps] PostgreSQL detail query failed:', sanitizeDatabaseError(err));
+        if (isUuid) {
+          return NextResponse.json(
+            { error: 'database_unavailable' },
+            { status: 503 }
+          );
+        }
       }
     }
 
     return NextResponse.json({ error: 'Application not found' }, { status: 404 });
   } catch (error) {
-    console.error('Application detail error:', error);
+    console.error('Application detail error:', sanitizeDatabaseError(error));
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) {
+      return NextResponse.json(
+        { error: 'database_unavailable' },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: 'Unable to load application' }, { status: 503 });
   }
 }

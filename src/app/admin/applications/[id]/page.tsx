@@ -44,6 +44,7 @@ export default function ApplicationDetailPage() {
   const [error, setError] = useState('');
   const [updating, setUpdating] = useState(false);
   const [declineReason, setDeclineReason] = useState('');
+  const [dbUnavailable, setDbUnavailable] = useState(false);
   const [selectedPreviewDoc, setSelectedPreviewDoc] = useState<{
     label: string;
     url: string;
@@ -52,10 +53,16 @@ export default function ApplicationDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
+    setDbUnavailable(false);
     try {
       const res = await fetch(`/api/admin/applications/${id}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Unable to load application');
+      if (!res.ok) {
+        if (data.error === 'database_unavailable' || res.status === 503) {
+          setDbUnavailable(true);
+        }
+        throw new Error(data.error === 'database_unavailable' ? 'The primary database is unavailable.' : (data.error || 'Unable to load application'));
+      }
       setApp(data.application);
       setDeclineReason(data.application?.reviewNote || '');
     } catch (err) {
@@ -82,7 +89,12 @@ export default function ApplicationDetailPage() {
         }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to submit decision');
+      if (!response.ok) {
+        if (data.error === 'database_unavailable' || response.status === 503) {
+          setDbUnavailable(true);
+        }
+        throw new Error(data.error === 'database_unavailable' ? 'The primary database is unavailable.' : (data.error || 'Failed to submit decision'));
+      }
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to update application');
@@ -104,7 +116,18 @@ export default function ApplicationDetailPage() {
         </Link>
       </div>
 
-      {error && (
+      {dbUnavailable && (
+        <div role="alert" className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 shadow-sm flex items-start gap-3">
+          <div className="flex-1">
+            <h4 className="font-semibold text-xs uppercase tracking-wider text-amber-800">Primary Database Unavailable</h4>
+            <p className="text-xs text-amber-700 mt-0.5">
+              The primary database is currently unreachable. Postgres-backed student applications cannot be loaded or reviewed at this time.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {error && !dbUnavailable && (
         <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700">
           {error}
         </div>

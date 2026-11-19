@@ -25,12 +25,25 @@ export function getMediaSigningSecret(): string {
 }
 
 /**
- * Validates production configuration at boot.
- * Logs problems instead of crashing the whole site — route handlers
- * still enforce what they need (admin MFA, Upstash rate limits, etc.).
+ * Production boot checks.
+ *
+ * AUTH_SECRET missing: fatal. Member JWT signing has no production fallback.
+ * DATABASE_URL missing: fatal. Instrumentation throws, so the Node server
+ *   (including Vercel serverless functions that import instrumentation) will
+ *   not boot — the whole site is down until the env var is set.
+ * DATABASE_URL set but unreachable: the rest of the site stays up; Postgres
+ *   routes return 503. Marketing/CMS Mongo routes are unaffected.
  */
 export function assertProductionSecrets(): void {
   if (!isProductionMode()) return;
+
+  if (!process.env.AUTH_SECRET?.trim()) {
+    throw new Error('Fatal: AUTH_SECRET is required in production');
+  }
+
+  if (!process.env.DATABASE_URL?.trim()) {
+    throw new Error('Fatal: DATABASE_URL is required in production');
+  }
 
   const required = [
     'ADMIN_SESSION_SECRET',

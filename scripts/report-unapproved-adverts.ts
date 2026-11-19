@@ -47,7 +47,14 @@ interface UnapprovedReport {
 async function main() {
   console.log('===============================================================');
   console.log('SINet Compliance Audit: Unapproved Adverts & Visual Risks');
-  console.log(`Connecting to: ${uri.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@')} [db: ${dbName}]`);
+  const host = (() => {
+    try {
+      return new URL(uri).hostname || '<redacted>';
+    } catch {
+      return '<redacted>';
+    }
+  })();
+  console.log(`Connecting to: ${host} [db: ${dbName}]`);
   console.log('===============================================================\n');
 
   let client: MongoClient | null = null;

@@ -16,14 +16,14 @@ import { SITE_URL } from '@/lib/site-config';
 import { isProductionMode } from '@/lib/runtime/envMode';
 
 function getSigningSecret(): string {
-  const secret = process.env.AUTH_SECRET?.trim() || process.env.ADMIN_SESSION_SECRET?.trim();
+  const secret = process.env.AUTH_SECRET?.trim();
   if (secret) return secret;
   if (isProductionMode()) {
     throw new Error(
-      'Fatal: AUTH_SECRET or ADMIN_SESSION_SECRET must be configured in production for cryptographic credential signatures.'
+      'Fatal: AUTH_SECRET must be configured in production for cryptographic credential signatures.'
     );
   }
-  return 'sinet-development-verification-hmac-secret-32-chars';
+  return process.env.ADMIN_SESSION_SECRET?.trim() || 'sinet-development-verification-hmac-secret-32-chars';
 }
 
 /**

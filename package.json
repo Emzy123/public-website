@@ -16,7 +16,9 @@
     "check:env": "tsx scripts/check-env.ts",
     "smoke": "bash scripts/smoke-test.sh",
     "seed:db": "tsx scripts/seed.ts",
-    "seed:cms": "tsx scripts/seed-cms.ts"
+    "seed:cms": "tsx scripts/seed-cms.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@edge-csrf/nextjs": "^2.5.2",

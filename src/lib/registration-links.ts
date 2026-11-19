@@ -192,12 +192,22 @@ export async function releaseApplicationSlot(
 }
 
 export function serialiseRegistrationLink(doc: Document) {
-  const link = doc as LinkDoc & { _id: import('mongodb').ObjectId; name: string; slug: string; roles: ApplicationRole[]; createdBy: string; createdAt: Date; updatedAt: Date };
+  const link = doc as LinkDoc & {
+    _id: import('mongodb').ObjectId;
+    name: string;
+    slug: string;
+    roles: ApplicationRole[];
+    isInviteOnly?: boolean;
+    createdBy: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
   return {
     _id: String(link._id),
     name: link.name,
     slug: link.slug,
     roles: link.roles,
+    isInviteOnly: Boolean(link.isInviteOnly),
     isOpen: isCampaignLinkOpen(link),
     status: resolveLinkStatus(link),
     expiresAt: link.expiresAt instanceof Date ? link.expiresAt.toISOString() : link.expiresAt,

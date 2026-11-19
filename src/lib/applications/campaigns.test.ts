@@ -11,11 +11,18 @@ import { db } from '@/lib/db';
 import { universities, users, userRoles, memberProfiles, userBadges, campaigns, applications } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
 
-describe('Campaigns & Applications Service Layer', () => {
+const isPostgresUp = process.env.POSTGRES_TEST_DB_AVAILABLE !== '0';
+const describeWithPostgres = isPostgresUp ? describe : describe.skip;
+
+if (!isPostgresUp) {
+  console.warn(`[SKIP] ${__filename}: Skipped because PostgreSQL is absent or unreachable on localhost:5432.`);
+}
+
+describeWithPostgres('Campaigns & Applications Service Layer', () => {
   it('correctly resolves active evergreen campaign status', async () => {
-    const info = await getCampaignBySlug('student-network');
+    const info = await getCampaignBySlug('test-membership');
     expect(info).not.toBeNull();
-    expect(info?.campaign.slug).toBe('student-network');
+    expect(info?.campaign.slug).toBe('test-membership');
     expect(info?.isAccepting).toBe(true);
     expect(info?.campaign.status).toBe('active');
   });
@@ -52,7 +59,7 @@ describe('Campaigns & Applications Service Layer', () => {
 
     const testEmail = `applicant-${Date.now()}@test.edu.ng`;
     const testPhone = `+23480${Math.floor(10000000 + Math.random() * 90000000)}`;
-    const appResult = await submitCampaignApplication('student-network', {
+    const appResult = await submitCampaignApplication('test-membership', {
       fullName: 'Tariq Bello',
       email: testEmail,
       phone: testPhone,
@@ -65,7 +72,7 @@ describe('Campaigns & Applications Service Layer', () => {
     });
 
     expect(appResult.applicationId).toBeDefined();
-    expect(appResult.campaignName).toContain('Student Investment Network');
+    expect(appResult.campaignName).toBe('Test Membership (Evergreen)');
 
     // Create a mock reviewer admin
     const reviewerEmail = `admin-reviewer-${Date.now()}@sinet.africa`;

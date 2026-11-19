@@ -1,4 +1,4 @@
-.PHONY: help setup install dev build start lint typecheck test test-watch test-ci check ci smoke seed db-up db-down check-env
+.PHONY: help setup install dev build start lint typecheck test test-watch test-ci check ci smoke seed db-up db-down check-env db-migrate
 
 help:
 	@echo "SINet development commands"
@@ -20,6 +20,7 @@ help:
 	@echo "  make db-up       Start local MongoDB (Docker)"
 	@echo "  make db-down     Stop local MongoDB"
 	@echo "  make check-env   Validate environment variables"
+	@echo "  make db-migrate  Apply Drizzle PostgreSQL migrations"
 
 setup:
 	bash scripts/setup.sh
@@ -69,3 +70,6 @@ db-down:
 
 check-env:
 	npm run check:env
+
+db-migrate:
+	npm run db:migrate

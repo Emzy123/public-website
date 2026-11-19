@@ -40,6 +40,22 @@ export function parseExpiryDate(expiry: Date | string | null | undefined): Date 
 }
 
 /**
+ * Parses start timestamp.
+ * If start date is provided as date-only 'YYYY-MM-DD', ISO 8601 defaults to midnight UTC.
+ * In SINet, date-only start dates are treated as the start of that day in Africa/Lagos (UTC+1: 00:00:00.000+01:00).
+ */
+export function parseStartDate(startDate: Date | string | null | undefined): Date | null {
+  if (!startDate) return null;
+  if (startDate instanceof Date) return startDate;
+  const str = String(startDate).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return new Date(`${str}T00:00:00.000+01:00`);
+  }
+  const parsed = new Date(str);
+  return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
  * Resolves the effective capacity limit for a campaign link.
  * Precedence rule: maxApplications > quota > seatLimit.
  * - maxApplications: explicit application override limit
@@ -83,7 +99,7 @@ export function isBaseStatusActive(campaign: CampaignLinkLike): boolean {
 /**
  * Shared helper: Single source of truth for whether a campaign or registration link is open.
  * Evaluated with precedence:
- * Active Base Status AND Not Expired AND Has Capacity Remaining
+ * Active Base Status AND Started (if startsAt set) AND Not Expired AND Has Capacity Remaining
  */
 export function isCampaignLinkOpen(
   campaign: CampaignLinkLike,
@@ -93,6 +109,13 @@ export function isCampaignLinkOpen(
 
   const isActive = isBaseStatusActive(campaign);
   if (!isActive) return false;
+
+  if (campaign.startsAt) {
+    const startDate = parseStartDate(campaign.startsAt);
+    if (startDate && startDate.getTime() > now.getTime()) {
+      return false;
+    }
+  }
 
   const rawExpiry = campaign.expiresAt ?? campaign.endsAt;
   const expiryDate = parseExpiryDate(rawExpiry);
@@ -111,10 +134,10 @@ export const isLinkOpen = isCampaignLinkOpen;
 /**
  * Derives 'Open', 'Expired', 'Full', or 'Closed' for display.
  * Precedence order: Closed > Full > Expired > Open
- * 1. Closed: Manually closed, auto-closed, archived, draft, or isOpen === false
+ * 1. Closed: Manually closed, auto-closed, archived, draft, startsAt in future, or isOpen === false
  * 2. Full: Capacity limit reached (applicationCount >= effectiveLimit)
  * 3. Expired: Expiration timestamp passed (<= now)
- * 4. Open: Active, within deadline, and capacity remaining
+ * 4. Open: Active, started, within deadline, and capacity remaining
  */
 export function getCampaignLinkDisplayStatus(
   campaign: CampaignLinkLike,
@@ -125,6 +148,13 @@ export function getCampaignLinkDisplayStatus(
   const isActive = isBaseStatusActive(campaign);
   if (!isActive) {
     return 'Closed';
+  }
+
+  if (campaign.startsAt) {
+    const startDate = parseStartDate(campaign.startsAt);
+    if (startDate && startDate.getTime() > now.getTime()) {
+      return 'Closed';
+    }
   }
 
   const limit = getEffectiveCapacityLimit(campaign);

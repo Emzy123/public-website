@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { universities } from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
+import { FALLBACK_KOGI_CHAPTERS } from '@/lib/chapters/chapters';
 
 export async function GET() {
   try {
@@ -21,10 +22,19 @@ export async function GET() {
       universities: list,
     });
   } catch (error) {
-    console.error('Failed to fetch universities:', error);
-    return NextResponse.json(
-      { error: 'Failed to retrieve universities list' },
-      { status: 500 }
-    );
+    console.warn('[Universities] DB query failed, using built-in chapters catalog fallback:', error);
+    const fallbackList = FALLBACK_KOGI_CHAPTERS.map((c) => ({
+      id: c.universityId,
+      name: c.universityName,
+      shortName: c.universityShortName,
+      campusCode: c.campusCode,
+      state: c.state,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      universities: fallbackList,
+      degraded: true,
+    });
   }
 }
