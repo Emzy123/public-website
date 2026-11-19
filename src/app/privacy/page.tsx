@@ -177,10 +177,10 @@ export default function PrivacyPage() {
             <Link href="/terms" className="text-sm font-semibold text-[#d9711b] hover:text-[#0d1a4a] transition-colors">
               Terms of Service →
             </Link>
-            <Link href="/transparency" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
-              Transparency & FAQ
+            <Link href="/about" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
+              About Us
             </Link>
-            <Link href="/connect" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
+            <Link href="/contact" className="text-sm text-slate-500 hover:text-[#0d1a4a] transition-colors">
               Contact Us
             </Link>
           </div>
