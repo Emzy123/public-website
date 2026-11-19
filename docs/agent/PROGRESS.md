@@ -176,4 +176,32 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
   - Production release checklist and runbook created in `docs/ops/RELEASE-phase-a.md`.
 
 
+## Phase A Release Prep summary (`agent/phase-a-release-prep`)
+- **Branch:** `agent/phase-a-release-prep`
+- **Commits:**
+  - c3db11f: fix(api): eliminate internal database error and reason text from public responses (1)
+  - 1c59300: fix(db): restrict docker service hostnames as local to non-production only (4)
+  - 5cad534: fix(seed): guard seed execution against non-local/production and neutralize seed wording (2)
+  - b1f7cce: test(jest): manage database client teardown in globalTeardown without forceExit (5)
+  - b8c7d77: chore(docker): add dev-only redis and serverless-redis-http services to docker-compose (3)
+  - f7e5b52: docs(ops): update Phase A release checklist with Upstash requirement, outage matrix, and PR workflow (6, 7)
+  - fabb605: fix(test): resolve typecheck errors in test env assertions and auth me handler (8)
+  - d8c0133: docs(ops): update commit list with latest typecheck fix in release checklist (7)
+- **DoD Verification Results:**
+  - `npm test`: 66 passed suites / 66 total (531 tests passed / 531 total, 0 failed) with local Postgres & Mongo up
+  - `npm run typecheck`: clean pass (0 errors)
+  - `npm run lint`: pass (0 errors, 2 pre-existing react-hooks/exhaustive-deps warnings)
+  - `next build`: pass (optimized build & next-sitemap generated, 82 static pages)
+  - `npm run smoke`: 61 passed / 0 failed
+  - `crawl`: script not present on Phase A (introduced in Phase B `a064ee8`)
+- **Key Verifications:**
+  - Zero internal database error or reason text leaks into public responses across all API routes under failure.
+  - Safe database seeding: guards refuse execution against non-local (Neon, Supabase) and production environments; neutral test seed data with no legal-gated wording.
+  - Rate-limit inventory complete; admin access during Postgres outage demonstrated (admin login page 200, admin login POST 200 via in-memory sliding window, public routes 503/429).
+  - Docker service hostnames (`postgres`, `sinet-postgres`) restricted as local only in non-production.
+  - Jest client teardown managed in `globalTeardown`; test worker dynamic Mongo import handle documented in `BLOCKERS.md`.
+  - Apply route 503 check documented; Upstash documented as hard production precondition; PR-based release workflow detailed in `docs/ops/RELEASE-phase-a.md`.
+
+
+
 
