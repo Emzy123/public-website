@@ -6,9 +6,11 @@ This document details the release checklist, required environment variables, ver
 
 ## 1. Commits Included in Release (origin/master 5236120 -> HEAD)
 
-The following 45 commits encompass Phase A security gates, resilience enhancements, operational tooling, and release-prep verifications:
+The following 47 commits encompass Phase A security gates, resilience enhancements, operational tooling, and release-prep verifications:
 
 ```text
+fabb605 fix(test): resolve typecheck errors in test env assertions and auth me handler (8)
+f7e5b52 docs(ops): update Phase A release checklist with Upstash requirement, outage matrix, and PR workflow (6, 7)
 b8c7d77 chore(docker): add dev-only redis and serverless-redis-http services to docker-compose (3)
 b1f7cce test(jest): manage database client teardown in globalTeardown without forceExit (5)
 5cad534 fix(seed): guard seed execution against non-local/production and neutralize seed wording (2)
