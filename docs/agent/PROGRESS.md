@@ -3,7 +3,7 @@
 Source of truth for session restarts. Continue from the first unfinished item.
 
 **Last updated:** 2026-11-19  
-**Current branch:** `agent/phase-b-rebase` → next `agent/phase-c-content`  
+**Current branch:** `agent/phase-b-followups` → next `agent/phase-c-content`  
 **New dependencies this session:** none
 
 ## Definition of Done (per item)
@@ -230,3 +230,17 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 - **Commits:** 0ae6b2d B1; fa66f48 B2; 4d983b7 B3; 24e3b17 B4; 96596ff B5-B6; a064ee8 B7; crawl transparency allowlist fix
 - **DoD:** typecheck pass; lint pass (pre-existing warnings); unit suites for B2/B3/B4 pass; full jest 62 pass / 5 fail (Postgres absent); next build pass; crawl 61 ok / 0 failed after fresh start
 - **Human:** B1 Staff link UI steps + B5 Resend in BLOCKERS.md
+
+
+## Phase B Follow-ups summary (`agent/phase-b-followups`)
+- **Branch:** `agent/phase-b-followups`
+- **Commits:**
+  - 7c6d50e: fix(crawl): remove internal transparency links and disallow 404s in crawler (1)
+  - 31828df: fix(api): mark universities route force-dynamic with regression tests (2)
+  - 6cd4984: fix(verify): enforce trusted Vercel IP extraction and friendly rate-limit UI (3)
+- **Key Verifications:**
+  - Internal links to retired `/transparency` route removed from `ConnectClient`, `privacy`, and `terms` (pointed to `/about` and direct `/contact`).
+  - `/transparency` 404 allowlist completely removed from `crawl-internal-links.mjs`; crawl strictly fails on any 404 or 500.
+  - `/api/universities` verified to query PostgreSQL and marked `export const dynamic = 'force-dynamic'` to prevent static baking during build; unit tests added.
+  - Client IP extraction unified across `rate-limit.ts` and `rate-limit-unified.ts` using trusted Vercel sources (`x-real-ip`, platform leftmost `x-vercel-forwarded-for` / `x-forwarded-for`) and fixed bucket `'unknown'`. Client-rotatable headers (e.g. `cf-connecting-ip`) stripped. Proved via tests that rotating headers cannot reset the limit.
+  - `/verify/[memberId]` page checks rate limit and renders friendly user-facing error UI when limited or when Upstash is missing in production.
