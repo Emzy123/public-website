@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { getClientIp } from '@/lib/security/rate-limit-unified';
 import { validateOrigin } from '@/lib/security/origin';
+import { writeAuditLog } from '@/lib/audit/log';
 
 import { sendApplicationStatusEmail } from '@/lib/email/application-mail';
 
@@ -34,6 +35,25 @@ export async function POST(
       return NextResponse.json(
         { error: 'Invalid review payload', issues: parsed.error.flatten() },
         { status: 400 }
+      );
+    }
+
+    // Require PostgreSQL to be configured and reachable before processing application reviews
+    // to prevent unaudited decisions or split-brain membership status during database outages
+    if (!isPostgresConfigured()) {
+      return NextResponse.json(
+        { error: 'database_unavailable' },
+        { status: 503 }
+      );
+    }
+
+    try {
+      await db.select({ id: chapters.id }).from(chapters).limit(1);
+    } catch (dbPingErr) {
+      console.warn('[AdminReview] PostgreSQL check failed, refusing application review:', sanitizeDatabaseError(dbPingErr));
+      return NextResponse.json(
+        { error: 'database_unavailable' },
+        { status: 503 }
       );
     }
 
@@ -66,6 +86,18 @@ export async function POST(
               },
             }
           );
+
+          await writeAuditLog({
+            action: 'application.status_update',
+            actor: session.email,
+            resource: `application:${mongoApp._id}`,
+            metadata: {
+              applicationId: String(mongoApp._id),
+              decision: parsed.data.decision,
+              status: newStatus,
+              remarks: parsed.data.remarks || null,
+            },
+          });
 
           // If applicant has record in members collection, sync their status
           const appData = (mongoApp.data as Record<string, unknown>) || {};

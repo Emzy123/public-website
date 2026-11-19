@@ -3,25 +3,48 @@ import { Redis } from '@upstash/redis';
 import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
 import { isProductionMode } from '@/lib/runtime/envMode';
 
-const redis =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-    ? new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
-    : null;
+let cachedRedis: Redis | null = null;
+let cachedRedisUrl = '';
+let cachedRedisToken = '';
 
 const limiterCache = new Map<string, Ratelimit>();
 
+export function getRedisClient(): Redis | null {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim() || '';
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim() || '';
+  if (!url || !token) {
+    cachedRedis = null;
+    cachedRedisUrl = '';
+    cachedRedisToken = '';
+    return null;
+  }
+  if (cachedRedis && cachedRedisUrl === url && cachedRedisToken === token) {
+    return cachedRedis;
+  }
+  cachedRedisUrl = url;
+  cachedRedisToken = token;
+  cachedRedis = new Redis({ url, token });
+  limiterCache.clear();
+  return cachedRedis;
+}
+
+export function clearLimiterCache(): void {
+  limiterCache.clear();
+  cachedRedis = null;
+  cachedRedisUrl = '';
+  cachedRedisToken = '';
+}
+
 function getUpstashLimiter(prefix: string, max: number, windowSec: number): Ratelimit | null {
-  if (!redis) return null;
+  const client = getRedisClient();
+  if (!client) return null;
 
   const cacheKey = `${prefix}:${max}:${windowSec}`;
   const existing = limiterCache.get(cacheKey);
   if (existing) return existing;
 
   const limiter = new Ratelimit({
-    redis,
+    redis: client,
     limiter: Ratelimit.slidingWindow(max, `${windowSec} s`),
     analytics: true,
     prefix: `sinet:${prefix}`,

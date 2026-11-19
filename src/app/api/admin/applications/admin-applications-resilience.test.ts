@@ -73,4 +73,29 @@ describe('Admin applications Postgres outage resilience', () => {
     const body = await res.json();
     expect(body.error).toBe('database_unavailable');
   });
+
+  it('POST /api/admin/applications/[id]/review returns 503 with database_unavailable when Postgres is down for Mongo ObjectId application', async () => {
+    const mongoId = '507f1f77bcf86cd799439011';
+    (db.select as jest.Mock).mockImplementation(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:5432');
+    });
+
+    const req = new NextRequest(`http://localhost:3000/api/admin/applications/${mongoId}/review`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        origin: 'http://localhost:3000',
+      },
+      body: JSON.stringify({
+        decision: 'approve',
+        remarks: 'Approved for onboarding',
+      }),
+    });
+
+    const res = await POST(req, { params: { id: mongoId } });
+
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe('database_unavailable');
+  });
 });
