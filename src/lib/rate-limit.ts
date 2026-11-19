@@ -38,40 +38,48 @@ export function checkRateLimit(
   return { ok: true };
 }
 
-export function getClientIp(requestOrHeaders: Request | Headers): string {
-  if (!requestOrHeaders) return 'unknown';
+export function getClientIp(input: unknown): string {
+  if (!input || typeof input !== 'object') return 'unknown';
 
-  let headers: Headers;
+  let headersGetter: { get(name: string): string | null } | null = null;
   let nextRequestIp: string | undefined;
 
-  if ('headers' in requestOrHeaders && requestOrHeaders.headers) {
-    headers = requestOrHeaders.headers;
-    nextRequestIp = (requestOrHeaders as unknown as { ip?: string }).ip;
-  } else {
-    headers = requestOrHeaders as Headers;
+  // 1. Detect a real Headers object (or HeadersAdapter) first
+  if (typeof (input as { get?: unknown }).get === 'function') {
+    headersGetter = input as { get(name: string): string | null };
+  } else if (
+    'headers' in input &&
+    input.headers &&
+    typeof (input.headers as { get?: unknown }).get === 'function'
+  ) {
+    // 2. Otherwise read input.headers if that has a .get function (e.g. Request / NextRequest)
+    headersGetter = input.headers as { get(name: string): string | null };
+    nextRequestIp = (input as { ip?: string }).ip;
   }
 
-  // 1. NextRequest.ip (populated by Next.js / Vercel Edge runtime)
+  // If no valid headers object with .get exists, fall back to 'unknown'
+  if (!headersGetter) {
+    return 'unknown';
+  }
+
+  // NextRequest.ip (populated by Next.js / Vercel Edge runtime)
   if (nextRequestIp?.trim()) {
     return nextRequestIp.trim();
   }
 
-  // 2. x-real-ip header (set by trusted reverse proxy / Vercel edge)
-  const realIp = headers.get('x-real-ip');
+  const realIp = headersGetter.get('x-real-ip');
   if (realIp?.trim()) {
     return realIp.trim();
   }
 
-  // 3. x-vercel-forwarded-for (Vercel platform header - platform-set leftmost client IP entry)
-  const vercelForwarded = headers.get('x-vercel-forwarded-for');
+  const vercelForwarded = headersGetter.get('x-vercel-forwarded-for');
   if (vercelForwarded?.trim()) {
     const parts = vercelForwarded.split(',').map((p) => p.trim()).filter(Boolean);
     const leftmost = parts[0];
     if (leftmost) return leftmost;
   }
 
-  // 4. x-forwarded-for (platform-set leftmost client IP entry on Vercel)
-  const forwarded = headers.get('x-forwarded-for');
+  const forwarded = headersGetter.get('x-forwarded-for');
   if (forwarded?.trim()) {
     const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
     const leftmost = parts[0];
@@ -82,7 +90,7 @@ export function getClientIp(requestOrHeaders: Request | Headers): string {
   return 'unknown';
 }
 
-export function getClientKey(req: Request | Headers): string {
+export function getClientKey(req: unknown): string {
   return getClientIp(req);
 }
 

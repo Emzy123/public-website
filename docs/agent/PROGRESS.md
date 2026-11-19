@@ -2,8 +2,8 @@
 
 Source of truth for session restarts. Continue from the first unfinished item.
 
-**Last updated:** 2026-11-19  
-**Current branch:** `agent/phase-b-followups` → next `agent/phase-c-content`  
+**Last updated:** 2026-11-20  
+**Current branch:** `agent/phase-b-hotfix`  
 **New dependencies this session:** none
 
 ## Definition of Done (per item)
@@ -47,6 +47,17 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 | B5 Sign-in OTP neutral errors | done | 0ae6b2d (+e0e27da0) | Resend steps in BLOCKERS |
 | B6 Regression smokes (redirects, join, /me 401) | done | 96596ff | returns/investor-journey/me/verify/footer |
 | B7 Crawl script + CI | done | a064ee8 / (fix) | crawl-internal-links.mjs in smoke+CI |
+
+---
+
+## Phase B Hotfix — `/verify/[memberId]` 500 crash & PII signature gating (`agent/phase-b-hotfix`)
+| Item | Status | Commit | Notes |
+|------|--------|--------|-------|
+| B.Hotfix.1 `getClientIp` HeadersAdapter .get crash fix | done | pending | Checks typeof input.get === 'function' first, safely falls back to 'unknown' |
+| B.Hotfix.2 `/verify/[memberId]` signature privacy gate | done | pending | Without valid sig: status and member ID only; full details and trust seal require valid sig |
+| B.Hotfix.3 `/verify/[memberId]` generateMetadata privacy gate | done | pending | Generic title/description without fullName unless sig valid |
+| B.Hotfix.4 Smoke assertions for `/verify` & `/verify/SIN-TEST` | done | pending | Assert 200 + 'Member ID Not Found' |
+| B.Hotfix.5 Docs on Upstash fallback & Vercel IP header | done | pending | Documented in rate-limit-unified.ts & BLOCKERS.md |
 
 ---
 

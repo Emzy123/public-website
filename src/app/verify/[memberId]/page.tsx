@@ -7,8 +7,10 @@ import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: { memberId: string };
+  searchParams?: { sig?: string };
 }): Promise<Metadata> {
   try {
     const record = await getVerifiedMemberRecord(params.memberId);
@@ -16,6 +18,17 @@ export async function generateMetadata({
       return {
         title: 'Credential Verification — SINet',
         description: 'Verify digital membership credentials on SINet.',
+      };
+    }
+
+    const isSigValid = searchParams?.sig
+      ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
+      : false;
+
+    if (!isSigValid) {
+      return {
+        title: 'Credential Verification — SINet',
+        description: `Verify digital membership credential status for ${record.fullMemberId}.`,
       };
     }
 
@@ -225,88 +238,120 @@ export default async function MemberVerificationPage({
             </div>
 
             <div className="mt-4 sm:ml-5 sm:mt-0">
-              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
-                {record.fullName}
+              <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl font-mono">
+                {isSigValid ? record.fullName : record.fullMemberId}
               </h1>
-              <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-amber-400">
-                {record.fullMemberId}
-              </p>
-              {record.programme && (
+              {isSigValid && (
+                <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-amber-400">
+                  {record.fullMemberId}
+                </p>
+              )}
+              {isSigValid && record.programme && (
                 <p className="mt-1 text-xs text-slate-300">
                   {record.programme} {record.level ? `• ${record.level} Level` : ''}
+                </p>
+              )}
+              {!isSigValid && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Status only. Scan the member&apos;s QR code for full details.
                 </p>
               )}
             </div>
           </div>
 
-          {/* Meta Details Grid */}
-          <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-xs sm:grid-cols-2">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Campus Chapter
-              </p>
-              <p className="mt-1 font-medium text-slate-200">
-                {record.chapterName || record.universityName || 'National Chapter'}
-              </p>
-            </div>
+          {/* Details Section */}
+          {isSigValid ? (
+            <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-xs sm:grid-cols-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Campus Chapter
+                </p>
+                <p className="mt-1 font-medium text-slate-200">
+                  {record.chapterName || record.universityName || 'National Chapter'}
+                </p>
+              </div>
 
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Institution
-              </p>
-              <p className="mt-1 font-medium text-slate-200">
-                {record.universityName || 'Accredited Tertiary Institution'}
-              </p>
-            </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Institution
+                </p>
+                <p className="mt-1 font-medium text-slate-200">
+                  {record.universityName || 'Accredited Tertiary Institution'}
+                </p>
+              </div>
 
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Role
-              </p>
-              <p className="mt-1 font-medium text-amber-300">
-                {divisionInfo?.name || 'Community Member'}
-              </p>
-            </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Role
+                </p>
+                <p className="mt-1 font-medium text-amber-300">
+                  {divisionInfo?.name || 'Community Member'}
+                </p>
+              </div>
 
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Status
-              </p>
-              <p className="mt-1 font-medium text-slate-200">{credentialLabel}</p>
-            </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Status
+                </p>
+                <p className="mt-1 font-medium text-slate-200">{credentialLabel}</p>
+              </div>
 
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Issued Date
-              </p>
-              <p className="mt-1 font-mono text-slate-300">
-                {new Date(record.issuedAt).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </p>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Issued Date
+                </p>
+                <p className="mt-1 font-mono text-slate-300">
+                  {new Date(record.issuedAt).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-6 grid grid-cols-1 gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-xs sm:grid-cols-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Credential Status
+                </p>
+                <p className="mt-1 font-medium text-slate-200">{credentialLabel}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Member ID
+                </p>
+                <p className="mt-1 font-mono text-slate-200">{record.fullMemberId}</p>
+              </div>
+            </div>
+          )}
 
-          {/* Cryptographic Trust Seal */}
-          <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-left">
-            <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
-              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-              <span>Authentic Digital Credential Verified</span>
+          {/* Cryptographic Trust Seal — Shown ONLY when isSigValid is true */}
+          {isSigValid ? (
+            <div className="mt-6 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-left">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+                <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
+                </svg>
+                <span>Authentic Digital Credential Verified</span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                This digital identity card was minted by the SINet authority. The
+                cryptographic token matches the records stored in the central institutional registry.
+              </p>
             </div>
-            <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-              This digital identity card was minted by the SINet authority. The
-              cryptographic token matches the records stored in the central institutional registry.
-            </p>
-          </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-left">
+              <p className="text-xs text-slate-400">
+                Status only. Scan the member&apos;s QR code for full details.
+              </p>
+            </div>
+          )}
 
           {/* Footer Action */}
           <div className="mt-6 flex flex-col gap-2 pt-2 sm:flex-row sm:justify-between">
