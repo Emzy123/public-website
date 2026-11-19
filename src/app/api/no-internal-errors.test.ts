@@ -128,8 +128,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
       throw pgConnectionError;
     });
 
-    const req = new NextRequest('http://localhost:3000/api/auth/me');
-    const res = await getAuthMe(req);
+    const res = await getAuthMe();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.authenticated).toBe(true);

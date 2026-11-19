@@ -97,11 +97,11 @@ describe('isLocalDatabaseHost exact hostname matching', () => {
     const originalEnv = process.env.NODE_ENV;
 
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      (process.env as any).NODE_ENV = originalEnv;
     });
 
     it('treats postgres and sinet-postgres as non-local in production', () => {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       expect(isLocalDatabaseHost('postgresql://postgres@postgres:5432/sinet_dev')).toBe(false);
       expect(isLocalDatabaseHost('postgresql://postgres@sinet-postgres:5432/sinet_dev')).toBe(false);
       // localhost and loopbacks remain local
@@ -111,11 +111,11 @@ describe('isLocalDatabaseHost exact hostname matching', () => {
     });
 
     it('treats postgres and sinet-postgres as local in non-production (development/test)', () => {
-      process.env.NODE_ENV = 'development';
+      (process.env as any).NODE_ENV = 'development';
       expect(isLocalDatabaseHost('postgresql://postgres@postgres:5432/sinet_dev')).toBe(true);
       expect(isLocalDatabaseHost('postgresql://postgres@sinet-postgres:5432/sinet_dev')).toBe(true);
 
-      process.env.NODE_ENV = 'test';
+      (process.env as any).NODE_ENV = 'test';
       expect(isLocalDatabaseHost('postgresql://postgres@postgres:5432/sinet_dev')).toBe(true);
       expect(isLocalDatabaseHost('postgresql://postgres@sinet-postgres:5432/sinet_dev')).toBe(true);
     });
