@@ -4,6 +4,8 @@ import { universities } from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
 import { FALLBACK_KOGI_CHAPTERS } from '@/lib/chapters/chapters';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const list = await db
