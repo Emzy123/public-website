@@ -2,8 +2,8 @@
 
 Source of truth for session restarts. Continue from the first unfinished item.
 
-**Last updated:** 2026-11-18  
-**Current branch:** `agent/phase-a-followups`  
+**Last updated:** 2026-11-19  
+**Current branch:** `agent/phase-b-followups` → next `agent/phase-c-content`  
 **New dependencies this session:** none
 
 ## Definition of Done (per item)
@@ -22,31 +22,31 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 ## Phase A — Sync and security gate (`agent/phase-a-security` & `agent/phase-a-verify`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| A1 Git status / reflog / confirm security commits | done | 79913a6 | See docs/agent/A1_GIT_REPORT.md |
-| A2 Postgres TLS verify + config test | done | 6cba401 (+5620e59, 746662f) | Proof: ssl require => rejectUnauthorized false; docs/ops/postgres-tls.md; unit tests for require/verify-full/none |
-| A3 Member 2FA fail-closed + stale Mongo test | done_on_master | 8917588 / 5620e59 | Verified in verify-otp & verify-2fa suites |
-| A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | done_on_master | 016dafa + me tests | Verified in me/route.test.ts |
-| A5 OTP/magic-link logging allowlist | done | 8917588 (+a53aa8a) | Verified never logs when NODE_ENV=production |
-| A6 Boot: AUTH_SECRET + DATABASE_URL fatal in prod | done_on_master | e4b4826 | Verified in secrets.test.ts & boot check |
-| A7 `/api/health` public vs authorized + ops doc | done | 78003e3 (+e4b4826) | docs/ops/health-check.md |
-| A8 Admin applications display-only dedupe | done_on_master | (dedupe.ts) | Display-only, never deletes user data |
-| A9 `db:migrate` manual + `docs/ops/migrations.md` | done | 10283d0 (+5c614ac) | Local migration verified against local postgres |
-| A10 CI smoke SHA-pinned, no secrets | done_on_master | fd811d0 | Verified permissions: contents: read |
-| A11 Logout + server-side JWT revocation | done | c9704e6 / eca1b8a (+5922fc7) | jti denylist + sessions delete; cross-instance Postgres dependency verified |
-| A12 `docs/ops/ENV.md` | done | 24c115e | Updated docs/ops/ENV.md |
+| A1 Git status / reflog / confirm security commits | released 2026-11-19 at 75fc63a | 79913a6 | See docs/agent/A1_GIT_REPORT.md |
+| A2 Postgres TLS verify + config test | released 2026-11-19 at 75fc63a | 6cba401 (+5620e59, 746662f) | Proof: ssl require => rejectUnauthorized false; docs/ops/postgres-tls.md; unit tests for require/verify-full/none |
+| A3 Member 2FA fail-closed + stale Mongo test | released 2026-11-19 at 75fc63a | 8917588 / 5620e59 | Verified in verify-otp & verify-2fa suites |
+| A4 Degraded `/api/auth/me` JWT-only roles; 401 signed out | released 2026-11-19 at 75fc63a | 016dafa + me tests | Verified in me/route.test.ts |
+| A5 OTP/magic-link logging allowlist | released 2026-11-19 at 75fc63a | 8917588 (+a53aa8a) | Verified never logs when NODE_ENV=production |
+| A6 Boot: AUTH_SECRET + DATABASE_URL fatal in prod | released 2026-11-19 at 75fc63a | e4b4826 | Verified in secrets.test.ts & boot check |
+| A7 `/api/health` public vs authorized + ops doc | released 2026-11-19 at 75fc63a | 78003e3 (+e4b4826) | docs/ops/health-check.md |
+| A8 Admin applications display-only dedupe | released 2026-11-19 at 75fc63a | (dedupe.ts) | Display-only, never deletes user data |
+| A9 `db:migrate` manual + `docs/ops/migrations.md` | released 2026-11-19 at 75fc63a | 10283d0 (+5c614ac) | Local migration verified against local postgres |
+| A10 CI smoke SHA-pinned, no secrets | released 2026-11-19 at 75fc63a | fd811d0 | Verified permissions: contents: read |
+| A11 Logout + server-side JWT revocation | released 2026-11-19 at 75fc63a | c9704e6 / eca1b8a (+5922fc7) | jti denylist + sessions delete; cross-instance Postgres dependency verified |
+| A12 `docs/ops/ENV.md` | released 2026-11-19 at 75fc63a | 24c115e | Updated docs/ops/ENV.md |
 
 ---
 
 ## Phase B — Broken paths (`agent/phase-b-paths`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
-| B1 Edit link roles + Staff invite-only + Closed bug | partial | 9378622 / 2fa2faa | Need BLOCKERS UI steps for link 3fac46517ba6 |
-| B2 `/verify` public check + rate limit + footer | partial | verify/[memberId] exists | Need `/verify` index; confirm footer |
-| B3 `/admin/audit` fix + pagination/filters + smoke | partial | page exists | Filters incomplete (action only); need actor/date + pagination + smoke |
-| B4 Applications role filter = full enum | pending | | |
-| B5 Sign-in OTP neutral errors | done_on_master | e0e27da0 | Confirm BLOCKERS for Resend |
-| B6 Regression smokes (redirects, join, /me 401) | partial | 5062ffb | Expand smoke |
-| B7 Crawl script + CI | pending | | |
+| B1 Edit link roles + Staff invite-only + Closed bug | done | 0ae6b2d (+9378622/2fa2faa) | BLOCKERS UI steps shipped |
+| B2 `/verify` public check + rate limit + footer | done | fa66f48 | /verify index + public API strip PII |
+| B3 `/admin/audit` fix + pagination/filters + smoke | done | 4d983b7 | actor/date/pagination + client test |
+| B4 Applications role filter = full enum | done | 24e3b17 | ALL_APPLICATION_ROLES dropdown |
+| B5 Sign-in OTP neutral errors | done | 0ae6b2d (+e0e27da0) | Resend steps in BLOCKERS |
+| B6 Regression smokes (redirects, join, /me 401) | done | 96596ff | returns/investor-journey/me/verify/footer |
+| B7 Crawl script + CI | done | a064ee8 / (fix) | crawl-internal-links.mjs in smoke+CI |
 
 ---
 
@@ -125,6 +125,7 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 - **Human:** none new beyond existing Postgres/DNS blockers.
 
 
+<<<<<<< HEAD
 ## Phase A Verification summary (`agent/phase-a-verify`)
 - **Branch:** `agent/phase-a-verify`
 - **Commits:**
@@ -224,6 +225,22 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
   - CR-001 status updated to "removed (no approval required)".
 
 
+## Phase B summary
+- **Branch:** `agent/phase-b-paths`
+- **Commits:** 0ae6b2d B1; fa66f48 B2; 4d983b7 B3; 24e3b17 B4; 96596ff B5-B6; a064ee8 B7; crawl transparency allowlist fix
+- **DoD:** typecheck pass; lint pass (pre-existing warnings); unit suites for B2/B3/B4 pass; full jest 62 pass / 5 fail (Postgres absent); next build pass; crawl 61 ok / 0 failed after fresh start
+- **Human:** B1 Staff link UI steps + B5 Resend in BLOCKERS.md
 
 
-
+## Phase B Follow-ups summary (`agent/phase-b-followups`)
+- **Branch:** `agent/phase-b-followups`
+- **Commits:**
+  - 7c6d50e: fix(crawl): remove internal transparency links and disallow 404s in crawler (1)
+  - 31828df: fix(api): mark universities route force-dynamic with regression tests (2)
+  - 6cd4984: fix(verify): enforce trusted Vercel IP extraction and friendly rate-limit UI (3)
+- **Key Verifications:**
+  - Internal links to retired `/transparency` route removed from `ConnectClient`, `privacy`, and `terms` (pointed to `/about` and direct `/contact`).
+  - `/transparency` 404 allowlist completely removed from `crawl-internal-links.mjs`; crawl strictly fails on any 404 or 500.
+  - `/api/universities` verified to query PostgreSQL and marked `export const dynamic = 'force-dynamic'` to prevent static baking during build; unit tests added.
+  - Client IP extraction unified across `rate-limit.ts` and `rate-limit-unified.ts` using trusted Vercel sources (`x-real-ip`, platform leftmost `x-vercel-forwarded-for` / `x-forwarded-for`) and fixed bucket `'unknown'`. Client-rotatable headers (e.g. `cf-connecting-ip`) stripped. Proved via tests that rotating headers cannot reset the limit.
+  - `/verify/[memberId]` page checks rate limit and renders friendly user-facing error UI when limited or when Upstash is missing in production.

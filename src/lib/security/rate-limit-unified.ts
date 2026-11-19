@@ -1,7 +1,9 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { checkRateLimit, getRateLimitHeaders } from '@/lib/rate-limit';
+import { checkRateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit';
 import { isProductionMode } from '@/lib/runtime/envMode';
+
+export { getClientIp };
 
 let cachedRedis: Redis | null = null;
 let cachedRedisUrl = '';
@@ -100,34 +102,4 @@ export async function enforceRateLimit(
     };
   }
   return { ok: true, headers: {} };
-}
-
-export function getClientIp(request: Request): string {
-  // 1. NextRequest.ip (populated by Next.js / Vercel Edge runtime)
-  const nextRequestIp = (request as unknown as { ip?: string }).ip;
-  if (nextRequestIp?.trim()) {
-    return nextRequestIp.trim();
-  }
-
-  // 2. x-real-ip header (set by trusted reverse proxy / Vercel edge)
-  const realIp = request.headers.get('x-real-ip');
-  if (realIp?.trim()) return realIp.trim();
-
-  // 3. x-vercel-forwarded-for (Vercel platform header - right-most trusted entry)
-  const vercelForwarded = request.headers.get('x-vercel-forwarded-for');
-  if (vercelForwarded?.trim()) {
-    const parts = vercelForwarded.split(',').map((p) => p.trim()).filter(Boolean);
-    const rightMost = parts[parts.length - 1];
-    if (rightMost) return rightMost;
-  }
-
-  // 4. x-forwarded-for (standard proxy header - right-most trusted entry, never left-most client spoof)
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded?.trim()) {
-    const parts = forwarded.split(',').map((p) => p.trim()).filter(Boolean);
-    const rightMost = parts[parts.length - 1];
-    if (rightMost) return rightMost;
-  }
-
-  return 'unknown';
 }

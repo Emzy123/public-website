@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/member-id';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
+import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
 export async function generateMetadata({
   params,
@@ -36,6 +38,52 @@ export default async function MemberVerificationPage({
   params: { memberId: string };
   searchParams: { sig?: string };
 }) {
+  const headerList = headers();
+  const clientIp = getClientIp(headerList);
+  const limit = await enforceRateLimit(clientIp, 'verify-member-credential', 60, 60);
+
+  if (!limit.ok) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center bg-[#071026] px-4 py-16 text-center text-white">
+        <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl backdrop-blur-md">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400">
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <p className="mt-5 font-mono text-xs uppercase tracking-widest text-amber-400">
+            Request Limit Exceeded
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-white">
+            Too Many Verification Requests
+          </h1>
+          <p className="mt-4 text-xs leading-relaxed text-slate-300">
+            You have made too many verification requests or the verification service is currently busy. Please wait a moment before trying again.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href={`/verify/${encodeURIComponent(params.memberId)}`}
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-amber-500 px-6 text-xs font-semibold text-slate-950 transition hover:bg-amber-400"
+            >
+              Retry Verification
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-white/10 px-6 text-xs font-semibold text-white transition hover:bg-white/20"
+            >
+              Go to Homepage
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   let record: Awaited<ReturnType<typeof getVerifiedMemberRecord>> = null;
   let isUnavailable = false;
 
@@ -127,7 +175,9 @@ export default async function MemberVerificationPage({
     ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
     : false;
 
-  const isActive = record.status === 'active';
+  const isRevoked = record.status === 'suspended';
+  const isValid = record.status === 'active' && !isRevoked;
+  const credentialLabel = isValid ? 'Valid' : isRevoked ? 'Revoked' : 'Pending';
   const divisionInfo = record.division
     ? STUDENT_DIVISION_INFO[record.division as StudentDivision]
     : null;
@@ -152,13 +202,19 @@ export default async function MemberVerificationPage({
             </div>
             <div
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
-                isActive
+                isValid
                   ? 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/40'
-                  : 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40'
+                  : isRevoked
+                    ? 'bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/40'
+                    : 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/40'
               }`}
             >
-              <span className={`h-2 w-2 rounded-full ${isActive ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-              {isActive ? 'Active Member' : 'Pending Verification'}
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  isValid ? 'bg-emerald-400' : isRevoked ? 'bg-rose-400' : 'bg-amber-400'
+                }`}
+              />
+              {credentialLabel}
             </div>
           </div>
 
@@ -205,11 +261,18 @@ export default async function MemberVerificationPage({
 
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Student Division
+                Role
               </p>
               <p className="mt-1 font-medium text-amber-300">
-                {divisionInfo?.name || 'General Student Network'}
+                {divisionInfo?.name || 'Community Member'}
               </p>
+            </div>
+
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Status
+              </p>
+              <p className="mt-1 font-medium text-slate-200">{credentialLabel}</p>
             </div>
 
             <div>

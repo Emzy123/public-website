@@ -49,9 +49,24 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/returns',
+        destination: '/news',
+        permanent: true,
+      },
+      {
+        source: '/investor-journey',
+        destination: '/sectors',
+        permanent: true,
+      },
+      {
         source: '/connect',
         destination: '/contact',
         permanent: true,
+      },
+      {
+        source: '/ambassadors',
+        destination: '/join?role=ambassador',
+        permanent: false,
       },
       {
         source: '/join/student-network',

@@ -320,7 +320,7 @@ export default function ConnectClient({
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/membership" className="px-5 py-2.5 bg-[#d9711b] text-white text-sm font-bold hover:bg-[#b9560b] transition-colors">Explore membership</Link>
             <Link href="/sectors" className="px-5 py-2.5 border border-white/20 text-white text-sm font-medium hover:bg-white/10 transition-colors">See what we do</Link>
-            <Link href="/transparency" className="px-5 py-2.5 border border-white/20 text-white rounded-xl text-sm font-medium hover:bg-white/10 transition-colors">Read FAQ</Link>
+            <Link href="/about" className="px-5 py-2.5 border border-white/20 text-white rounded-xl text-sm font-medium hover:bg-white/10 transition-colors">About us</Link>
           </div>
         </div>
       </section>

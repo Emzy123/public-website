@@ -44,20 +44,23 @@ export async function GET(
       ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, sig)
       : null;
 
+    const isRevoked = record.status === 'suspended';
+    const isValid = record.status === 'active' && !isRevoked;
+
+    // Public payload: name, role, chapter, status / valid|revoked only — never email or phone.
     return NextResponse.json({
-      valid: true,
+      valid: isValid,
+      revoked: isRevoked,
       signatureValid,
       member: {
         memberId: record.fullMemberId,
         fullName: record.fullName,
-        avatarUrl: record.avatarUrl,
         campusCode: record.campusCode,
         universityName: record.universityName,
         chapterName: record.chapterName,
-        division: record.division,
-        programme: record.programme,
-        level: record.level,
-        status: record.status,
+        role: record.division,
+        status: isRevoked ? 'revoked' : record.status,
+        credential: isValid ? 'valid' : isRevoked ? 'revoked' : 'pending',
         issuedAt: record.issuedAt,
       },
     });
