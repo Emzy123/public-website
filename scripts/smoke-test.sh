@@ -152,6 +152,22 @@ check "Signed-out /api/auth/me" "GET" "/api/auth/me" "401"
 # 3c. Public verify entry (B2)
 check "Verify credential index" "GET" "/verify" "200"
 
+check_verify_member_not_found() {
+  local status
+  local body
+  body=$(curl -s "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "")
+  status=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "000")
+
+  if [ "$status" = "200" ] && echo "$body" | grep -q "Member ID Not Found"; then
+    echo "✓ /verify/SIN-TEST returns 200 and body contains 'Member ID Not Found'"
+    PASS=$((PASS + 1))
+  else
+    echo "✗ /verify/SIN-TEST check failed: status=${status}, body contains 'Member ID Not Found': $(echo "$body" | grep -q "Member ID Not Found" && echo "yes" || echo "no")"
+    FAIL=$((FAIL + 1))
+  fi
+}
+check_verify_member_not_found
+
 # 4. 404 & Noindex Header Protection
 check_transparency_404_noindex
 

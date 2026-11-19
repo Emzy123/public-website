@@ -1,3 +1,22 @@
+/**
+ * Unified Rate Limiting Module (Upstash Redis with in-memory fallback)
+ *
+ * Security & Architecture Guarantees:
+ * 1. IP Extraction Trust Model:
+ *    - `getClientIp` derives client IP from platform-set headers (x-real-ip, x-forwarded-for).
+ *    - Leftmost entry in `x-forwarded-for` is trusted ONLY because Vercel (the edge CDN/reverse proxy)
+ *      overwrites/sets this header with the client's actual IP before forwarding the request to serverless functions.
+ *      If deployed outside Vercel or behind a proxy that does not strip untrusted client headers,
+ *      client-supplied x-forwarded-for spoofing could occur.
+ *
+ * 2. Distributed vs In-Memory Fallback:
+ *    - Under normal conditions, limits are tracked centrally in Upstash Redis across all serverless instances.
+ *    - If Upstash credentials are missing in production, requests fail closed (429) for public endpoints.
+ *    - If Upstash is configured but throws an error at runtime (e.g., Redis timeout, network glitch),
+ *      the system falls back to the per-instance in-memory limiter (`checkRateLimit`).
+ *      This is an accepted residual risk: during an Upstash outage, limits are enforced per-serverless instance
+ *      rather than globally, preventing a total denial-of-service outage for legitimate users.
+ */
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { checkRateLimit, getRateLimitHeaders, getClientIp } from '@/lib/rate-limit';
@@ -81,7 +100,8 @@ export async function enforceRateLimit(
       return { ok: true, headers: {} };
     } catch (error) {
       console.error(`Upstash rate limit failed for ${prefix}:`, error);
-      // Fall through to memory limiter below for availability.
+      // Accepted residual risk: fall back to per-instance in-memory limiter below
+      // to preserve service availability during transient Upstash Redis outages.
     }
   } else if (isProductionMode() && prefix !== 'admin-login') {
     console.error(`Upstash rate limiter unavailable for ${prefix}; rejecting request in production.`);

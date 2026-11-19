@@ -3,22 +3,30 @@
  */
 import { NextRequest } from 'next/server';
 import { GET as getVerify } from '@/app/api/verify/[memberId]/route';
-import MemberVerificationPage from './[memberId]/page';
+import MemberVerificationPage, { generateMetadata } from './[memberId]/page';
 import * as memberIdModule from '@/lib/members/member-id';
 import * as rateLimit from '@/lib/security/rate-limit-unified';
+import { HeadersAdapter } from 'next/dist/server/web/spec-extension/adapters/headers';
+import { headers } from 'next/headers';
 
 jest.mock('next/headers', () => ({
-  headers: jest.fn().mockReturnValue(new Headers({ 'x-real-ip': '127.0.0.1' })),
+  headers: jest.fn(),
 }));
 jest.mock('@/lib/members/member-id');
-jest.mock('@/lib/security/rate-limit-unified', () => ({
-  enforceRateLimit: jest.fn().mockResolvedValue({ ok: true, headers: {} }),
-  getClientIp: jest.fn().mockReturnValue('127.0.0.1'),
-}));
+jest.mock('@/lib/security/rate-limit-unified', () => {
+  const actual = jest.requireActual('@/lib/security/rate-limit-unified');
+  return {
+    ...actual,
+    enforceRateLimit: jest.fn().mockResolvedValue({ ok: true, headers: {} }),
+  };
+});
 
 describe('GET /api/verify/[memberId] public payload (B2)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (headers as jest.Mock).mockReturnValue(
+      HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '127.0.0.1' }))
+    );
     (rateLimit.enforceRateLimit as jest.Mock).mockResolvedValue({ ok: true, headers: {} });
   });
 
@@ -117,6 +125,141 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     expect(text).toContain('Retry Verification');
     expect(text).not.toContain('ECONNREFUSED');
     expect(text).not.toContain('stack');
+  });
+
+  describe('/verify/[memberId] page rendering with Next HeadersAdapter and signature gating (Hotfix)', () => {
+    const mockMember = {
+      fullMemberId: 'SIN-FULOKOJA-24-0001',
+      userId: 'user-1',
+      fullName: 'Ada Lovelace',
+      avatarUrl: null,
+      campusCode: 'FULOKOJA',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'FULOKOJA Chapter',
+      division: 'student_finance',
+      programme: 'Economics',
+      level: '300',
+      status: 'active',
+      issuedAt: new Date('2024-01-15'),
+    };
+
+    it('renders with Next HeadersAdapter with x-real-ip set without throwing', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
+
+      const jsx = await MemberVerificationPage({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: {},
+      });
+
+      expect(jsx).toBeDefined();
+      const text = extractText(jsx);
+      expect(text).toContain('SIN-FULOKOJA-24-0001');
+      expect(text).toContain('Valid');
+    });
+
+    it('without sig: shows status and member ID only, omitting name, chapter, institution, programme, and trust seal', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+
+      const jsx = await MemberVerificationPage({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: {},
+      });
+
+      const text = extractText(jsx);
+      expect(text).toContain('SIN-FULOKOJA-24-0001');
+      expect(text).toContain('Valid');
+      expect(text).toContain("Status only. Scan the member's QR code for full details.");
+      // Initials are allowed in the avatar: "AD"
+      expect(text).toContain('AD');
+      // Full name, chapter, institution, programme, trust seal MUST NOT appear
+      expect(text).not.toContain('Ada Lovelace');
+      expect(text).not.toContain('FULOKOJA Chapter');
+      expect(text).not.toContain('Federal University Lokoja');
+      expect(text).not.toContain('Economics');
+      expect(text).not.toContain('Authentic Digital Credential Verified');
+    });
+
+    it('with invalid sig: shows status and member ID only, omitting name, chapter, institution, programme, and trust seal', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+
+      const jsx = await MemberVerificationPage({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: { sig: 'invalid_signature_hex' },
+      });
+
+      const text = extractText(jsx);
+      expect(text).toContain('SIN-FULOKOJA-24-0001');
+      expect(text).toContain('Valid');
+      expect(text).toContain("Status only. Scan the member's QR code for full details.");
+      expect(text).not.toContain('Ada Lovelace');
+      expect(text).not.toContain('FULOKOJA Chapter');
+      expect(text).not.toContain('Federal University Lokoja');
+      expect(text).not.toContain('Economics');
+      expect(text).not.toContain('Authentic Digital Credential Verified');
+    });
+
+    it('with valid sig: shows all details (full name, chapter, institution, programme, and trust seal)', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      const jsx = await MemberVerificationPage({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: { sig: 'valid_signature_hex' },
+      });
+
+      const text = extractText(jsx);
+      expect(text).toContain('Ada Lovelace');
+      expect(text).toContain('FULOKOJA Chapter');
+      expect(text).toContain('Federal University Lokoja');
+      expect(text).toContain('Economics');
+      expect(text).toContain('Authentic Digital Credential Verified');
+      expect(text).toContain('SIN-FULOKOJA-24-0001');
+      expect(text).toContain('Valid');
+      expect(text).not.toContain("Status only. Scan the member's QR code for full details.");
+    });
+
+    it('generateMetadata omits fullName when sig is missing or invalid', async () => {
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+
+      const metaNoSig = await generateMetadata({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: {},
+      });
+      expect(metaNoSig.title).toBe('Credential Verification — SINet');
+      expect(metaNoSig.description).not.toContain('Ada Lovelace');
+      expect(metaNoSig.description).toContain('SIN-FULOKOJA-24-0001');
+
+      const metaInvalidSig = await generateMetadata({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: { sig: 'wrong_sig' },
+      });
+      expect(metaInvalidSig.title).toBe('Credential Verification — SINet');
+      expect(metaInvalidSig.description).not.toContain('Ada Lovelace');
+      expect(metaInvalidSig.description).toContain('SIN-FULOKOJA-24-0001');
+
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+      const metaValidSig = await generateMetadata({
+        params: { memberId: 'SIN-FULOKOJA-24-0001' },
+        searchParams: { sig: 'correct_sig' },
+      });
+      expect(metaValidSig.title).toContain('Ada Lovelace');
+      expect(metaValidSig.description).toContain('Ada Lovelace');
+    });
   });
 });
 

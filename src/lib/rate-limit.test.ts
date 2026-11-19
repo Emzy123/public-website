@@ -1,4 +1,5 @@
 import { checkRateLimit, getClientKey, getRateLimitHeaders } from './rate-limit';
+import { HeadersAdapter } from 'next/dist/server/web/spec-extension/adapters/headers';
 
 jest.mock('@upstash/redis', () => ({
   Redis: jest.fn(),
@@ -70,6 +71,20 @@ describe('getClientKey & getClientIp trusted reverse proxy extraction', () => {
     const headers = new Headers();
     headers.set('x-real-ip', '198.51.100.55');
     expect(getClientIp(headers)).toBe('198.51.100.55');
+  });
+
+  it("extracts IP using Next.js actual HeadersAdapter (HeadersAdapter.seal(HeadersAdapter.from({...}))) without throwing", () => {
+    const adapter = HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.99' }));
+    expect(getClientIp(adapter)).toBe('203.0.113.99');
+    expect(() => getClientIp(adapter)).not.toThrow();
+  });
+
+  it('safely handles plain objects without .get and returns unknown without throwing', () => {
+    expect(getClientIp({})).toBe('unknown');
+    expect(getClientIp({ headers: {} })).toBe('unknown');
+    expect(getClientIp({ headers: null })).toBe('unknown');
+    expect(getClientIp(null)).toBe('unknown');
+    expect(getClientIp(undefined)).toBe('unknown');
   });
 
   it('falls back to fixed bucket unknown when no trusted IP headers are present', () => {
