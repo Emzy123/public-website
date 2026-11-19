@@ -6,59 +6,13 @@ This document details the release checklist, required environment variables, ver
 
 ## 1. Commits Included in Release (origin/master 5236120 -> HEAD)
 
-The following 49 commits encompass Phase A security gates, resilience enhancements, operational tooling, and release-prep verifications:
+To inspect the exact, immutable sequence of commits included in this release from origin/master (5236120) to this branch, run:
 
-```text
-3d7c86c docs(agent): record Phase A release prep summary in PROGRESS.md (7)
-d8c0133 docs(ops): update commit list with latest typecheck fix in release checklist (7)
-fabb605 fix(test): resolve typecheck errors in test env assertions and auth me handler (8)
-f7e5b52 docs(ops): update Phase A release checklist with Upstash requirement, outage matrix, and PR workflow (6, 7)
-b8c7d77 chore(docker): add dev-only redis and serverless-redis-http services to docker-compose (3)
-b1f7cce test(jest): manage database client teardown in globalTeardown without forceExit (5)
-5cad534 fix(seed): guard seed execution against non-local/production and neutralize seed wording (2)
-1c59300 fix(db): restrict docker service hostnames as local to non-production only (4)
-c3db11f fix(api): eliminate internal database error and reason text from public responses (1)
-f3a7f9a docs(ops): include final verification commit in release checklist (7)
-c21fcc5 docs(agent): finalize Phase A follow-ups verification summary and checklist (7)
-308b4aa test(db): fix it.each callback signature type in hostname match test (1)
-171efbe docs(ops): create Phase A release checklist and runbook (7)
-e786f07 docs(agent): scope PROGRESS.md to Phase A on this branch (6)
-03f0234 docs(auth): document session TTL and cross-instance revocation window during Postgres outage (5)
-c86634d fix(db): remove duplicate export of createPostgresClient and isLocalDatabaseHost (1)
-5fd9b20 test(db): auto-seed local test database in globalSetup and skip if absent (3)
-06eb394 fix(rate-limit): use trusted right-most IP or platform header to prevent spoof bypass (4)
-ac4a944 test(db): assert driver-resolved rejectUnauthorized and exact local hostname matching (1)
-99a8b3a docs(agent): update PROGRESS.md with reality, Phase C rows, and e0e27da0 fix (10)
-34c46a0 docs(verify): document rate limit counter store and serverless semantics (8)
-5922fc7 test(auth): verify cross-instance revocation dependency on Postgres sessions table (7)
-a53aa8a test(auth): prove no OTP or magic link is logged when NODE_ENV is production (9)
-746662f test(db): verify rejectUnauthorized with require, verify-full, and CA cert (3)
-58f3b6e chore(docker): add dev-only postgres service to docker-compose (1)
-0f305b9 docs(agent): record Phase A DoD results and summary (A1-A12)
-eca1b8a fix(auth): avoid Map iterator for session denylist prune under TS target (A11)
-24c115e docs(ops): list production env vars and Resend DNS verification steps (A12)
-c9704e6 feat(auth): revoke member JWT on logout via jti denylist and sessions table (A11)
-10283d0 docs(ops): add manual db:migrate baseline plan for push-created DBs (A9)
-78003e3 docs(ops): document authorized /api/health Postgres ping usage (A7)
-6cba401 docs(ops): prove postgres ssl require skips verify; keep rejectUnauthorized true (A2)
-79913a6 docs(agent): record A1 git diagnostics and confirm security commit history (A1)
-8b8032e docs(agent): add HARD RULES, PROGRESS, BLOCKERS, and COPY_REVIEW (phase-0)
-9378622 feat(admin): add edit link roles control with staff invite-only server enforcement and audit logging
-2fa2faa fix(links): unify link accepting and status calculation between admin UI and public join API
-0e27da0 fix(auth): structured logging and admin health diagnostics for OTP sign-in delivery failures
-5062ffb test(chapters): verify chapter join links routing through /join with role and chapter params
-2dd6351 feat(compliance): gate unsigned financial claims and scale stats behind feature flag
-5c614ac docs: document membership Postgres boot behavior and manual db:migrate
-fd811d0 ci: pin Actions to commit SHAs, set contents:read, and smoke without repository secrets
-e4b4826 fix(runtime): require AUTH_SECRET and DATABASE_URL at boot and ping Postgres with a timeout
-8917588 fix(auth): fail closed on incomplete member 2FA and stop logging OTP codes by default
-5620e59 fix(security): enforce verified TLS with custom CA support, fail closed on stale-Mongo 2FA, and assert JWT-only roles
-ea09959 docs(deployment): document production Postgres pooling and SSL requirements
-c042a6d feat(integrity): structured fallback audit logging and database reconciliation guide
-016dafa fix(availability): graceful fallbacks and 503 handling for /me, /verify, 2FA, apply, and admin applications
-c58f0c2 fix(security): prevent 2FA bypass in Mongo fallback, restrict fallback JWT roles to member, and enforce verified TLS
-8a09f8b feat(capacity-audit): report sanitized database error diagnosis without leaking credentials
+```bash
+git log --oneline 5236120..<release tip>
 ```
+
+**Release Tip Commit Hash:** Recorded at the end of this release-prep batch.
 
 ---
 

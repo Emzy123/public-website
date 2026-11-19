@@ -203,5 +203,27 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
   - Apply route 503 check documented; Upstash documented as hard production precondition; PR-based release workflow detailed in `docs/ops/RELEASE-phase-a.md`.
 
 
+## Phase A Final review summary (`agent/phase-a-final`)
+- **Branch:** `agent/phase-a-final`
+- **Commits:**
+  - 32886c1: fix(security): redact database URLs and credentials from logs, errors, and fixtures (1)
+  - e79c1c4: fix(admin): use Upstash for admin limiter and fail closed on unaudited application reviews (2)
+- **DoD Verification Results:**
+  - `npm test`: 67 passed suites / 67 total (536 tests passed / 536 total, 0 failed) with local Postgres & Mongo up
+  - `npm run typecheck`: clean pass (0 errors)
+  - `npm run lint`: pass (0 errors, 2 pre-existing react-hooks/exhaustive-deps warnings)
+  - `next build`: pass (optimized build & next-sitemap generated, 82 static pages)
+  - `npm run smoke`: 61 passed / 0 failed
+- **Key Verifications:**
+  - Complete redaction of database URLs and credentials from all logs, errors, console messages, and test fixture refusal outputs.
+  - Admin identity documented: credentials and MFA TOTP verified via env vars in memory; role super_admin hardcoded in guards for verified admin session. Zero admin roles read from Mongo.
+  - Admin login limiter dynamically connects to Upstash Redis when configured, and falls back to in-memory sliding window when unconfigured or unreachable.
+  - Admin write routes audited: CMS, adverts legal approval, and links are durably audited in MongoDB; application reviews fail closed with HTTP 503 during Postgres outages, preventing unaudited decisions.
+  - Posts table drift identified: schema defines posts and post_reports, which were added after initial migration 0000.
+  - Request-OTP 503 root cause confirmed: RESEND_API_KEY assertion in production mode; token generation succeeds via MongoDB fallback.
+  - CR-001 status updated to "removed (no approval required)".
+
+
+
 
 
