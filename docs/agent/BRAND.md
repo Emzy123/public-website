@@ -50,7 +50,8 @@ All generated assets in `public/brand/` and `public/` are interim rasters derive
 | `blue-700` | `#022892` | Deep electric blue |
 | `blue-600` | `#143DB1` | **Primary Brand Blue** |
 | `blue-500` | `#2153D2` | Bright interactive blue |
-| `gold-700` | `#A06E1B` | Deep gold / amber (accessible on light backgrounds) |
+| `blue-300` | `#8BB4F8` | Light interactive blue for text & links on dark surfaces |
+| `gold-700` | `#946318` | Deep gold / amber (accessible on white & #F6F2E8) |
 | `gold-500` | `#E0A92E` | **Brand Accent Gold** (primary accent) |
 | `gold-300` | `#EDB944` | Highlight gold / warm sunshine |
 | `cream` | `#DBD1A5` | Warm cream / light accent surface |
@@ -66,9 +67,10 @@ All generated assets in `public/brand/` and `public/` are interim rasters derive
 | `primary` | `var(--color-primary)` (`#143DB1`) | Primary buttons, active tabs, core highlights |
 | `primary-hover` | `var(--color-primary-hover)` (`#022892`) | Hover/active states for primary actions |
 | `accent` | `var(--color-accent)` (`#E0A92E`) | Key accents, badge highlights, callouts |
-| `accent-text-on-light`| `var(--color-accent-text-on-light)` (`#A06E1B`) | Accessible gold text on white/light surfaces |
+| `accent-text-on-light`| `var(--color-accent-text-on-light)` (`#946318`) | Accessible gold text on white/light surfaces (>= 4.5:1) |
+| `link-on-dark`| `var(--color-link-on-dark)` (`#8BB4F8`) | Accessible interactive link copy on dark surfaces (>= 4.5:1) |
 | `border` | `var(--color-border)` (`rgba(255, 255, 255, 0.12)`) | Subtle dividers and card outlines |
-| `focus-ring` | `var(--color-focus-ring)` (`#2153D2`) | High-visibility focus indicators |
+| `focus-ring` | `var(--color-focus-ring)` (`#2153D2`) | High-visibility focus indicators (>= 3:1) |
 
 ### 3.3 Typography Scale
 - `font-heading`: Sora (weights 600, 700; display: swap)
@@ -110,14 +112,21 @@ All generated assets in `public/brand/` and `public/` are interim rasters derive
 ## 4. Accessibility & Contrast Guidelines (WCAG AA)
 
 1. **`gold-500` (`#E0A92E`) on White (`#FFFFFF`) is STRICTLY PROHIBITED for body text.**
-   - Contrast ratio is only ~2.13:1, severely violating WCAG AA minimums (4.5:1).
-   - Use `accent-text-on-light` (`gold-700` `#A06E1B`) for text on white or light surfaces (achieves ≥ 4.5:1).
+   - Contrast ratio is only ~2.12:1, severely violating WCAG AA minimums (4.5:1).
+   - Use `accent-text-on-light` (`gold-700` `#946318`) for text on white or light surfaces (achieves 5.18:1 on `#FFFFFF`, 4.63:1 on `#F6F2E8`, passing WCAG AA for normal text).
 2. **`gold-500` (`#E0A92E`) on `ink` (`#0A0A0F`) and `navy` (`#1B234C`):**
-   - Contrast on ink is ~9.28:1 (passes WCAG AAA).
-   - Contrast on navy is ~7.23:1 (passes WCAG AAA).
-3. **`primary` (`#143DB1`) on White:**
-   - Contrast is ~8.99:1 (passes WCAG AAA).
-4. **All assertions verified automatically in unit test `src/tests/brand/contrast.test.ts`.**
+   - Contrast on ink is ~9.30:1 (passes WCAG AAA).
+   - Contrast on navy is ~7.10:1 (passes WCAG AAA).
+3. **`primary` (`#143DB1`) on White / White on `primary`:**
+   - Contrast is ~9.00:1 (passes WCAG AAA).
+4. **Dark-first Links:**
+   - Primary blue (`#143DB1`) on ink is 2.19:1 (not allowed for text/links on dark).
+   - Use `link-on-dark` (`blue-300` `#8BB4F8`): 9.39:1 on ink, 7.17:1 on navy (passes WCAG AAA).
+5. **Text-Muted:**
+   - `text-muted` (`#94A3B8`): 7.70:1 on ink, 5.89:1 on navy (passes WCAG AA/AAA).
+6. **Focus Ring:**
+   - `focus-ring` (`#2153D2`): 3.04:1 vs ink (passes non-text UI component WCAG AA ≥ 3:1).
+7. **All assertions verified automatically in unit test `src/lib/brand/contrast.test.ts`.**
 
 ---
 
@@ -128,15 +137,18 @@ Official brand tagline:
 
 ---
 
-## 6. Inventory of Hard-Coded Hexes for Future Refactoring (R2/R5)
-The following legacy colors remain active on non-restyled pages and components, to be systematically migrated in R2/R5:
-- `#071026`: Dark midnight surface used in `verify/page.tsx`, `AdminShell.tsx`, `manifest.ts`
-- `#0d1a4a`: Legacy primary dark navy used across `Header.tsx`, `Footer.tsx`, email templates
-- `#16296b`: Legacy primary main blue in `globals.css`
-- `#d9a23c`: Legacy gold-main
-- `#eccb7c`: Legacy gold-light
-- `#b77d21`: Legacy gold-dark
-- `#d9711b`: Legacy terracotta/orange accent
-- `#f6f2e8`: Legacy sand/canvas background
-- `#fbf7ee`: Legacy canvas-subtle
-- `#0b1222`: Admin sidebar background in `AdminShell.tsx`
+## 6. Inventory of Hard-Coded Hexes & Old->New Mapping for R2/R5
+The following legacy colors remain active on non-restyled pages and components, with their target brand token equivalents for systematic migration during R2/R5:
+
+| Legacy Hex | Old Usage / Role | Target Token | New Hex | Notes |
+|------------|------------------|--------------|---------|-------|
+| `#16296b` | Legacy primary blue-light | `primary` / `blue-600` | `#143DB1` | Core interactive primary |
+| `#0d1a4a` | Legacy navy / primary-dark | `surface` / `navy` | `#1B234C` | Container/card surface |
+| `#071026` | Legacy dark ink / canvas | `bg` / `ink` | `#0A0A0F` | Canvas background |
+| `#d9a23c` | Legacy gold-main | `accent` / `gold-500` | `#E0A92E` | Brand accent gold |
+| `#eccb7c` | Legacy gold-light | `gold-300` | `#EDB944` | Warm sunshine highlight |
+| `#b77d21` | Legacy gold-dark | `gold-700` / `accent-text-on-light` | `#946318` | Accessible gold on light (≥ 4.5:1) |
+| `#d9711b` | Legacy terracotta | `accent` / `gold-500` | `#E0A92E` | Accent migration target |
+| `#f6f2e8` | Legacy sand / light canvas | `text` / `cream` | `#F6F2E8` / `#DBD1A5` | Text on dark canvas / warm surface |
+| `#fbf7ee` | Legacy canvas-subtle | `cream` | `#DBD1A5` | Warm cream tint |
+| `#0b1222` | Admin sidebar background | `surface-raised` | `#222B59` | Raised surface |

@@ -3,7 +3,7 @@
 Source of truth for session restarts. Continue from the first unfinished item.
 
 **Last updated:** 2026-11-20  
-**Current branch:** `agent/brand-foundation`  
+**Current branch:** `agent/brand-foundation-fixes`  
 **New dependencies this session:** `sharp` (devDependency — explicitly required to build reproducible brand assets in `scripts/brand/build-assets.mjs`)
 
 ## Definition of Done (per item)
@@ -11,7 +11,7 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 
 ---
 
-## Brand Foundation Phase (`agent/brand-foundation`)
+## Brand Foundation Phase (`agent/brand-foundation` & `agent/brand-foundation-fixes`)
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
 | 1. Source logo in brand/source + BRAND.md | done | 8bed79a | 1280x853 JPEG moved to brand/source/logo.jpg |
@@ -22,8 +22,16 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 | 6. Contrast WCAG AA unit test | done | 7a6657e | Unit test passes AAA/AA; gold-500 on white prohibited for body text |
 | 7. Tagline update | done | c46cb3a | "Building Africa's Future Systems" + unit test |
 | 8. Metadata icons & og-image links | done | fa8eb93 | Point openGraph/twitter/icons + test |
-| 9. Gates verification | done | 56443bd, f81f42a | typecheck, lint, jest (74 suites, 570 tests), build, smoke (76 passed), crawl (59 visited) |
+| 9. Gates verification | done | 56443bd, f81f42a | typecheck, lint, jest, build, smoke, crawl, assets 200 |
 | 10. Playwright screenshots check | done | - | Playwright not installed in environment; skipped per instructions |
+| Review Fix 1. Auth revert | done | 57cc7b4 | Reverted src/lib/auth/otp.ts to be identical to master |
+| Review Fix 2. Legal pages review | done | - | Verified only og:image metadata added to privacy & terms; 0 copy changes |
+| Review Fix 3. Smoke/crawl revert | done | f7b1553 | Reverted crawler timeout and verify test loosenings to match master |
+| Review Fix 4-6. Contrast & tokens | done | f44b449 | accent-text-on-light #946318 (≥4.5:1), link-on-dark #8BB4F8, text token #F6F2E8 |
+| Review Fix 7-8. Icon weights & dedupe | done | e7b85d2 | 512 icons <= 60 KB, 180/192 <= 20 KB, removed public duplicates, single icon set |
+| Review Fix 9. Absolute email logo | done | 3a60d9a | getLogoAssetUrl absolute URL, dark header cell, unit tests |
+| Review Fix 10. Header logo priority | done | 0c40901 | priority on Header logo only, alt="SINet" and explicit dimensions on all |
+| Review Fix 11. Old->New hex inventory | done | pending | Documented in docs/agent/BRAND.md |
 
 ---
 
