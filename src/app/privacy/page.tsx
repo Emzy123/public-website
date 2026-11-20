@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Privacy Policy',
     description: 'Learn how SINet collects, uses, and protects your personal information.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'SINet Privacy Policy' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/og-image.png'],
   },
 };
 

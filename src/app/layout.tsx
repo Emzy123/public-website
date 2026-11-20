@@ -36,20 +36,21 @@ export const metadata: Metadata = {
       'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     type: 'website',
     url: SITE_URL,
-    images: [{ url: '/images/og-image.jpg', width: 1200, height: 630, alt: 'SINet — Business Ecosystem & Community' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: "SINet — Building Africa's Future Systems" }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'SINet — Business Ecosystem & Community',
     description:
       'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
-    images: ['/images/og-image.jpg'],
+    images: ['/og-image.png'],
   },
   icons: {
     icon: [
-      { url: '/images/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
     ],
-    apple: '/images/favicon.svg',
+    apple: '/apple-icon.png',
   },
 };
 

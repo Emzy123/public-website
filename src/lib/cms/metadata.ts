@@ -11,6 +11,16 @@ export async function buildPageMetadata(page: PageSeoKey, fallback?: { title?: s
   return {
     title,
     description,
-    openGraph: { title, description },
+    openGraph: {
+      title,
+      description,
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: "SINet — Building Africa's Future Systems" }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/og-image.png'],
+    },
   };
 }
