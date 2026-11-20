@@ -11,7 +11,8 @@ export const BRAND_COLORS = {
   blue700: '#022892',
   blue600: '#143DB1', // Primary
   blue500: '#2153D2',
-  gold700: '#A06E1B',
+  blue300: '#8BB4F8',
+  gold700: '#946318', // Updated from #A06E1B for WCAG AA compliance on #FFFFFF and #F6F2E8
   gold500: '#E0A92E', // Accent
   gold300: '#EDB944',
   cream: '#DBD1A5',
@@ -21,12 +22,13 @@ export const BRAND_COLORS = {
   bg: '#0A0A0F',
   surface: '#1B234C',
   surfaceRaised: '#222B59',
-  text: '#FFFFFF',
+  text: '#F6F2E8',
   textMuted: '#94A3B8',
   primary: '#143DB1',
   primaryHover: '#022892',
   accent: '#E0A92E',
-  accentTextOnLight: '#A06E1B',
+  accentTextOnLight: '#946318',
+  linkOnDark: '#8BB4F8',
   border: 'rgba(255, 255, 255, 0.12)',
   focusRing: '#2153D2',
 } as const;

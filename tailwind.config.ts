@@ -53,7 +53,8 @@ const config: Config = {
           'blue-700': '#022892',
           'blue-600': '#143DB1', // primary
           'blue-500': '#2153D2',
-          'gold-700': '#A06E1B',
+          'blue-300': '#8BB4F8',
+          'gold-700': '#946318',
           'gold-500': '#E0A92E', // accent
           'gold-300': '#EDB944',
           cream: '#DBD1A5',
@@ -70,6 +71,7 @@ const config: Config = {
         'surface-raised': 'var(--color-surface-raised)',
         text: 'var(--color-text)',
         'text-muted': 'var(--color-text-muted)',
+        'link-on-dark': 'var(--color-link-on-dark)',
         primary: {
           DEFAULT: 'var(--color-primary)',
           hover: 'var(--color-primary-hover)',
