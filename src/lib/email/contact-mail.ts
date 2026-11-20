@@ -3,7 +3,7 @@ import { escapeHtml, firstName } from './html';
 import { SITE_URL, CONTACT_EMAIL, CONTACT_WHATSAPP, CONTACT_WHATSAPP_DISPLAY } from '@/lib/site-config';
 import { getLogoAssetUrl } from '@/components/brand/Logo';
 
-const LOGO_URL = `${SITE_URL}${getLogoAssetUrl('lockup', 'dark')}`;
+const LOGO_URL = getLogoAssetUrl('lockup', 'dark', { absolute: true });
 const WHATSAPP_URL = CONTACT_WHATSAPP;
 
 function buildContactEmailHtml(data: {

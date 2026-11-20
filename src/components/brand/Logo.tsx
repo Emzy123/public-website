@@ -19,12 +19,20 @@ export const BRAND_ASSETS = {
  */
 export function getLogoAssetUrl(
   variant: LogoVariant = 'lockup',
-  theme: LogoTheme = 'dark'
+  theme: LogoTheme = 'dark',
+  options?: { absolute?: boolean }
 ): string {
+  let assetPath: string;
   if (variant === 'mark') {
-    return BRAND_ASSETS.mark;
+    assetPath = BRAND_ASSETS.mark;
+  } else {
+    assetPath = theme === 'dark' ? BRAND_ASSETS.lockupDark : BRAND_ASSETS.lockupTransparent;
   }
-  return theme === 'dark' ? BRAND_ASSETS.lockupDark : BRAND_ASSETS.lockupTransparent;
+
+  if (options?.absolute) {
+    return `https://www.sinet.africa${assetPath}`;
+  }
+  return assetPath;
 }
 
 const PRESET_DIMS: Record<
