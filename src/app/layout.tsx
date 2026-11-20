@@ -1,14 +1,20 @@
 import type { Metadata } from 'next';
-import localFont from 'next/font/local';
+import { Sora, Inter } from 'next/font/google';
 import './globals.css';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 import { SITE_URL } from '@/lib/site-config';
 
-// Keep the application self-contained at build time. The editorial serif and mono
-// stacks are defined in globals.css; Geist supplies the UI/body fallback locally.
-const geist = localFont({
-  src: './fonts/GeistVF.woff',
+const sora = Sora({
+  subsets: ['latin'],
+  weight: ['600', '700'],
+  variable: '--font-heading',
+  display: 'swap',
+});
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
   variable: '--font-body',
   display: 'swap',
 });
@@ -58,8 +64,8 @@ export default function RootLayout({
   const nonce = headers().get('x-nonce') || undefined;
 
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${geist.variable} antialiased min-h-screen flex flex-col`}>
+    <html lang="en" className={`scroll-smooth ${sora.variable} ${inter.variable}`}>
+      <body className="antialiased min-h-screen flex flex-col font-sans">
         <AnalyticsScripts nonce={nonce} />
         <ServiceWorkerRegister />
         <SiteChrome>{children}</SiteChrome>

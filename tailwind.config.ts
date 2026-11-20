@@ -121,9 +121,9 @@ const config: Config = {
         '30': '7.5rem',
       },
       fontFamily: {
-        editorial: ['Fraunces', 'Iowan Old Style', 'Baskerville', 'Georgia', 'serif'],
-        heading: ['Fraunces', 'Iowan Old Style', 'Baskerville', 'Georgia', 'serif'],
+        heading: ['var(--font-heading)', 'Sora', 'sans-serif'],
         sans: ['var(--font-body)', 'Inter', 'system-ui', 'Arial', 'sans-serif'],
+        editorial: ['Fraunces', 'Iowan Old Style', 'Baskerville', 'Georgia', 'serif'],
         mono: ['"IBM Plex Mono"', 'SFMono-Regular', 'Consolas', 'monospace'],
         data: ['"IBM Plex Mono"', 'SFMono-Regular', 'Consolas', 'monospace'],
       },
