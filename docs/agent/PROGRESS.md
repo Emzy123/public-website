@@ -15,15 +15,15 @@ typecheck · lint · full `npm test` · `next build` · smoke — record summary
 | Item | Status | Commit | Notes |
 |------|--------|--------|-------|
 | 1. Source logo in brand/source + BRAND.md | done | 8bed79a | 1280x853 JPEG moved to brand/source/logo.jpg |
-| 2. Asset set build script + public assets | done | pending | scripts/brand/build-assets.mjs, lockups, icons, og-image |
-| 3. Centralized Logo component | pending | | src/components/brand/Logo.tsx |
-| 4. Design tokens (Tailwind + CSS vars) | pending | | tailwind.config.ts & globals.css |
-| 5. Fonts (Sora & Inter via next/font/google) | pending | | Self-hosted at build |
-| 6. Contrast WCAG AA unit test | pending | | Unit test for semantic pairs & gold-500 restriction |
-| 7. Tagline update | pending | | "Building Africa's Future Systems" |
-| 8. Metadata icons & og-image links | pending | | Point openGraph/twitter/icons |
-| 9. Gates verification | pending | | npm ci, typecheck, lint, jest, build, smoke, crawl, assets 200 |
-| 10. Playwright screenshots check | pending | | Check availability and capture / & /about |
+| 2. Asset set build script + public assets | done | e5d61cf | scripts/brand/build-assets.mjs, lockups, icons, og-image |
+| 3. Centralized Logo component | done | b9e38d9 | src/components/brand/Logo.tsx replaced all legacy logo references |
+| 4. Design tokens (Tailwind + CSS vars) | done | 2548783 | tailwind.config.ts & globals.css (ink, navy, blue, gold, cream, semantics) |
+| 5. Fonts (Sora & Inter via next/font/google) | done | 362c2c3 | Self-hosted at build, --font-heading and --font-body |
+| 6. Contrast WCAG AA unit test | done | 7a6657e | Unit test passes AAA/AA; gold-500 on white prohibited for body text |
+| 7. Tagline update | done | c46cb3a | "Building Africa's Future Systems" + unit test |
+| 8. Metadata icons & og-image links | done | fa8eb93 | Point openGraph/twitter/icons + test |
+| 9. Gates verification | done | 56443bd, f81f42a | typecheck, lint, jest (74 suites, 570 tests), build, smoke (76 passed), crawl (59 visited) |
+| 10. Playwright screenshots check | done | - | Playwright not installed in environment; skipped per instructions |
 
 ---
 
