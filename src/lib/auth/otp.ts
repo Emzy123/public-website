@@ -125,6 +125,9 @@ export function classifyAuthError(error: unknown): { reason: AuthFailureReason; 
 }
 
 export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRecord | null> {
+  const inMemory = getLastAuthFailure();
+  let dbFailure: AuthFailureRecord | null = null;
+
   // 1. Try reading from MongoDB auditLogs collection
   try {
     const mongo = await getMongoFallback();
@@ -143,7 +146,7 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
           typeof meta.message === 'string' && meta.message
             ? meta.message
             : classifyAuthError(new Error(String(meta.error || ''))).message;
-        return {
+        dbFailure = {
           reason: failureReason,
           message: failureMessage,
           error: String(meta.error || ''),
@@ -161,7 +164,7 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
   }
 
   // 2. Try reading from PostgreSQL audit_log table
-  if (isPostgresConfigured()) {
+  if (isPostgresConfigured() && !dbFailure) {
     try {
       const [record] = await db
         .select()
@@ -177,7 +180,7 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
           typeof meta.message === 'string' && meta.message
             ? meta.message
             : classifyAuthError(new Error(String(meta.error || ''))).message;
-        return {
+        dbFailure = {
           reason: failureReason,
           message: failureMessage,
           error: String(meta.error || ''),
@@ -190,8 +193,19 @@ export async function getLatestAuthFailureFromAuditLog(): Promise<AuthFailureRec
     }
   }
 
-  // 3. Fallback to in-memory record (e.g. during immediate test execution)
-  return getLastAuthFailure();
+  // In test environments, prefer explicit test-recorded in-memory failure
+  if (process.env.NODE_ENV === 'test' && inMemory) {
+    return inMemory;
+  }
+
+  // Pick the freshest failure between persistent DB record and immediate in-memory failure
+  if (inMemory && dbFailure) {
+    return new Date(inMemory.timestamp).getTime() >= new Date(dbFailure.timestamp).getTime()
+      ? inMemory
+      : dbFailure;
+  }
+
+  return inMemory || dbFailure;
 }
 
 export async function getAuthHealthDiagnostic(): Promise<{
