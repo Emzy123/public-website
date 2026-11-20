@@ -7,8 +7,10 @@ import { MobileDrawer } from './MobileDrawer';
 import { ApplyNotifyModal } from './ApplyNotifyModal';
 import { getPrimaryNav, type PrimaryNavItem } from '@/lib/site-config';
 
+import { Logo, getLogoAssetUrl } from '@/components/brand/Logo';
+
 const PRIMARY_NAV = getPrimaryNav();
-const DEFAULT_LOGO = '/images/logo-icon.svg';
+const DEFAULT_LOGO = getLogoAssetUrl('mark');
 
 type HeaderProps = {
   whatsappUrl?: string;
@@ -99,19 +101,34 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
         <div className="mx-auto flex h-[77px] max-w-[1220px] items-center justify-between px-5 lg:px-8">
           {/* Logo */}
           <Link href="/" className="group flex items-center gap-2.5" aria-label="SINet home">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={brandLogo}
-              alt=""
-              width={wordmark ? 160 : 36}
-              height={wordmark ? 48 : 36}
-              className={
-                wordmark
-                  ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
-                  : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
-              }
-              onError={() => setLogoFailed(true)}
-            />
+            {brandLogo !== DEFAULT_LOGO && !logoFailed ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brandLogo}
+                alt="SINet"
+                width={wordmark ? 160 : 36}
+                height={wordmark ? 48 : 36}
+                className={
+                  wordmark
+                    ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
+                    : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
+                }
+                onError={() => setLogoFailed(true)}
+              />
+            ) : (
+              <Logo
+                variant={wordmark ? 'lockup' : 'mark'}
+                theme="dark"
+                width={wordmark ? 160 : 36}
+                height={wordmark ? 48 : 36}
+                className={
+                  wordmark
+                    ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
+                    : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
+                }
+                onError={() => setLogoFailed(true)}
+              />
+            )}
             {!wordmark && (
               <span className="font-editorial text-[26px] font-semibold tracking-[-.04em] text-[#0d1a4a]">
                 SINet<span className="text-[#d9711b]">.</span>

@@ -22,6 +22,7 @@ import { AdminCard } from '../AdminShell';
 import { AdminField, AdminInput, AdminTextarea } from '../ui/AdminField';
 import { AdminMarkdownField } from '../ui/AdminMarkdownField';
 import { ImageUploadField } from '../ui/ImageUploadField';
+import { getLogoAssetUrl } from '@/components/brand/Logo';
 
 function HeroFields({
   hero,
@@ -368,17 +369,17 @@ export function SiteSettingsEditor({ data, onChange }: { data: SiteSettings; onC
         <div className="grid md:grid-cols-2 gap-4">
           <ImageUploadField
             label="Header Logo"
-            value={data.logoUrl ?? '/images/logo-icon.svg'}
+            value={data.logoUrl ?? getLogoAssetUrl('mark')}
             onChange={(url) => onChange({ ...data, logoUrl: url })}
             previewClassName="h-12 bg-contain bg-no-repeat bg-center"
-            hint="Square mark for the header. Default: /images/logo-icon.svg"
+            hint={`Square mark for the header. Default: ${getLogoAssetUrl('mark')}`}
           />
           <ImageUploadField
             label="Footer Logo"
-            value={data.footerLogoUrl ?? '/images/sinet-logo.svg'}
+            value={data.footerLogoUrl ?? getLogoAssetUrl('lockup', 'dark')}
             onChange={(url) => onChange({ ...data, footerLogoUrl: url })}
             previewClassName="h-12 bg-contain bg-no-repeat bg-center bg-[#0d1a4a] rounded"
-            hint="Wordmark for the dark footer. Default: /images/sinet-logo.svg"
+            hint={`Lockup for the dark footer. Default: ${getLogoAssetUrl('lockup', 'dark')}`}
           />
         </div>
       </AdminCard>

@@ -2,16 +2,22 @@ import Link from 'next/link';
 import type { SiteSettings } from '@admin/types/content';
 import { CONTACT_EMAIL, FEATURE_FLAGS, OFFICIAL_LEGAL_NAME } from '@/lib/site-config';
 import { SocialLinksBar } from '@/components/common/SocialIcons';
+import { Logo } from '@/components/brand/Logo';
 
 type FooterProps = { settings?: SiteSettings };
 
 export function Footer({ settings }: FooterProps) {
   const contact = settings?.contact;
   const social = settings?.social;
-  const brandCopy =
+  const rawBrandCopy =
     settings?.footer?.brandCopy?.trim() ||
-    'A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.';
-  const footerLogo = settings?.footerLogoUrl?.trim() || '/images/sinet-logo.svg';
+    "Building Africa's Future Systems. A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.";
+  const brandCopy = rawBrandCopy.replace("Build Africa's future.", "Building Africa's Future Systems.");
+  const hasCustomLogo = Boolean(
+    settings?.footerLogoUrl?.trim() &&
+    !settings.footerLogoUrl.includes('sinet-logo') &&
+    !settings.footerLogoUrl.includes('brand/sinet-lockup')
+  );
   const displayEmail = contact?.email || CONTACT_EMAIL;
 
   const exploreLinks = [
@@ -61,14 +67,24 @@ export function Footer({ settings }: FooterProps) {
           <div className="font-editorial text-[clamp(3.5rem,14vw,11rem)] leading-[.75] tracking-[-.07em]">
             SINet<span className="text-[#eccb7c]">.</span>
           </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={footerLogo}
-            alt="SINet"
-            width={220}
-            height={70}
-            className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
-          />
+          {hasCustomLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={settings?.footerLogoUrl?.trim()}
+              alt="SINet"
+              width={220}
+              height={70}
+              className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
+            />
+          ) : (
+            <Logo
+              variant="lockup"
+              theme="dark"
+              width={220}
+              height={70}
+              className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
+            />
+          )}
         </div>
       </div>
       <div className="mx-auto grid max-w-[1380px] gap-8 px-4 py-10 xs:gap-10 xs:px-5 xs:py-12 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-[1.35fr_repeat(4,1fr)] lg:px-8">

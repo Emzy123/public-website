@@ -1,8 +1,9 @@
 import { Resend } from 'resend';
 import { escapeHtml } from './html';
+import { getLogoAssetUrl } from '@/components/brand/Logo';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sinet.africa';
-const LOGO_URL = `${SITE_URL}/images/sinet-logo.svg`;
+const LOGO_URL = `${SITE_URL}${getLogoAssetUrl('lockup', 'dark')}`;
 
 function buildAdminAlertHtml(data: { type: string; label: string; name: string; email: string; subject?: string }): string {
   const label = escapeHtml(data.label);

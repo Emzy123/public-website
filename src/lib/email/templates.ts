@@ -1,7 +1,8 @@
 import { escapeHtml, firstName } from './html';
 import { SITE_URL, CONTACT_EMAIL } from '@/lib/site-config';
+import { getLogoAssetUrl } from '@/components/brand/Logo';
 
-const LOGO_URL = `${SITE_URL}/images/sinet-logo.svg`;
+const LOGO_URL = `${SITE_URL}${getLogoAssetUrl('lockup', 'dark')}`;
 const YEAR = new Date().getFullYear();
 
 const NAVY = '#0d1a4a';

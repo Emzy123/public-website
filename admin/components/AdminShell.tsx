@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { SubmissionCounts } from '@admin/lib/submissions';
+import { Logo } from '@/components/brand/Logo';
 
 type NavItem = {
   href: string;
@@ -149,9 +150,7 @@ function SidebarContent({
       {/* Brand Header */}
       <div className="flex items-center justify-between border-b border-slate-800/80 px-5 py-4">
         <Link href="/admin" onClick={onClose} className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 shadow-md shadow-amber-500/20 font-black text-sm text-[#071026]">
-            S
-          </div>
+          <Logo variant="mark" size={32} className="rounded-xl shadow-md shrink-0" />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold tracking-tight text-white text-sm">SINet</span>
