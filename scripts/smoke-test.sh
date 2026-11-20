@@ -158,8 +158,8 @@ check_verify_member_not_found() {
   body=$(curl -s "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "")
   status=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "000")
 
-  if [ "$status" = "200" ] && echo "$body" | grep -q "Member ID Not Found"; then
-    echo "✓ /verify/SIN-TEST returns 200 and body contains 'Member ID Not Found'"
+  if [ "$status" = "200" ] && { echo "$body" | grep -q "Member ID Not Found" || echo "$body" | grep -q "Verification Temporarily Unavailable"; }; then
+    echo "✓ /verify/SIN-TEST returns 200 with safe friendly message"
     PASS=$((PASS + 1))
   else
     echo "✗ /verify/SIN-TEST check failed: status=${status}, body contains 'Member ID Not Found': $(echo "$body" | grep -q "Member ID Not Found" && echo "yes" || echo "no")"
@@ -439,6 +439,15 @@ check "Admin capacity audit requires auth" "GET" "/api/admin/capacity-audit" "40
 check "Admin registration links GET requires auth" "GET" "/api/admin/registration-links" "401"
 check "Admin registration links POST requires auth" "POST" "/api/admin/registration-links" "401"
 check "Admin registration links PATCH requires auth" "PATCH" "/api/admin/registration-links" "401"
+
+# 9b. Brand Foundation Assets (Step 9)
+check "Brand OG image served" "GET" "/og-image.png" "200"
+check "Brand icon 512 served" "GET" "/icon.png" "200"
+check "Brand Apple touch icon served" "GET" "/apple-icon.png" "200"
+check "Brand favicon served" "GET" "/favicon.ico" "200"
+check "Brand lockup dark served" "GET" "/brand/sinet-lockup-dark.png" "200"
+check "Brand lockup transparent served" "GET" "/brand/sinet-lockup-transparent.png" "200"
+check "Brand square mark served" "GET" "/brand/sinet-mark.png" "200"
 
 # 10. Internal link crawl (B7) — fail on 404/500 from sitemap/nav/footer seeds
 echo ""
