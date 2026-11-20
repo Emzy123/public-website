@@ -9,7 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const BASE = (process.argv[2] || process.env.SMOKE_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const MAX_PAGES = 80;
-const FETCH_TIMEOUT_MS = 30000;
+const FETCH_TIMEOUT_MS = 15000;
 
 const SEED_PATHS = [
   '/',

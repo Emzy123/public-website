@@ -158,8 +158,8 @@ check_verify_member_not_found() {
   body=$(curl -s "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "")
   status=$(curl -s -o /dev/null -w "%{http_code}" "${BASE_URL}/verify/SIN-TEST" 2>/dev/null || echo "000")
 
-  if [ "$status" = "200" ] && { echo "$body" | grep -q "Member ID Not Found" || echo "$body" | grep -q "Verification Temporarily Unavailable"; }; then
-    echo "✓ /verify/SIN-TEST returns 200 with safe friendly message"
+  if [ "$status" = "200" ] && echo "$body" | grep -q "Member ID Not Found"; then
+    echo "✓ /verify/SIN-TEST returns 200 and body contains 'Member ID Not Found'"
     PASS=$((PASS + 1))
   else
     echo "✗ /verify/SIN-TEST check failed: status=${status}, body contains 'Member ID Not Found': $(echo "$body" | grep -q "Member ID Not Found" && echo "yes" || echo "no")"
