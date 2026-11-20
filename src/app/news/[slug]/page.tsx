@@ -31,13 +31,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       publishedTime: publishedIso,
       authors: [post.authorName],
       tags: post.tags,
-      images: post.coverImageUrl ? [{ url: post.coverImageUrl }] : undefined,
+      images: post.coverImageUrl
+        ? [{ url: post.coverImageUrl }]
+        : [{ url: '/og-image.png', width: 1200, height: 630 }],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description: post.summary,
-      images: post.coverImageUrl ? [post.coverImageUrl] : undefined,
+      images: post.coverImageUrl ? [post.coverImageUrl] : ['/og-image.png'],
     },
   };
 }

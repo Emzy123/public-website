@@ -23,6 +23,7 @@ import type {
   WaitlistPageContent,
 } from '@admin/types/content';
 import { DEFAULT_ABOUT_TEAM, DEFAULT_ABOUT_TIMELINE } from './defaults/about-data';
+import { getLogoAssetUrl } from '@/components/brand/Logo';
 
 export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
   {
@@ -670,7 +671,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
   footer: {
     // TODO-VERIFY: CEO approval needed for original copy: "Invest in active goods trade with our structured 6-week investment cycles while co-owning Africa's next great institutions."
-    brandCopy: "Build Africa's future. A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.",
+    brandCopy: "Building Africa's Future Systems. A business ecosystem built on agriculture, trade & distribution, and real estate — with community at the centre.",
     columns: [
       {
         title: 'Platform',
@@ -708,8 +709,8 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     defaultDescription: "SINet connects entrepreneurs, students, and partners across Africa's key sectors.",
   },
   pageSeo: DEFAULT_PAGE_SEO,
-  logoUrl: '/images/logo-icon.svg',
-  footerLogoUrl: '/images/sinet-logo.svg',
+  logoUrl: getLogoAssetUrl('mark'),
+  footerLogoUrl: getLogoAssetUrl('lockup', 'dark'),
 };
 
 const DEFAULTS: CmsDataMap = {
@@ -933,8 +934,8 @@ export function normalizeSiteSettings(data: Partial<SiteSettings> | undefined): 
     navigation: data.navigation?.length ? data.navigation : defaults.navigation,
     seo: { ...defaults.seo, ...data.seo },
     pageSeo: { ...defaults.pageSeo, ...data.pageSeo },
-    logoUrl: normalizeLogoPath(data.logoUrl, defaults.logoUrl ?? '/images/logo-icon.svg'),
-    footerLogoUrl: normalizeLogoPath(data.footerLogoUrl, defaults.footerLogoUrl ?? '/images/sinet-logo.svg'),
+    logoUrl: normalizeLogoPath(data.logoUrl, defaults.logoUrl ?? getLogoAssetUrl('mark')),
+    footerLogoUrl: normalizeLogoPath(data.footerLogoUrl, defaults.footerLogoUrl ?? getLogoAssetUrl('lockup', 'dark')),
   };
 }
 
@@ -947,6 +948,8 @@ function normalizeLogoPath(value: string | undefined, fallback: string): string 
     '/images/logo.jpeg',
     '/images/logo.png',
     'images/logo.jpg',
+    '/images/logo-icon.svg',
+    '/images/sinet-logo.svg',
   ];
   if (broken.some((path) => url === path || url.endsWith(path))) return fallback;
   return url;
