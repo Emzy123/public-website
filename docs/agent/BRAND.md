@@ -82,8 +82,28 @@ All generated assets in `public/brand/` and `public/` are interim rasters derive
   - `2xl`: 1.5rem (24px), line-height 2rem
   - `3xl`: 1.875rem (30px), line-height 2.25rem
   - `4xl`: 2.25rem (36px), line-height 2.5rem
-  - `5xl`: 3rem (48px), line-height 1
+  - `5xl`: 3rem (48px), line-height 1.1
   - `6xl`: 3.75rem (60px), line-height 1
+
+### 3.4 Radii, Shadows & Spacing
+- **Radii:**
+  - `sm`: 0.25rem (4px)
+  - `md`: 0.5rem (8px)
+  - `lg`: 0.75rem (12px)
+  - `xl`: 1rem (16px)
+  - `2xl`: 1.5rem (24px)
+  - `full`: 9999px
+- **Shadows:**
+  - `brand-sm`: `0 1px 2px 0 rgba(10, 10, 15, 0.05)`
+  - `brand-md`: `0 4px 6px -1px rgba(10, 10, 15, 0.1)`
+  - `brand-lg`: `0 10px 15px -3px rgba(10, 10, 15, 0.1)`
+  - `brand-xl`: `0 20px 25px -5px rgba(10, 10, 15, 0.1)`
+  - `gold-glow`: `0 0 24px -4px rgba(224, 169, 46, 0.35)`
+  - `blue-glow`: `0 0 24px -4px rgba(20, 61, 177, 0.35)`
+- **Spacing:**
+  - `18`: 4.5rem (72px)
+  - `22`: 5.5rem (88px)
+  - `30`: 7.5rem (120px)
 
 ---
 

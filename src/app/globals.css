@@ -3,6 +3,35 @@
 @tailwind utilities;
 
 :root {
+  /* ============================================
+     SINET BRAND REDESIGN TOKENS (agent/brand-foundation)
+     ============================================ */
+  /* Primitive Brand Colors */
+  --brand-ink: #0a0a0f;
+  --brand-black: #000000;
+  --brand-navy: #1b234c;
+  --brand-blue-700: #022892;
+  --brand-blue-600: #143db1;
+  --brand-blue-500: #2153d2;
+  --brand-gold-700: #a06e1b;
+  --brand-gold-500: #e0a92e;
+  --brand-gold-300: #edb944;
+  --brand-cream: #dbd1a5;
+
+  /* Semantic Aliases */
+  --color-bg: var(--brand-ink);
+  --color-surface: var(--brand-navy);
+  --color-surface-raised: #222b59;
+  --color-text: #ffffff;
+  --color-text-muted: #94a3b8;
+  --color-primary: var(--brand-blue-600);
+  --color-primary-hover: var(--brand-blue-700);
+  --color-accent: var(--brand-gold-500);
+  --color-accent-text-on-light: var(--brand-gold-700);
+  --color-border: rgba(255, 255, 255, 0.12);
+  --color-focus-ring: var(--brand-blue-500);
+
+  /* Legacy Colors (retained for backward compatibility during phased redesign) */
   --primary-dark: #0d1a4a;
   --primary-main: #16296b;
   --primary-light: #24399f;
