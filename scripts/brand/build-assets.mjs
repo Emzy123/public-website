@@ -144,6 +144,7 @@ async function build() {
     .toBuffer();
 
   // Create 512x512 square mark with gentle padding on dark background (#0A0A0F)
+  // Encoded with palette PNG (quality: 55, compression: 9, effort: 10) to stay strictly <= 60 KB
   const mark512Buffer = await sharp({
     create: {
       width: 512,
@@ -158,38 +159,44 @@ async function build() {
         gravity: 'centre',
       },
     ])
-    .png()
+    .png({ palette: true, quality: 55, compressionLevel: 9, effort: 10 })
     .toBuffer();
 
   const markPath = path.join(PUBLIC_BRAND_DIR, 'sinet-mark.png');
   fs.writeFileSync(markPath, mark512Buffer);
-  console.log(`✓ Generated ${markPath} (512x512)`);
+  console.log(`✓ Generated ${markPath} (512x512, ${mark512Buffer.length} bytes <= 60 KB)`);
 
   // -------------------------------------------------------------
   // 5. App Icons & Favicon
   // -------------------------------------------------------------
-  const icon512Path = path.join(PUBLIC_DIR, 'icon.png');
-  const appleIconPath = path.join(PUBLIC_DIR, 'apple-icon.png');
+  // Next.js App Router convention: icon.png, apple-icon.png, and favicon.ico live in src/app/
+  // Manifest icons live in public/ (manifest-icon-192.png, manifest-icon-512.png)
+  // No duplicate icon files in public/ to prevent multiple <link rel="icon"> tags.
   const manifest192Path = path.join(PUBLIC_DIR, 'manifest-icon-192.png');
   const manifest512Path = path.join(PUBLIC_DIR, 'manifest-icon-512.png');
-  const faviconPath = path.join(PUBLIC_DIR, 'favicon.ico');
 
-  // Copy icon.png (512x512)
-  fs.writeFileSync(icon512Path, mark512Buffer);
-
-  // apple-icon (180x180)
-  const appleIconBuffer = await sharp(mark512Buffer).resize(180, 180).png().toBuffer();
-  fs.writeFileSync(appleIconPath, appleIconBuffer);
-
-  // manifest 192 & 512
-  const manifest192Buffer = await sharp(mark512Buffer).resize(192, 192).png().toBuffer();
+  // manifest 192 (encoded <= 20 KB) & manifest 512 (<= 60 KB)
+  const manifest192Buffer = await sharp(mark512Buffer)
+    .resize(192, 192)
+    .png({ palette: true, quality: 80, compressionLevel: 9, effort: 10 })
+    .toBuffer();
   fs.writeFileSync(manifest192Path, manifest192Buffer);
   fs.writeFileSync(manifest512Path, mark512Buffer);
 
-  // Build multi-size favicon.ico (16, 32, 48)
-  const png16 = await sharp(mark512Buffer).resize(16, 16).png().toBuffer();
-  const png32 = await sharp(mark512Buffer).resize(32, 32).png().toBuffer();
-  const png48 = await sharp(mark512Buffer).resize(48, 48).png().toBuffer();
+  // apple-icon (180x180, encoded <= 20 KB)
+  const appleIconBuffer = await sharp(mark512Buffer)
+    .resize(180, 180)
+    .png({ palette: true, quality: 80, compressionLevel: 9, effort: 10 })
+    .toBuffer();
+
+  // Build multi-size favicon.ico (16, 32, 48) with sharpened, legible 16px rendering
+  const png16 = await sharp(markRaw)
+    .resize(16, 16, { fit: 'contain', background: { r: 10, g: 10, b: 15, alpha: 1 } })
+    .sharpen()
+    .png({ palette: true, quality: 90 })
+    .toBuffer();
+  const png32 = await sharp(mark512Buffer).resize(32, 32).png({ palette: true, quality: 90 }).toBuffer();
+  const png48 = await sharp(mark512Buffer).resize(48, 48).png({ palette: true, quality: 90 }).toBuffer();
 
   const icoImages = [
     { width: 16, height: 16, data: png16 },
@@ -219,14 +226,23 @@ async function build() {
   }
 
   const faviconBuffer = Buffer.concat([header, ...entries, ...icoImages.map((img) => img.data)]);
-  fs.writeFileSync(faviconPath, faviconBuffer);
 
-  // Also sync to src/app for Next.js App Router metadata conventions
+  // Write to src/app for Next.js App Router metadata conventions
   fs.writeFileSync(path.join(APP_DIR, 'icon.png'), mark512Buffer);
   fs.writeFileSync(path.join(APP_DIR, 'apple-icon.png'), appleIconBuffer);
   fs.writeFileSync(path.join(APP_DIR, 'favicon.ico'), faviconBuffer);
 
-  console.log(`✓ Generated app icons: favicon.ico, icon.png (512), apple-icon.png (180), manifest 192/512`);
+  // Clean up any legacy duplicate icons from public/ to guarantee single icon set
+  for (const duplicate of ['icon.png', 'apple-icon.png', 'favicon.ico']) {
+    const dupPath = path.join(PUBLIC_DIR, duplicate);
+    if (fs.existsSync(dupPath)) {
+      fs.unlinkSync(dupPath);
+      console.log(`✓ Removed duplicate ${dupPath}`);
+    }
+  }
+
+  console.log(`✓ Generated app icons in src/app: favicon.ico, icon.png (512, ${mark512Buffer.length} B), apple-icon.png (180, ${appleIconBuffer.length} B)`);
+  console.log(`✓ Generated manifest icons in public: manifest-icon-192 (${manifest192Buffer.length} B), manifest-icon-512 (${mark512Buffer.length} B)`);
 
   // -------------------------------------------------------------
   // 6. OpenGraph Image (1200x630)

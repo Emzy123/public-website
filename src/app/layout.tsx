@@ -45,13 +45,6 @@ export const metadata: Metadata = {
       'SINet is a business ecosystem built on Agriculture, Trade & Goods Distribution, and Real Estate — with community at the centre.',
     images: ['/og-image.png'],
   },
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
-    ],
-    apple: '/apple-icon.png',
-  },
 };
 
 import { headers } from 'next/headers';

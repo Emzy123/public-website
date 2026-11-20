@@ -17,6 +17,8 @@ jest.mock('@/lib/cms', () => ({
   }),
 }));
 
+import fs from 'fs';
+import path from 'path';
 import { metadata } from '@/app/layout';
 import { buildPageMetadata } from '@/lib/cms/metadata';
 
@@ -36,13 +38,20 @@ describe('Root & CMS Metadata Brand Assets (Step 8)', () => {
     expect(twitterImages).toContain('/og-image.png');
   });
 
-  it('points root layout icons to canonical brand favicon, icon, and apple-icon', () => {
-    expect(metadata.icons).toBeDefined();
-    const icons = metadata.icons as { icon: Array<{ url: string }>; apple: string };
-    const iconUrls = Array.isArray(icons.icon) ? icons.icon.map((i) => i.url) : [icons.icon];
-    expect(iconUrls).toContain('/favicon.ico');
-    expect(iconUrls).toContain('/icon.png');
-    expect(icons.apple).toBe('/apple-icon.png');
+  it('verifies canonical app icons exist in src/app with no duplicate files in public/', () => {
+    // App router convention
+    expect(fs.existsSync(path.resolve('src/app/favicon.ico'))).toBe(true);
+    expect(fs.existsSync(path.resolve('src/app/icon.png'))).toBe(true);
+    expect(fs.existsSync(path.resolve('src/app/apple-icon.png'))).toBe(true);
+
+    // Duplicates removed from public/
+    expect(fs.existsSync(path.resolve('public/icon.png'))).toBe(false);
+    expect(fs.existsSync(path.resolve('public/apple-icon.png'))).toBe(false);
+    expect(fs.existsSync(path.resolve('public/favicon.ico'))).toBe(false);
+
+    // Manifest icons preserved in public/
+    expect(fs.existsSync(path.resolve('public/manifest-icon-192.png'))).toBe(true);
+    expect(fs.existsSync(path.resolve('public/manifest-icon-512.png'))).toBe(true);
   });
 
   it('includes /og-image.png in buildPageMetadata output', async () => {
