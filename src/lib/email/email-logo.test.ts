@@ -19,7 +19,6 @@ describe('Email Logo Brand Compliance (Fix 9)', () => {
     const html = applicationReceivedHtml({
       name: 'Amara Okafor',
       role: 'Campus Ambassador',
-      applicationId: 'app-test-123',
     });
 
     const expectedLogoUrl = 'https://www.sinet.africa/brand/sinet-lockup-dark.png';
