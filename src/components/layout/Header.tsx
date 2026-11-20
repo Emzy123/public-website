@@ -121,6 +121,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
                 theme="dark"
                 width={wordmark ? 160 : 36}
                 height={wordmark ? 48 : 36}
+                priority={true}
                 className={
                   wordmark
                     ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
