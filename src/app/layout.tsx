@@ -9,6 +9,8 @@ const sora = localFont({
   src: './fonts/sora-latin-variable.woff2',
   variable: '--font-heading',
   display: 'swap',
+  weight: '100 800',
+  style: 'normal',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
   adjustFontFallback: 'Arial',
 });
@@ -17,6 +19,8 @@ const inter = localFont({
   src: './fonts/inter-latin-variable.woff2',
   variable: '--font-body',
   display: 'swap',
+  weight: '100 900',
+  style: 'normal',
   fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
   adjustFontFallback: 'Arial',
 });
