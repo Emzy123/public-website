@@ -68,7 +68,7 @@ export interface LogoProps {
 }
 
 export function Logo({
-  variant = 'compact',
+  variant = 'full',
   size,
   width,
   height,
