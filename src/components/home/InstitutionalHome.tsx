@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Logo } from '@/components/brand/Logo';
 import { FEATURE_FLAGS } from '@/lib/site-config';
 
 const PILLARS = [
@@ -29,9 +30,18 @@ export function InstitutionalHero() {
         <p className="mb-8 flex items-center gap-3 font-data text-[11px] uppercase tracking-[.16em] text-[#60594d]">
           <span className="h-px w-7 bg-[#d9711b]" /> A business ecosystem built on community
         </p>
-        <h1 className="max-w-[690px] font-editorial text-[clamp(3rem,7.5vw,7rem)] leading-[.88] tracking-[-.07em] text-[#0d1a4a]">
-          One Community. Three Pillars. Endless Opportunities.
+        <h1 className="max-w-[560px]">
+          <span className="sr-only">SINet</span>
+          <Logo
+            variant="full"
+            width={560}
+            priority={false}
+            className="h-auto w-full max-w-[560px] object-contain"
+          />
         </h1>
+        <p className="mt-8 text-2xl font-bold tracking-tight text-[#0d1a4a] sm:text-3xl">
+          One Community. Three Pillars. Endless Opportunities.
+        </p>
         <p className="mt-10 max-w-[520px] text-[17px] leading-7 text-[#464238]">
           Agriculture, Trade &amp; Goods Distribution, and Real Estate work together to create sustainable businesses and long-term impact.
         </p>
