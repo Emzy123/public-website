@@ -20,14 +20,20 @@ const ALLOWED_HEADER_LOGOS = new Set([
   '/brand/sinet-mark@2x.png',
 ]);
 
-function resolveHeaderLogoVariant(url?: string): 'compact' | 'mark' | 'full' {
+const ALLOWED_FULL_HEADER_LOGOS = new Set([
+  '/brand/sinet-lockup.png',
+  '/brand/sinet-lockup@2x.png',
+]);
+
+function resolveHeaderLogoVariant(url?: string): 'compact' | 'full' {
   if (!url || !ALLOWED_HEADER_LOGOS.has(url.trim())) {
     return 'compact';
   }
   const clean = url.trim();
-  if (clean.includes('sinet-mark')) return 'mark';
-  if (clean.includes('sinet-lockup-compact')) return 'compact';
-  return 'full';
+  if (ALLOWED_FULL_HEADER_LOGOS.has(clean)) {
+    return 'full';
+  }
+  return 'compact';
 }
 
 type HeaderProps = {
@@ -47,12 +53,6 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const headerLogoVariant = resolveHeaderLogoVariant(logoUrl);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window.location.hash === '#menu' || window.location.search.includes('menu=open'))) {
-      setIsMobileMenuOpen(true);
-    }
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
