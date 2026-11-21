@@ -1,22 +1,28 @@
 import type { Metadata } from 'next';
-import { Sora, Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { SiteChrome } from '@/components/layout/SiteChrome';
 import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
 import { SITE_URL } from '@/lib/site-config';
 
-const sora = Sora({
-  subsets: ['latin'],
-  weight: ['600', '700'],
+const sora = localFont({
+  src: './fonts/sora-latin-variable.woff2',
   variable: '--font-heading',
   display: 'swap',
+  weight: '100 800',
+  style: 'normal',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+  adjustFontFallback: 'Arial',
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const inter = localFont({
+  src: './fonts/inter-latin-variable.woff2',
   variable: '--font-body',
   display: 'swap',
+  weight: '100 900',
+  style: 'normal',
+  fallback: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+  adjustFontFallback: 'Arial',
 });
 
 export const metadata: Metadata = {
