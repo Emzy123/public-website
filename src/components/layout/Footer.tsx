@@ -61,7 +61,7 @@ export function Footer({ settings }: FooterProps) {
   };
 
   return (
-    <footer className="bg-[#0d1a4a] text-[#f6f2e8]">
+    <footer id="footer" className="bg-[#0A0A0F] text-[#f6f2e8]">
       <div className="border-b border-white/15 px-4 py-10 xs:px-5 md:py-14 lg:px-8 lg:py-20">
         <div className="mx-auto flex max-w-[1380px] flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="font-editorial text-[clamp(3.5rem,14vw,11rem)] leading-[.75] tracking-[-.07em]">
@@ -72,17 +72,15 @@ export function Footer({ settings }: FooterProps) {
             <img
               src={settings?.footerLogoUrl?.trim()}
               alt="SINet"
-              width={220}
-              height={70}
-              className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
+              width={200}
+              height={76}
+              className="h-auto w-[200px] object-contain opacity-95"
             />
           ) : (
             <Logo
-              variant="lockup"
-              theme="dark"
-              width={220}
-              height={70}
-              className="h-12 w-auto max-w-[220px] object-contain opacity-95 sm:h-14"
+              variant="full"
+              width={200}
+              className="h-auto w-[200px] object-contain opacity-95"
             />
           )}
         </div>
