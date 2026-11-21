@@ -376,10 +376,10 @@ export function SiteSettingsEditor({ data, onChange }: { data: SiteSettings; onC
           />
           <ImageUploadField
             label="Footer Logo"
-            value={data.footerLogoUrl ?? getLogoAssetUrl('lockup', 'dark')}
+            value={data.footerLogoUrl ?? getLogoAssetUrl('full')}
             onChange={(url) => onChange({ ...data, footerLogoUrl: url })}
-            previewClassName="h-12 bg-contain bg-no-repeat bg-center bg-[#0d1a4a] rounded"
-            hint={`Lockup for the dark footer. Default: ${getLogoAssetUrl('lockup', 'dark')}`}
+            previewClassName="h-12 bg-contain bg-no-repeat bg-center bg-[#0A0A0F] rounded"
+            hint={`Full lockup for the dark footer. Default: ${getLogoAssetUrl('full')}`}
           />
         </div>
       </AdminCard>

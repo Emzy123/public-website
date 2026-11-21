@@ -7,21 +7,34 @@ import { MobileDrawer } from './MobileDrawer';
 import { ApplyNotifyModal } from './ApplyNotifyModal';
 import { getPrimaryNav, type PrimaryNavItem } from '@/lib/site-config';
 
-import { Logo, getLogoAssetUrl } from '@/components/brand/Logo';
+import { Logo } from '@/components/brand/Logo';
 
 const PRIMARY_NAV = getPrimaryNav();
-const DEFAULT_LOGO = getLogoAssetUrl('mark');
+
+const ALLOWED_HEADER_LOGOS = new Set([
+  '/brand/sinet-lockup-compact.png',
+  '/brand/sinet-lockup-compact@2x.png',
+  '/brand/sinet-lockup.png',
+  '/brand/sinet-lockup@2x.png',
+  '/brand/sinet-mark.png',
+  '/brand/sinet-mark@2x.png',
+]);
+
+function resolveHeaderLogoVariant(url?: string): 'compact' | 'mark' | 'full' {
+  if (!url || !ALLOWED_HEADER_LOGOS.has(url.trim())) {
+    return 'compact';
+  }
+  const clean = url.trim();
+  if (clean.includes('sinet-mark')) return 'mark';
+  if (clean.includes('sinet-lockup-compact')) return 'compact';
+  return 'full';
+}
 
 type HeaderProps = {
   whatsappUrl?: string;
   stackOffset?: boolean;
   logoUrl?: string;
 };
-
-function isWordmark(url: string): boolean {
-  const lower = url.toLowerCase();
-  return lower.includes('sinet-logo') || lower.includes('logo-primary') || lower.includes('wordmark');
-}
 
 export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -30,16 +43,10 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   const [isCommunityDropdownOpen, setIsCommunityDropdownOpen] = useState(false);
   const [isCampaignOpen, setIsCampaignOpen] = useState(false);
   const [campaignUrl, setCampaignUrl] = useState<string | null>(null);
-  const [logoFailed, setLogoFailed] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const brandLogo = logoFailed ? DEFAULT_LOGO : logoUrl?.trim() || DEFAULT_LOGO;
-  const wordmark = isWordmark(brandLogo);
-
-  useEffect(() => {
-    setLogoFailed(false);
-  }, [logoUrl]);
+  const headerLogoVariant = resolveHeaderLogoVariant(logoUrl);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && (window.location.hash === '#menu' || window.location.search.includes('menu=open'))) {
@@ -108,7 +115,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
           {/* Logo */}
           <Link href="/" className="group flex items-center" aria-label="SINet home">
             <Logo
-              variant="compact"
+              variant={headerLogoVariant}
               height={40}
               priority={true}
               className="h-8 w-auto sm:h-10"
