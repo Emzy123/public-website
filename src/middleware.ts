@@ -87,8 +87,8 @@ export async function middleware(request: NextRequest) {
     script-src 'self' 'nonce-${nonce}' https://www.googletagmanager.com https://www.google.com https://www.gstatic.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ''};
     worker-src 'self';
     manifest-src 'self';
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    font-src 'self' https://fonts.gstatic.com data:;
+    style-src 'self' 'unsafe-inline';
+    font-src 'self' data:;
     img-src 'self' data: blob: https://images.unsplash.com https://plus.unsplash.com https://www.google.com https://www.gstatic.com;
     connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.google.com;
     frame-src 'self' https://www.google.com https://www.recaptcha.net;

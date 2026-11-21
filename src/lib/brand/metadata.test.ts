@@ -1,7 +1,9 @@
-jest.mock('next/font/google', () => ({
-  Sora: () => ({ variable: '--font-heading' }),
-  Inter: () => ({ variable: '--font-body' }),
-}));
+jest.mock('next/font/local', () => {
+  return jest.fn((options: { variable?: string }) => ({
+    variable: options?.variable || '',
+    className: 'mock-local-font',
+  }));
+});
 jest.mock('@/app/globals.css', () => ({}));
 jest.mock('@/components/layout/SiteChrome', () => ({ SiteChrome: () => null }));
 jest.mock('@/components/analytics/AnalyticsScripts', () => ({ AnalyticsScripts: () => null }));
