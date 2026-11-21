@@ -35,7 +35,8 @@ export function InstitutionalHero() {
           <Logo
             variant="full"
             width={560}
-            priority={false}
+            priority={true}
+            alt=""
             className="h-auto w-full max-w-[560px] object-contain"
           />
         </h1>
