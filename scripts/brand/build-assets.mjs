@@ -36,23 +36,17 @@ async function build() {
   console.log(`Trimmed lockup: ${trimWidth}x${trimHeight}`);
 
   // -------------------------------------------------------------
-  // 2. Lockup Dark (@1x and @2x)
+  // 2. Lockup Dark (@1x for email templates)
   // -------------------------------------------------------------
-  const lockupDark2xPath = path.join(PUBLIC_BRAND_DIR, 'sinet-lockup-dark@2x.png');
   const lockupDark1xPath = path.join(PUBLIC_BRAND_DIR, 'sinet-lockup-dark.png');
 
-  // @2x full resolution trimmed
-  await sharp(trimmedBuffer)
-    .png({ quality: 100, compressionLevel: 9 })
-    .toFile(lockupDark2xPath);
-
-  // @1x half resolution
+  // @1x half resolution for email clients
   await sharp(trimmedBuffer)
     .resize(Math.round(trimWidth / 2), Math.round(trimHeight / 2))
     .png({ quality: 100, compressionLevel: 9 })
     .toFile(lockupDark1xPath);
 
-  console.log(`✓ Generated ${lockupDark1xPath} (@1x) & ${lockupDark2xPath} (@2x)`);
+  console.log(`✓ Generated ${lockupDark1xPath} (@1x for email clients)`);
 
   // -------------------------------------------------------------
   // 3. Lockup Transparent (near-black background keyed out with flood-fill)
@@ -183,10 +177,28 @@ async function build() {
   fs.writeFileSync(manifest192Path, manifest192Buffer);
   fs.writeFileSync(manifest512Path, mark512Buffer);
 
-  // apple-icon (180x180, encoded <= 20 KB)
-  const appleIconBuffer = await sharp(mark512Buffer)
-    .resize(180, 180)
-    .png({ palette: true, quality: 80, compressionLevel: 9, effort: 10 })
+  // apple-icon (180x180 opaque on ink #0A0A0F with ~12% padding, mark size ~137px)
+  const paddedMarkSize = Math.round(180 * (1 - 0.24)); // 137px
+  const markForApple = await sharp(mark512Buffer)
+    .resize(paddedMarkSize, paddedMarkSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+
+  const appleIconBuffer = await sharp({
+    create: {
+      width: 180,
+      height: 180,
+      channels: 4,
+      background: { r: 10, g: 10, b: 15, alpha: 1 }, // #0A0A0F ink
+    },
+  })
+    .composite([
+      {
+        input: markForApple,
+        top: Math.round((180 - paddedMarkSize) / 2),
+        left: Math.round((180 - paddedMarkSize) / 2),
+      },
+    ])
+    .png({ palette: true, quality: 90, compressionLevel: 9, effort: 10 })
     .toBuffer();
 
   // Build multi-size favicon.ico (16, 32, 48) with sharpened, legible 16px rendering

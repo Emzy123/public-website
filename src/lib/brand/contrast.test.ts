@@ -70,4 +70,14 @@ describe('Brand Token WCAG Accessibility & Contrast Compliance', () => {
     const ratio = getContrastRatio(BRAND_COLORS.focusRing, BRAND_COLORS.ink);
     expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_GRAPHICAL_OR_LARGE);
   });
+
+  it('asserts header and footer nav text achieves WCAG AA on ink background', () => {
+    // Normal nav text #F6F2E8 on ink #0A0A0F
+    const normalNavRatio = getContrastRatio(BRAND_COLORS.text, BRAND_COLORS.ink);
+    expect(normalNavRatio).toBeGreaterThanOrEqual(WCAG_AA_BODY); // Expect ~17.9:1
+
+    // Hover/active nav text gold-500 #E0A92E on ink #0A0A0F
+    const activeNavRatio = getContrastRatio(BRAND_COLORS.accent, BRAND_COLORS.ink);
+    expect(activeNavRatio).toBeGreaterThanOrEqual(WCAG_AA_BODY); // Expect ~9.2:1
+  });
 });

@@ -447,7 +447,13 @@ check "Brand Apple touch icon served" "GET" "/apple-icon.png" "200"
 check "Brand favicon served" "GET" "/favicon.ico" "200"
 check "Brand lockup dark served" "GET" "/brand/sinet-lockup-dark.png" "200"
 check "Brand lockup transparent served" "GET" "/brand/sinet-lockup-transparent.png" "200"
+check "Brand lockup full served" "GET" "/brand/sinet-lockup.png" "200"
+check "Brand lockup full 2x served" "GET" "/brand/sinet-lockup@2x.png" "200"
+check "Brand lockup compact served" "GET" "/brand/sinet-lockup-compact.png" "200"
+check "Brand lockup compact 2x served" "GET" "/brand/sinet-lockup-compact@2x.png" "200"
 check "Brand square mark served" "GET" "/brand/sinet-mark.png" "200"
+check "Brand square mark 2x served" "GET" "/brand/sinet-mark@2x.png" "200"
+check "Brand square mark 512 served" "GET" "/brand/sinet-mark-512.png" "200"
 
 # 10. Internal link crawl (B7) — fail on 404/500 from sitemap/nav/footer seeds
 echo ""
