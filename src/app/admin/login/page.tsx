@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Logo } from '@/components/brand/Logo';
 import { AdminField, AdminInput } from '@admin/components/ui/AdminField';
 
 function sanitizeRedirect(target: string | null, fallback: string = '/admin'): string {
@@ -136,8 +137,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-[#f6f2e8] flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d1a4a]">
-            <span className="text-xl font-bold text-[#d9a23c]">S</span>
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <Logo variant="compact" height={40} className="h-10 w-auto" />
           </div>
           <h1 className="text-2xl font-semibold text-[#0d1a4a]">SINet Admin</h1>
           <p className="mt-1 text-sm text-[#7b7263]">Sign in to the staff console</p>

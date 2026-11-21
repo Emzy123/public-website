@@ -710,7 +710,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
   pageSeo: DEFAULT_PAGE_SEO,
   logoUrl: getLogoAssetUrl('mark'),
-  footerLogoUrl: getLogoAssetUrl('lockup', 'dark'),
+  footerLogoUrl: getLogoAssetUrl('full'),
 };
 
 const DEFAULTS: CmsDataMap = {
@@ -935,7 +935,7 @@ export function normalizeSiteSettings(data: Partial<SiteSettings> | undefined): 
     seo: { ...defaults.seo, ...data.seo },
     pageSeo: { ...defaults.pageSeo, ...data.pageSeo },
     logoUrl: normalizeLogoPath(data.logoUrl, defaults.logoUrl ?? getLogoAssetUrl('mark')),
-    footerLogoUrl: normalizeLogoPath(data.footerLogoUrl, defaults.footerLogoUrl ?? getLogoAssetUrl('lockup', 'dark')),
+    footerLogoUrl: normalizeLogoPath(data.footerLogoUrl, defaults.footerLogoUrl ?? getLogoAssetUrl('full')),
   };
 }
 
@@ -950,6 +950,10 @@ function normalizeLogoPath(value: string | undefined, fallback: string): string 
     'images/logo.jpg',
     '/images/logo-icon.svg',
     '/images/sinet-logo.svg',
+    '/brand/sinet-lockup-dark.png',
+    '/brand/sinet-lockup-dark@2x.png',
+    '/brand/sinet-lockup-transparent.png',
+    '/images/logo-mark.png',
   ];
   if (broken.some((path) => url === path || url.endsWith(path))) return fallback;
   return url;

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Logo } from '@/components/brand/Logo';
 import { APPLICATION_ROLES, ALL_APPLICATION_ROLES, ROLE_LABELS, normalizeRoleSlug, type ApplicationRole } from '@/lib/types/membership';
 import {
   ROLE_DEFINITIONS,
@@ -419,8 +420,9 @@ export function CampaignApplicationWizard({ slug, allowedRoles }: { slug: string
       />
       <header className="bg-[#0d1a4a] text-[#f6f2e8]">
         <div className="mx-auto flex max-w-[1160px] items-center justify-between px-4 py-5 xs:px-5 xs:py-6 lg:px-8">
-          <Link href="/" className="font-editorial text-xl font-semibold xs:text-2xl">
-            SINet. — Join
+          <Link href="/" className="flex items-center gap-2" aria-label="SINet home">
+            <Logo variant="compact" height={28} className="h-7 w-auto" />
+            <span className="font-semibold text-white/80">— Join</span>
           </Link>
           <button
             type="button"

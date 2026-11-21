@@ -21,14 +21,15 @@ All generated assets in `public/brand/` and `public/` are interim rasters derive
 
 | Asset Path | Target Dimensions | Purpose | Notes |
 |------------|-------------------|---------|-------|
-| `public/brand/sinet-lockup-dark.png` | 1196 × 459 (@2x) / 598 × 230 (@1x) | Lockup on black/navy backgrounds | Pixel-faithful trimmed raster from source master |
-| `public/brand/sinet-lockup-transparent.png` | 1196 × 459 | Lockup on transparent/light canvas | Outer black background keyed via boundary flood-fill |
-| `public/brand/sinet-mark.png` | 512 × 512 | Standalone square brand icon (eagle + swoosh) | Center-cropped and padded |
-| `public/favicon.ico` | 48 × 48 (multi-size ICO) | Browser tab favicon | Conforms to Next.js app conventions |
-| `public/icon.png` | 512 × 512 | PWA / general app icon | High-resolution brand mark |
-| `public/apple-icon.png` | 180 × 180 | Apple touch icon for iOS Safari | Square mark on dark brand background |
-| `public/manifest-icon-192.png` | 192 × 192 | PWA manifest icon | Standard density Android / Web manifest |
-| `public/manifest-icon-512.png` | 512 × 512 | PWA maskable manifest icon | High density Android / Web manifest |
+| `public/brand/sinet-lockup.png` / `@2x` | 480 × 183 (@1x) / 960 × 367 (@2x) | Transparent full brand lockup with tagline | Used in hero and footer |
+| `public/brand/sinet-lockup-compact.png` / `@2x` | 171 × 48 (@1x) / 342 × 96 (@2x) | Transparent compact lockup without tagline | Used in header, mobile menu, auth screens |
+| `public/brand/sinet-mark.png` / `@2x` / `-512` | 96 × 95 / 192 × 190 / 512 × 512 | Transparent square brand icon (eagle + swoosh) | Admin shell, favicons, app icons |
+| `public/brand/sinet-lockup-dark.png` | 598 × 230 (@1x) | Lockup on dark backgrounds for email clients | Preserved specifically for email tables |
+| `src/app/favicon.ico` | 16 × 16, 32 × 32, 48 × 48 | Multi-resolution tab icon | Transparent mark |
+| `src/app/icon.png` | 512 × 512 | App icon / PWA | Transparent mark |
+| `src/app/apple-icon.png` | 180 × 180 | Apple touch icon for iOS Safari | Mark centered on ink `#0A0A0F` with ~12% padding |
+| `public/manifest-icon-192.png` | 192 × 192 | PWA manifest icon | Standard density Web manifest |
+| `public/manifest-icon-512.png` | 512 × 512 | PWA manifest icon | High density Web manifest |
 | `public/og-image.png` | 1200 × 630 | OpenGraph & Twitter preview image | Lockup centered on `#0A0A0F` with tagline "BUILDING AFRICA'S FUTURE SYSTEMS" |
 
 ### Background Keying Assessment

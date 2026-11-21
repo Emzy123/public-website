@@ -36,101 +36,17 @@ async function build() {
   console.log(`Trimmed lockup: ${trimWidth}x${trimHeight}`);
 
   // -------------------------------------------------------------
-  // 2. Lockup Dark (@1x and @2x)
+  // 2. Lockup Dark (@1x for email templates)
   // -------------------------------------------------------------
-  const lockupDark2xPath = path.join(PUBLIC_BRAND_DIR, 'sinet-lockup-dark@2x.png');
   const lockupDark1xPath = path.join(PUBLIC_BRAND_DIR, 'sinet-lockup-dark.png');
 
-  // @2x full resolution trimmed
-  await sharp(trimmedBuffer)
-    .png({ quality: 100, compressionLevel: 9 })
-    .toFile(lockupDark2xPath);
-
-  // @1x half resolution
+  // @1x half resolution for email clients
   await sharp(trimmedBuffer)
     .resize(Math.round(trimWidth / 2), Math.round(trimHeight / 2))
     .png({ quality: 100, compressionLevel: 9 })
     .toFile(lockupDark1xPath);
 
-  console.log(`✓ Generated ${lockupDark1xPath} (@1x) & ${lockupDark2xPath} (@2x)`);
-
-  // -------------------------------------------------------------
-  // 3. Lockup Transparent (near-black background keyed out with flood-fill)
-  // -------------------------------------------------------------
-  const lockupTransPath = path.join(PUBLIC_BRAND_DIR, 'sinet-lockup-transparent.png');
-  const { data: rawData, info: rawInfo } = await sharp(trimmedBuffer)
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const w = rawInfo.width;
-  const h = rawInfo.height;
-  const isOuterBlack = new Uint8Array(w * h);
-  const queue = [];
-
-  // Seed boundary pixels where max(R,G,B) is dark (< 18)
-  for (let x = 0; x < w; x++) {
-    for (const y of [0, h - 1]) {
-      const idx = (y * w + x) * 4;
-      if (Math.max(rawData[idx], rawData[idx + 1], rawData[idx + 2]) < 18) {
-        const p = y * w + x;
-        isOuterBlack[p] = 1;
-        queue.push(p);
-      }
-    }
-  }
-  for (let y = 0; y < h; y++) {
-    for (const x of [0, w - 1]) {
-      const idx = (y * w + x) * 4;
-      if (Math.max(rawData[idx], rawData[idx + 1], rawData[idx + 2]) < 18) {
-        const p = y * w + x;
-        if (!isOuterBlack[p]) {
-          isOuterBlack[p] = 1;
-          queue.push(p);
-        }
-      }
-    }
-  }
-
-  // BFS flood-fill outward black background
-  let head = 0;
-  while (head < queue.length) {
-    const p = queue[head++];
-    const px = p % w;
-    const py = Math.floor(p / w);
-
-    const neighbors = [
-      py > 0 ? p - w : -1,
-      py < h - 1 ? p + w : -1,
-      px > 0 ? p - 1 : -1,
-      px < w - 1 ? p + 1 : -1,
-    ];
-
-    for (const n of neighbors) {
-      if (n >= 0 && !isOuterBlack[n]) {
-        const nidx = n * 4;
-        const maxVal = Math.max(rawData[nidx], rawData[nidx + 1], rawData[nidx + 2]);
-        if (maxVal < 16) {
-          isOuterBlack[n] = 1;
-          queue.push(n);
-        }
-      }
-    }
-  }
-
-  // Apply alpha mask to outer black pixels
-  const transBuffer = Buffer.from(rawData);
-  for (let i = 0; i < w * h; i++) {
-    if (isOuterBlack[i]) {
-      transBuffer[i * 4 + 3] = 0; // Alpha 0
-    }
-  }
-
-  await sharp(transBuffer, { raw: { width: w, height: h, channels: 4 } })
-    .png({ quality: 100, compressionLevel: 9 })
-    .toFile(lockupTransPath);
-
-  console.log(`✓ Generated ${lockupTransPath} (keyed ${queue.length} outer background pixels)`);
+  console.log(`✓ Generated ${lockupDark1xPath} (@1x for email clients)`);
 
   // -------------------------------------------------------------
   // 4. Brand Mark (S swoosh + eagle, square icon)
@@ -183,10 +99,28 @@ async function build() {
   fs.writeFileSync(manifest192Path, manifest192Buffer);
   fs.writeFileSync(manifest512Path, mark512Buffer);
 
-  // apple-icon (180x180, encoded <= 20 KB)
-  const appleIconBuffer = await sharp(mark512Buffer)
-    .resize(180, 180)
-    .png({ palette: true, quality: 80, compressionLevel: 9, effort: 10 })
+  // apple-icon (180x180 opaque on ink #0A0A0F with ~12% padding, mark size ~137px)
+  const paddedMarkSize = Math.round(180 * (1 - 0.24)); // 137px
+  const markForApple = await sharp(mark512Buffer)
+    .resize(paddedMarkSize, paddedMarkSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .toBuffer();
+
+  const appleIconBuffer = await sharp({
+    create: {
+      width: 180,
+      height: 180,
+      channels: 4,
+      background: { r: 10, g: 10, b: 15, alpha: 1 }, // #0A0A0F ink
+    },
+  })
+    .composite([
+      {
+        input: markForApple,
+        top: Math.round((180 - paddedMarkSize) / 2),
+        left: Math.round((180 - paddedMarkSize) / 2),
+      },
+    ])
+    .png({ palette: true, quality: 90, compressionLevel: 9, effort: 10 })
     .toBuffer();
 
   // Build multi-size favicon.ico (16, 32, 48) with sharpened, legible 16px rendering

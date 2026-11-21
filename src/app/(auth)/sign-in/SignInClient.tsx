@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/brand/Logo';
 import { FormField, Input, Button } from '@/components/ui';
 
 export function SignInClient() {
@@ -57,10 +58,8 @@ export function SignInClient() {
     <div className="min-h-screen bg-brand-canvas text-brand-ink flex flex-col justify-center px-4 py-12 xs:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <span className="font-editorial text-3xl font-bold tracking-tight text-brand-ink">
-              SINet<span className="text-brand-accent">.</span>
-            </span>
+          <Link href="/" className="inline-flex items-center justify-center" aria-label="SINet home">
+            <Logo variant="compact" height={36} className="h-9 w-auto" />
           </Link>
           <h1 className="mt-4 font-editorial text-2xl xs:text-3xl font-bold tracking-tight text-brand-ink">
             Sign in to SINet
