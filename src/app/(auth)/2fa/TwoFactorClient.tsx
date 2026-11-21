@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Logo } from '@/components/brand/Logo';
 
 export function TwoFactorClient() {
   const router = useRouter();
@@ -60,10 +61,8 @@ export function TwoFactorClient() {
     <div className="min-h-screen bg-[#f6f2e8] text-[#0d1a4a] flex flex-col justify-center px-4 py-12 xs:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <span className="font-editorial text-3xl font-bold tracking-tight text-[#0d1a4a]">
-              SINet<span className="text-[#d9711b]">.</span>
-            </span>
+          <Link href="/" className="inline-flex items-center justify-center" aria-label="SINet home">
+            <Logo variant="compact" height={36} className="h-9 w-auto" />
           </Link>
           <p className="mt-2 text-xs font-data uppercase tracking-[.18em] text-[#d9711b]">
             Admin Security

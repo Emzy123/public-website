@@ -150,7 +150,7 @@ function SidebarContent({
       {/* Brand Header */}
       <div className="flex items-center justify-between border-b border-slate-800/80 px-5 py-4">
         <Link href="/admin" onClick={onClose} className="flex items-center gap-2.5">
-          <Logo variant="mark" size={32} className="rounded-xl shadow-md shrink-0" />
+          <Logo variant="mark" size={32} alt="" className="shrink-0" />
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold tracking-tight text-white text-sm">SINet</span>
