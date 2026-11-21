@@ -42,6 +42,12 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   }, [logoUrl]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && (window.location.hash === '#menu' || window.location.search.includes('menu=open'))) {
+      setIsMobileMenuOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 12);
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -94,47 +100,19 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   return (
     <>
       <header
-        className={`sticky z-40 border-b border-[#0d1a4a]/15 transition-all duration-300 ${
+        className={`sticky z-40 border-b border-white/10 transition-all duration-300 ${
           stackOffset ? 'top-10' : 'top-0'
-        } ${isScrolled ? 'bg-[#f6f2e8]/95 backdrop-blur-md shadow-[0_5px_20px_rgba(13,26,74,.06)]' : 'bg-[#f6f2e8]'}`}
+        } ${isScrolled ? 'bg-[#0A0A0F]/95 backdrop-blur-md shadow-[0_5px_20px_rgba(0,0,0,0.4)]' : 'bg-[#0A0A0F]'}`}
       >
         <div className="mx-auto flex h-[77px] max-w-[1220px] items-center justify-between px-5 lg:px-8">
           {/* Logo */}
-          <Link href="/" className="group flex items-center gap-2.5" aria-label="SINet home">
-            {brandLogo !== DEFAULT_LOGO && !logoFailed ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={brandLogo}
-                alt="SINet"
-                width={wordmark ? 160 : 36}
-                height={wordmark ? 48 : 36}
-                className={
-                  wordmark
-                    ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
-                    : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
-                }
-                onError={() => setLogoFailed(true)}
-              />
-            ) : (
-              <Logo
-                variant={wordmark ? 'lockup' : 'mark'}
-                theme="dark"
-                width={wordmark ? 160 : 36}
-                height={wordmark ? 48 : 36}
-                priority={true}
-                className={
-                  wordmark
-                    ? 'h-9 w-auto max-w-[160px] object-contain transition-transform group-hover:-rotate-1'
-                    : 'h-9 w-9 object-contain transition-transform group-hover:-rotate-6'
-                }
-                onError={() => setLogoFailed(true)}
-              />
-            )}
-            {!wordmark && (
-              <span className="font-editorial text-[26px] font-semibold tracking-[-.04em] text-[#0d1a4a]">
-                SINet<span className="text-[#d9711b]">.</span>
-              </span>
-            )}
+          <Link href="/" className="group flex items-center" aria-label="SINet home">
+            <Logo
+              variant="compact"
+              height={40}
+              priority={true}
+              className="h-8 w-auto sm:h-10"
+            />
           </Link>
 
           {/* Desktop Nav */}
@@ -157,14 +135,14 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
                       aria-haspopup="true"
                       className={`inline-flex items-center gap-1 px-3 py-2 text-[13px] font-medium transition-colors ${
                         isChildActive || isCommunityDropdownOpen
-                          ? 'font-semibold text-[#0d1a4a]'
-                          : 'text-[#4f4b43] hover:text-[#d9711b]'
+                          ? 'font-semibold text-[#E0A92E]'
+                          : 'text-[#F6F2E8]/85 hover:text-[#E0A92E]'
                       }`}
                     >
                       <span>{item.label}</span>
                       <svg
                         className={`h-3.5 w-3.5 transition-transform duration-200 ${
-                          isCommunityDropdownOpen ? 'rotate-180 text-[#d9711b]' : 'text-[#4f4b43]'
+                          isCommunityDropdownOpen ? 'rotate-180 text-[#E0A92E]' : 'text-[#F6F2E8]/70'
                         }`}
                         fill="none"
                         viewBox="0 0 24 24"
@@ -178,7 +156,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
                       <div
                         role="menu"
                         aria-label="Community navigation"
-                        className="absolute left-0 top-full z-50 w-52 rounded-xl border border-[#0d1a4a]/15 bg-white p-2 shadow-xl ring-1 ring-black/5"
+                        className="absolute left-0 top-full z-50 w-52 rounded-xl border border-white/15 bg-[#0A0A0F] p-2 shadow-xl ring-1 ring-black/20"
                       >
                         {item.children.map((child) => {
                           const active = pathname === child.href;
@@ -190,8 +168,8 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
                               onClick={() => setIsCommunityDropdownOpen(false)}
                               className={`block rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors ${
                                 active
-                                  ? 'bg-[#d9711b]/10 text-[#d9711b]'
-                                  : 'text-[#0d1a4a] hover:bg-[#f6f2e8] hover:text-[#d9711b]'
+                                  ? 'bg-white/10 text-[#E0A92E]'
+                                  : 'text-[#F6F2E8]/85 hover:bg-white/10 hover:text-[#E0A92E]'
                               }`}
                             >
                               {child.label}
@@ -210,7 +188,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
                   key={item.label}
                   href={item.href || '#'}
                   className={`px-3 py-2 text-[13px] transition-colors ${
-                    active ? 'font-semibold text-[#0d1a4a]' : 'text-[#4f4b43] hover:text-[#d9711b]'
+                    active ? 'font-semibold text-[#E0A92E]' : 'text-[#F6F2E8]/85 hover:text-[#E0A92E]'
                   }`}
                 >
                   {item.label}
@@ -223,7 +201,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
           <div className="hidden items-center gap-3 xl:flex">
             <Link
               href="/sign-in"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#0d1a4a]/25 bg-transparent px-3.5 py-2 text-xs font-semibold text-[#0d1a4a] transition-colors hover:border-[#0d1a4a] hover:bg-[#0d1a4a]/5"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3.5 py-2 text-xs font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
             >
               Sign in
             </Link>
@@ -231,7 +209,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
             {isCampaignOpen ? (
               <Link
                 href={campaignUrl || '/join'}
-                className="inline-flex rounded-lg bg-[#0d1a4a] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]"
+                className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
               >
                 Apply Now
               </Link>
@@ -239,7 +217,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => setIsNotifyModalOpen(true)}
-                className="inline-flex rounded-lg bg-[#0d1a4a] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#d9711b]"
+                className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
               >
                 Get Notified
               </button>
@@ -249,7 +227,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
           {/* Mobile menu toggle */}
           <button
             type="button"
-            className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#0d1a4a]/20 text-[#0d1a4a] xl:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 text-[#F6F2E8] hover:bg-white/5 xl:hidden"
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Open menu"
           >
