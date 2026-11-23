@@ -34,8 +34,10 @@ describe('Offline PWA & Budget Android Optimizations', () => {
     expect(swContent).toContain('/api/verify/');
   });
 
-  test('middleware.ts includes worker-src and manifest-src in CSP', () => {
-    const middlewarePath = path.join(rootDir, 'src', 'middleware.ts');
+  test('middleware/proxy includes worker-src and manifest-src in CSP', () => {
+    const middlewarePath = fs.existsSync(path.join(rootDir, 'src', 'proxy.ts'))
+      ? path.join(rootDir, 'src', 'proxy.ts')
+      : path.join(rootDir, 'src', 'middleware.ts');
     const content = fs.readFileSync(middlewarePath, 'utf-8');
 
     expect(content).toContain("worker-src 'self';");
