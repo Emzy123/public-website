@@ -77,7 +77,7 @@ function applySecurityHeaders(response: NextResponse, pathname: string, csp: str
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const nonce = crypto.randomUUID();

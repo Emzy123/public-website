@@ -3,6 +3,11 @@ import { listPublishedPosts } from '@/lib/posts/posts';
 import { POST_PILLARS, type PostPillar } from '@/lib/db/schema/posts';
 import { formatWatDate } from '@/lib/date';
 
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata = {
   title: 'News & Dispatches',
   description:
@@ -19,14 +24,15 @@ const PILLAR_LABELS: Record<PostPillar, string> = {
 };
 
 interface NewsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     pillar?: string;
     q?: string;
     page?: string;
-  };
+  }>;
 }
 
-export default async function NewsPage({ searchParams }: NewsPageProps) {
+export default async function NewsPage(props: NewsPageProps) {
+  const searchParams = await props.searchParams;
   const selectedPillar = (
     searchParams.pillar && (POST_PILLARS as readonly string[]).includes(searchParams.pillar)
       ? searchParams.pillar

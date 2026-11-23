@@ -2,6 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CONTACT_EMAIL, OFFICIAL_LEGAL_NAME } from '@/lib/site-config';
 
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'Learn how SINet collects, uses, and protects your personal information. Your privacy matters to us.',

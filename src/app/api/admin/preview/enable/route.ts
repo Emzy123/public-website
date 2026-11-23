@@ -12,6 +12,6 @@ export async function POST(request: NextRequest) {
   const csrf = await verifyCsrfToken(request);
   if (!csrf.ok) return csrf.response;
 
-  cookies().set(previewCookieOptions(true));
+  (await cookies()).set(previewCookieOptions(true));
   return NextResponse.json({ success: true });
 }

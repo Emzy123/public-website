@@ -24,10 +24,8 @@ function pathwayLabel(pathway: string): string {
   return pathway.replace('_', ' ');
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     await requireRole(['super_admin', 'admin', 'chapter_lead'], request);
   } catch (authErr) {

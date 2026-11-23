@@ -6,9 +6,15 @@ import { SITE_URL } from '@/lib/site-config';
 import { formatWatDate } from '@/lib/date';
 import type { Metadata } from 'next';
 
-type Props = { params: { slug: string } };
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const post = await getPostBySlug(params.slug);
   if (!post) {
     return {
@@ -44,7 +50,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function NewsPostPage({ params }: Props) {
+export default async function NewsPostPage(props: Props) {
+  const params = await props.params;
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
 

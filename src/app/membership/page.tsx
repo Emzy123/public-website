@@ -2,6 +2,11 @@ import Link from 'next/link';
 import { getActiveMembershipApplication } from '@/lib/applications/active-link';
 import { MembershipRolesGrid } from '@/components/membership/MembershipRolesGrid';
 
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata = {
   title: 'Join SINet | Membership',
   description:

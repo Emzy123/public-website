@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getChapterBySlug } from '@/lib/chapters/chapters';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   try {
     const chapter = await getChapterBySlug(params.slug);
     if (!chapter) {

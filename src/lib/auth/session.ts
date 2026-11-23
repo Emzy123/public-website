@@ -122,7 +122,7 @@ export function getSessionCookieOptions(maxAge = SESSION_MAX_AGE) {
 }
 
 export async function getSession(): Promise<AuthSession | null> {
-  const token = cookies().get(MEMBER_SESSION_COOKIE)?.value;
+  const token = (await cookies()).get(MEMBER_SESSION_COOKIE)?.value;
   if (!token) return null;
   return verifySessionToken(token);
 }

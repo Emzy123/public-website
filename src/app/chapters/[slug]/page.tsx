@@ -4,11 +4,17 @@ import { notFound } from 'next/navigation';
 import { getChapterBySlug } from '@/lib/chapters/chapters';
 import { STUDENT_DIVISION_INFO } from '@/lib/schemas/member-application.schema';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const chapter = await getChapterBySlug(params.slug);
   if (!chapter) {
     return {
@@ -23,11 +29,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function ChapterDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function ChapterDetailPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const chapter = await getChapterBySlug(params.slug);
 
   if (!chapter) {

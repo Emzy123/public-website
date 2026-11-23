@@ -3,14 +3,15 @@ import { getMediaFile } from '@/lib/media/gridfs';
 
 export const runtime = 'nodejs';
 
-type RouteContext = { params: { id: string } };
+type RouteContext = { params: Promise<{ id: string }> };
 
 /**
  * Public CMS media (flyers, gallery, logos). Files live in the cms_media GridFS
  * bucket and are intended for the marketing site — no signed URL required.
  * Application documents use a separate admin-only route.
  */
-export async function GET(_request: NextRequest, { params }: RouteContext) {
+export async function GET(_request: NextRequest, props: RouteContext) {
+  const params = await props.params;
   const { id } = params;
 
   try {

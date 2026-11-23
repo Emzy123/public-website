@@ -56,12 +56,19 @@ export const metadata: Metadata = {
 import { headers } from 'next/headers';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const nonce = headers().get('x-nonce') || undefined;
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
+export default async function RootLayout(
+  {
+    children,
+  }: {
+    children: React.ReactNode;
+  }
+) {
+  const nonce = (await headers()).get('x-nonce') || undefined;
 
   return (
     <html lang="en" className={`scroll-smooth ${sora.variable} ${inter.variable}`}>

@@ -10,7 +10,7 @@ import { AdvertSpotlight } from './AdvertSpotlight';
 import { isAdvertSuppressedRoute } from '@/lib/adverts/suppression';
 
 export async function SiteChrome({ children }: { children: React.ReactNode }) {
-  const pathname = headers().get('x-pathname') ?? '';
+  const pathname = (await headers()).get('x-pathname') ?? '';
   const isAdmin = pathname.startsWith('/admin');
 
   if (isAdmin) {

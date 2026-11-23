@@ -7,7 +7,7 @@
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -33,13 +33,13 @@
     "framer-motion": "^12.43.0",
     "jose": "^6.2.3",
     "mongodb": "^7.1.0",
-    "next": "14.2.35",
+    "next": "16.4.6",
     "next-sitemap": "^4.2.3",
     "otpauth": "^9.5.1",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "react-google-recaptcha": "^3.1.0",
     "react-hook-form": "^7.71.2",
     "react-markdown": "^10.1.0",
@@ -54,13 +54,13 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "@types/sanitize-html": "^2.16.2",
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.11",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.6",
     "fast-check": "^4.6.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
@@ -73,6 +73,8 @@
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "$postcss"
+    "postcss": "$postcss",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0"
   }
 }

@@ -5,13 +5,19 @@ import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/me
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: {
-  params: { memberId: string };
-  searchParams?: { sig?: string };
-}): Promise<Metadata> {
+// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
+// Remove this opt-out after verifying the segment passes validation without it.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
+export async function generateMetadata(
+  props: {
+    params: Promise<{ memberId: string }>;
+    searchParams?: Promise<{ sig?: string }>;
+  }
+): Promise<Metadata> {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   try {
     const record = await getVerifiedMemberRecord(params.memberId);
     if (!record) {
@@ -44,14 +50,15 @@ export async function generateMetadata({
   }
 }
 
-export default async function MemberVerificationPage({
-  params,
-  searchParams,
-}: {
-  params: { memberId: string };
-  searchParams: { sig?: string };
-}) {
-  const headerList = headers();
+export default async function MemberVerificationPage(
+  props: {
+    params: Promise<{ memberId: string }>;
+    searchParams: Promise<{ sig?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const headerList = await headers();
   const clientIp = getClientIp(headerList);
   const limit = await enforceRateLimit(clientIp, 'verify-member-credential', 60, 60);
 

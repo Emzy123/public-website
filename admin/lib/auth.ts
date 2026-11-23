@@ -42,7 +42,7 @@ export async function verifySession(token: string): Promise<AdminSession | null>
 }
 
 export async function getSession(): Promise<AdminSession | null> {
-  const token = cookies().get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   return verifySession(token);
 }
