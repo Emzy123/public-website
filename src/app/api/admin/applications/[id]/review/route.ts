@@ -20,7 +20,7 @@ const reviewDecisionSchema = z.object({
   remarks: z.string().trim().max(1000).optional(),
 });
 
-export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> | { id: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });

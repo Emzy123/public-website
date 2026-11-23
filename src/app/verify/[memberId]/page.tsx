@@ -7,8 +7,8 @@ import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified
 
 export async function generateMetadata(
   props: {
-    params: Promise<{ memberId: string }> | { memberId: string };
-    searchParams?: Promise<{ sig?: string }> | { sig?: string };
+    params: Promise<{ memberId: string }>;
+    searchParams?: Promise<{ sig?: string }>;
   }
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
@@ -47,8 +47,8 @@ export async function generateMetadata(
 
 export default async function MemberVerificationPage(
   props: {
-    params: Promise<{ memberId: string }> | { memberId: string };
-    searchParams?: Promise<{ sig?: string }> | { sig?: string };
+    params: Promise<{ memberId: string }>;
+    searchParams?: Promise<{ sig?: string }>;
   }
 ) {
   const searchParams = await props.searchParams;

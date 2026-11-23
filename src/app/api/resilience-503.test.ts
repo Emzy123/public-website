@@ -28,7 +28,7 @@ describe('P1 Availability - 503 Handling on Postgres Down', () => {
     );
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001');
-    const res = await getVerifyMember(req, { params: { memberId: 'SIN-FULOKOJA-24-0001' } });
+    const res = await getVerifyMember(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
 
     expect(res.status).toBe(503);
     const body = await res.json();

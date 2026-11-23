@@ -75,7 +75,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       body: JSON.stringify(validStaffBody),
     });
 
-    const res = await POST(req, { params: { slug: 'lagos-public-drive' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'lagos-public-drive' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();
@@ -111,7 +111,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       body: JSON.stringify(validStaffBody),
     });
 
-    const res = await POST(req, { params: { slug: 'hq-staff-invite-only' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'hq-staff-invite-only' }) });
     expect(res.status).toBe(201);
 
     const body = await res.json();
@@ -149,7 +149,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       body: JSON.stringify(validStaffBody),
     });
 
-    const res = await POST(req, { params: { slug: 'student-network' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'student-network' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();
@@ -189,7 +189,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       }),
     });
 
-    const res = await POST(req, { params: { slug: 'hq-staff-kogi' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'hq-staff-kogi' }) });
     expect(res.status).toBe(201);
 
     expect(mockCollection.insertOne).toHaveBeenCalledWith(
@@ -243,7 +243,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       }),
     });
 
-    const res = await POST(req, { params: { slug: 'hq-staff-anywhere' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'hq-staff-anywhere' }) });
     expect(res.status).toBe(201);
 
     expect(mockCollection.insertOne).toHaveBeenCalledWith(
@@ -292,7 +292,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       }),
     });
 
-    const res = await POST(req, { params: { slug: 'hq-staff-anywhere' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'hq-staff-anywhere' }) });
     expect(res.status).toBe(503);
     const json = await res.json();
     expect(json.retryable).toBe(true);
@@ -344,7 +344,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
       body: JSON.stringify(validStudentPayload),
     });
 
-    const res = await POST(req, { params: { slug: 'student-network' } });
+    const res = await POST(req, { params: Promise.resolve({ slug: 'student-network' }) });
     expect(res.status).toBe(201);
     expect(submitSpy).toHaveBeenCalledWith(
       'student-network',
@@ -381,7 +381,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'closed-drive' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'closed-drive' }) });
       expect(res.status).toBe(403);
       const data = await res.json();
       expect(data.error).toContain('closed');
@@ -416,7 +416,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'expired-drive' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'expired-drive' }) });
       expect(res.status).toBe(410);
       const data = await res.json();
       expect(data.error).toContain('passed');
@@ -450,7 +450,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'full-drive' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'full-drive' }) });
       expect(res.status).toBe(409);
       const data = await res.json();
       expect(data.error).toContain('capacity');
@@ -488,7 +488,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         }),
       });
 
-      const res = await POST(req, { params: { slug: 'closed-cohort' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'closed-cohort' }) });
       expect(res.status).toBe(403);
       const data = await res.json();
       expect(data.status).toBe('Closed');
@@ -526,7 +526,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         }),
       });
 
-      const res = await POST(req, { params: { slug: 'expired-cohort' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'expired-cohort' }) });
       expect(res.status).toBe(410);
       const data = await res.json();
       expect(data.status).toBe('Expired');
@@ -564,7 +564,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         }),
       });
 
-      const res = await POST(req, { params: { slug: 'full-cohort' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'full-cohort' }) });
       expect(res.status).toBe(409);
       const data = await res.json();
       expect(data.status).toBe('Full');
@@ -609,7 +609,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'race-link' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'race-link' }) });
       expect(res.status).toBe(409);
       const data = await res.json();
       expect(data.status).toBe('Full');
@@ -645,7 +645,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'fail-insert-link' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'fail-insert-link' }) });
       expect(res.status).toBe(503);
       expect(releaseSpy).toHaveBeenCalledWith(expect.anything(), 'fail-insert-link');
     });
@@ -681,7 +681,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'unlimited-link' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'unlimited-link' }) });
       expect(res.status).toBe(201);
       const data = await res.json();
       expect(data.success).toBe(true);
@@ -720,7 +720,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validStaffBody),
       });
 
-      const res = await POST(req, { params: { slug: 'zero-limit-link' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'zero-limit-link' }) });
       expect(res.status).toBe(201);
       const data = await res.json();
       expect(data.success).toBe(true);
@@ -762,7 +762,7 @@ describe('POST /api/join/[slug]/apply server-side role enforcement', () => {
         body: JSON.stringify(validCampaignBody),
       });
 
-      const res = await POST(req, { params: { slug: 'test-campaign' } });
+      const res = await POST(req, { params: Promise.resolve({ slug: 'test-campaign' }) });
       expect(res.status).toBe(503);
     });
   });
