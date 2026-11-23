@@ -12,8 +12,8 @@ export const instant = false;
 
 export async function generateMetadata(
   props: {
-    params: Promise<{ memberId: string }>;
-    searchParams?: Promise<{ sig?: string }>;
+    params: Promise<{ memberId: string }> | { memberId: string };
+    searchParams?: Promise<{ sig?: string }> | { sig?: string };
   }
 ): Promise<Metadata> {
   const searchParams = await props.searchParams;
@@ -52,8 +52,8 @@ export async function generateMetadata(
 
 export default async function MemberVerificationPage(
   props: {
-    params: Promise<{ memberId: string }>;
-    searchParams: Promise<{ sig?: string }>;
+    params: Promise<{ memberId: string }> | { memberId: string };
+    searchParams?: Promise<{ sig?: string }> | { sig?: string };
   }
 ) {
   const searchParams = await props.searchParams;
@@ -191,7 +191,7 @@ export default async function MemberVerificationPage(
     );
   }
 
-  const isSigValid = searchParams.sig
+  const isSigValid = searchParams?.sig
     ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
     : false;
 

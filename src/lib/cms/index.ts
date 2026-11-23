@@ -16,6 +16,7 @@ import { gateUnsignedCmsContent } from '@/lib/compliance/unsigned-claims';
 
 /** Public-site CMS reader. Uses draft content when preview mode cookie is active. */
 export async function getCmsContent<K extends CmsKey>(key: K): Promise<CmsDataMap[K]> {
-  const content = await getPublishedOrPreviewContent(key, { preview: isPreviewMode() });
+  const preview = await isPreviewMode();
+  const content = await getPublishedOrPreviewContent(key, { preview });
   return gateUnsignedCmsContent(content);
 }

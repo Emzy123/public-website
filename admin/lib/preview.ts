@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { cookies, type UnsafeUnwrappedCookies } from 'next/headers';
+import { cookies } from 'next/headers';
 import { isProductionMode } from '@/lib/runtime/envMode';
 
 export const PREVIEW_COOKIE = 'sinet_cms_preview';
@@ -50,9 +50,9 @@ export function verifyPreviewToken(value: string | undefined): boolean {
   }
 }
 
-export function isPreviewMode(): boolean {
-  return verifyPreviewToken((/* @next-codemod-error Await this API and update its callers; remove the temporary UnsafeUnwrappedCookies cast after repairing the migration. */
-  cookies() as unknown as UnsafeUnwrappedCookies).get(PREVIEW_COOKIE)?.value);
+export async function isPreviewMode(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return verifyPreviewToken(cookieStore.get(PREVIEW_COOKIE)?.value);
 }
 
 export function previewCookieOptions(enabled: boolean) {

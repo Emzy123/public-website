@@ -10,7 +10,7 @@ const decisionSchema = z.object({
   rejectionReason: z.string().max(500).optional(),
 });
 
-export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> | { id: string } }) {
   const params = await props.params;
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });

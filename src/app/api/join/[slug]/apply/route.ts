@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   return issueCsrfToken(request);
 }
 
-export async function POST(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ slug: string }> | { slug: string } }) {
   const params = await props.params;
   const blocked = await enforcePublicFormGuards(request, {
     routeKey: 'applications',

@@ -22,7 +22,7 @@ const updateAnnouncementSchema = z.object({
   isApproved: z.boolean().optional(),
 });
 
-export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> | { id: string } }) {
   const params = await props.params;
   const session = await getSession();
   if (!session) {

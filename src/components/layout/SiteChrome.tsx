@@ -18,7 +18,7 @@ export async function SiteChrome({ children }: { children: React.ReactNode }) {
   }
 
   const isSuppressed = isAdvertSuppressedRoute(pathname);
-  const preview = isPreviewMode();
+  const preview = await isPreviewMode();
   const [settings, adverts, linkAdverts] = await Promise.all([
     getCmsContent('site-settings'),
     getCmsContent('adverts'),

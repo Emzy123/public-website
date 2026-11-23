@@ -14,7 +14,7 @@ const updateSchema = z.object({
   tags: z.array(z.string()).max(10).optional(),
 });
 
-export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> | { slug: string } }) {
   const params = await props.params;
   try {
     const post = await getPostBySlug(params.slug);
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ slug:
   }
 }
 
-export async function PATCH(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ slug: string }> | { slug: string } }) {
   const params = await props.params;
   if (!validateOrigin(request)) {
     return NextResponse.json({ error: 'Forbidden origin.' }, { status: 403 });

@@ -3,7 +3,7 @@ import { getMediaFile } from '@/lib/media/gridfs';
 
 export const runtime = 'nodejs';
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = { params: Promise<{ id: string }> | { id: string } };
 
 /**
  * Public CMS media (flyers, gallery, logos). Files live in the cms_media GridFS

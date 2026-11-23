@@ -3,7 +3,7 @@ import { getSession as getAdminSession } from '@admin/lib/auth';
 import { getSession as getMemberSession } from '@/lib/auth/session';
 import { getApplicationDocument } from '@/lib/applications/document-storage';
 
-export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> | { id: string } }) {
   const params = await props.params;
   const adminSession = await getAdminSession().catch(() => null);
   let isAuthorized = Boolean(adminSession?.email);
