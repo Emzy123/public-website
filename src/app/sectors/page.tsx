@@ -1,10 +1,5 @@
 import Link from 'next/link';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 const PILLARS = [
   { id: 'agriculture', title: 'Agriculture', body: 'Production, aggregation, processing, and agribusiness — building practical enterprise from the ground up across Nigeria.' },
   { id: 'trade', title: 'Trade & Goods Distribution', body: 'Wholesale supply, logistics, and distribution — connecting producers to markets and communities to goods.' },

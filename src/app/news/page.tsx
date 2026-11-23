@@ -3,11 +3,6 @@ import { listPublishedPosts } from '@/lib/posts/posts';
 import { POST_PILLARS, type PostPillar } from '@/lib/db/schema/posts';
 import { formatWatDate } from '@/lib/date';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 export const metadata = {
   title: 'News & Dispatches',
   description:

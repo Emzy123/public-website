@@ -5,11 +5,6 @@ import { AnimatedBg } from '@/components/ui/AnimatedBg';
 import { getCmsContent } from '@/lib/cms';
 import { buildPageMetadata } from '@/lib/cms/metadata';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 export async function generateMetadata() {
   return buildPageMetadata('academy', {
     title: 'Investor Academy',

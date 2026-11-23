@@ -4,11 +4,6 @@ import { RegistrationClosedView } from '@/components/applications/RegistrationCl
 import { normalizeRoleSlug } from '@/lib/types/membership';
 import { buildJoinRedirectUrl } from '@/lib/registration-links';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 export const metadata = {
   title: 'Join SINet | Admissions & Membership',
   description:

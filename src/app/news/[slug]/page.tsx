@@ -6,11 +6,6 @@ import { SITE_URL } from '@/lib/site-config';
 import { formatWatDate } from '@/lib/date';
 import type { Metadata } from 'next';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {

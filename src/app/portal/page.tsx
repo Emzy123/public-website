@@ -14,11 +14,6 @@ import { getWeeklyPulseFeed } from '@/lib/pulse/pulse';
 import { SITE_URL } from '@/lib/site-config';
 import { PortalClient } from './PortalClient';
 
-// @next-codemod-ignore Cache Components adoption: this segment temporarily allows blocking.
-// Remove this opt-out after verifying the segment passes validation without it.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 export const metadata = {
   title: 'Member Portal — SINet',
   description: 'Manage your membership, view your digital Member ID Card, and explore community chapter activities.',
