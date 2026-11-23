@@ -155,8 +155,6 @@ export async function proxy(request: NextRequest) {
   return withPathname(finalResponse, pathname);
 }
 
-export { proxy as middleware };
-
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|images|sw\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)'],
 };
