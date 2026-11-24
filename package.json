@@ -75,6 +75,9 @@
   "overrides": {
     "postcss": "$postcss",
     "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0"
+    "@types/react-dom": "19.3.0",
+    "@edge-csrf/nextjs": {
+      "next": "$next"
+    }
   }
 }
