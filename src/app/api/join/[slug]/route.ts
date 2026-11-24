@@ -12,7 +12,8 @@ import {
 } from '@/lib/applications/link-status';
 import { csrfProtect } from '@/lib/csrf';
 
-export async function GET(request: NextRequest, { params }: { params: { slug: string } }) {
+export async function GET(request: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   try {
     const slug = params.slug?.trim() || '';
     if (!slug) {

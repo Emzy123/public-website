@@ -49,7 +49,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/3fac46517ba6');
-      const res = await GET(req, { params: { slug: '3fac46517ba6' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: '3fac46517ba6' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -83,7 +83,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/quota-full-slug');
-      const res = await GET(req, { params: { slug: 'quota-full-slug' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'quota-full-slug' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -115,7 +115,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/past-deadline');
-      const res = await GET(req, { params: { slug: 'past-deadline' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'past-deadline' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -147,7 +147,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       });
 
       const req = new NextRequest('http://localhost:3000/api/join/finance-analysts-closed');
-      const res = await GET(req, { params: { slug: 'finance-analysts-closed' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'finance-analysts-closed' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -180,7 +180,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       });
 
       const req = new NextRequest('http://localhost:3000/api/join/ambassadors-full');
-      const res = await GET(req, { params: { slug: 'ambassadors-full' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'ambassadors-full' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -215,7 +215,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/3fac46517ba6');
-      const res = await GET(req, { params: { slug: '3fac46517ba6' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: '3fac46517ba6' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -250,7 +250,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/evergreen-intake');
-      const res = await GET(req, { params: { slug: 'evergreen-intake' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'evergreen-intake' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -281,7 +281,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       });
 
       const req = new NextRequest('http://localhost:3000/api/join/student-enterprise-fellows');
-      const res = await GET(req, { params: { slug: 'student-enterprise-fellows' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'student-enterprise-fellows' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -322,7 +322,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/3FAC46517BA6');
-      const res = await GET(req, { params: { slug: '3FAC46517BA6' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: '3FAC46517BA6' }) });
 
       expect(res.status).toBe(200);
       const json = await res.json();
@@ -341,7 +341,7 @@ describe('GET /api/join/[slug] - Single Source of Truth for Link Status', () => 
       jest.spyOn(mongodbModule, 'getMongoDb').mockResolvedValue(mockDb as any);
 
       const req = new NextRequest('http://localhost:3000/api/join/non-existent-campaign');
-      const res = await GET(req, { params: { slug: 'non-existent-campaign' } });
+      const res = await GET(req, { params: Promise.resolve({ slug: 'non-existent-campaign' }) });
 
       expect(res.status).toBe(404);
       const json = await res.json();

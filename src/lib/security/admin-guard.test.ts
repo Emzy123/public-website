@@ -1,7 +1,7 @@
 /** @jest-environment node */
 
 import { NextRequest } from 'next/server';
-import { middleware } from '@/middleware';
+import { proxy as middleware } from '@/proxy';
 import { createSession } from '@admin/lib/auth';
 import { createSessionToken } from '@/lib/auth/session';
 

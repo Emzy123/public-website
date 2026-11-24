@@ -50,7 +50,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001?sig=abc');
-    const res = await getVerify(req, { params: { memberId: 'SIN-FULOKOJA-24-0001' } });
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -84,7 +84,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     });
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0002');
-    const res = await getVerify(req, { params: { memberId: 'SIN-FULOKOJA-24-0002' } });
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0002' }) });
     const body = await res.json();
 
     expect(body.valid).toBe(false);
@@ -100,7 +100,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     });
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001');
-    const res = await getVerify(req, { params: { memberId: 'SIN-FULOKOJA-24-0001' } });
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
     expect(res.status).toBe(429);
     const body = await res.json();
     expect(body.valid).toBe(false);
@@ -115,8 +115,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     });
 
     const jsx = await MemberVerificationPage({
-      params: { memberId: 'SIN-FULOKOJA-24-0001' },
-      searchParams: {},
+      params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+      searchParams: Promise.resolve({}),
     });
 
     const text = extractText(jsx);
@@ -150,8 +150,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(mockMember);
 
       const jsx = await MemberVerificationPage({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: {},
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({}),
       });
 
       expect(jsx).toBeDefined();
@@ -168,8 +168,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
 
       const jsx = await MemberVerificationPage({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: {},
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({}),
       });
 
       const text = extractText(jsx);
@@ -194,8 +194,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
 
       const jsx = await MemberVerificationPage({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: { sig: 'invalid_signature_hex' },
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({ sig: 'invalid_signature_hex' }),
       });
 
       const text = extractText(jsx);
@@ -217,8 +217,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
 
       const jsx = await MemberVerificationPage({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: { sig: 'valid_signature_hex' },
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({ sig: 'valid_signature_hex' }),
       });
 
       const text = extractText(jsx);
@@ -237,16 +237,16 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
 
       const metaNoSig = await generateMetadata({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: {},
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({}),
       });
       expect(metaNoSig.title).toBe('Credential Verification — SINet');
       expect(metaNoSig.description).not.toContain('Ada Lovelace');
       expect(metaNoSig.description).toContain('SIN-FULOKOJA-24-0001');
 
       const metaInvalidSig = await generateMetadata({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: { sig: 'wrong_sig' },
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({ sig: 'wrong_sig' }),
       });
       expect(metaInvalidSig.title).toBe('Credential Verification — SINet');
       expect(metaInvalidSig.description).not.toContain('Ada Lovelace');
@@ -254,8 +254,8 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
 
       (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
       const metaValidSig = await generateMetadata({
-        params: { memberId: 'SIN-FULOKOJA-24-0001' },
-        searchParams: { sig: 'correct_sig' },
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({ sig: 'correct_sig' }),
       });
       expect(metaValidSig.title).toContain('Ada Lovelace');
       expect(metaValidSig.description).toContain('Ada Lovelace');

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import {
   CampaignApplicationWizard,
   ClosedLinkWaitlist,
@@ -27,7 +27,8 @@ type LinkInfo = {
   status: string;
 };
 
-export default function JoinPage({ params }: { params: { slug: string } }) {
+export default function JoinPage(props: { params: Promise<{ slug: string }> }) {
+  const params = use(props.params);
   const [campaign, setCampaign] = useState<CampaignInfo | null>(null);
   const [link, setLink] = useState<LinkInfo | null>(null);
   const [loading, setLoading] = useState(true);

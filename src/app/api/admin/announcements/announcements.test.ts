@@ -142,7 +142,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
   it('returns 401 with no session', async () => {
     (adminAuth.getSession as jest.Mock).mockResolvedValue(null);
 
-    const res = await PATCH(patchReq('ann-001', { title: 'Updated' }), { params: { id: 'ann-001' } });
+    const res = await PATCH(patchReq('ann-001', { title: 'Updated' }), { params: Promise.resolve({ id: 'ann-001' }) });
     expect(res.status).toBe(401);
   });
 
@@ -151,7 +151,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
 
     const res = await PATCH(
       patchReq('ann-001', { title: 'Updated' }, 'https://evil.com'),
-      { params: { id: 'ann-001' } }
+      { params: Promise.resolve({ id: 'ann-001' }) }
     );
     expect(res.status).toBe(403);
     const body = await res.json();
@@ -161,7 +161,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
   it('returns 400 for zod-invalid body (title too long)', async () => {
     const res = await PATCH(
       patchReq('ann-001', { title: 'x'.repeat(201) }),
-      { params: { id: 'ann-001' } }
+      { params: Promise.resolve({ id: 'ann-001' }) }
     );
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -171,7 +171,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
   it('returns 200 with complianceRisk for a clean edit', async () => {
     const res = await PATCH(
       patchReq('ann-001', { title: 'Chapter Sync Update', body: 'Rescheduled to Monday.' }),
-      { params: { id: 'ann-001' } }
+      { params: Promise.resolve({ id: 'ann-001' }) }
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -193,7 +193,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
 
     const res = await PATCH(
       patchReq('ann-001', { title: 'Guaranteed returns from our trade program' }),
-      { params: { id: 'ann-001' } }
+      { params: Promise.resolve({ id: 'ann-001' }) }
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -205,7 +205,7 @@ describe('PATCH /api/admin/announcements/[id]', () => {
     (adminAuth.getSession as jest.Mock).mockResolvedValue(null);
     const res = await PATCH(
       patchReq('ann-001', { body: 'test' }),
-      { params: { id: 'ann-001' } }
+      { params: Promise.resolve({ id: 'ann-001' }) }
     );
     expect(res.status).toBe(401);
   });

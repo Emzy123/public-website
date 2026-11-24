@@ -11,9 +11,6 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
-  experimental: {
-    instrumentationHook: true,
-  },
   images: {
     remotePatterns: [
       {

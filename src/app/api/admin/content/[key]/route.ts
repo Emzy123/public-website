@@ -8,9 +8,10 @@ import { verifyCsrfToken } from '@/lib/security/csrf-handler';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import type { CmsKey } from '@admin/types/content';
 
-type RouteContext = { params: { key: string } };
+type RouteContext = { params: Promise<{ key: string }> };
 
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(request: NextRequest, props: RouteContext) {
+  const params = await props.params;
   const key = params.key;
   if (!isCmsKey(key)) {
     return NextResponse.json({ error: 'Invalid content key' }, { status: 400 });
@@ -27,7 +28,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   return response;
 }
 
-export async function PUT(request: NextRequest, { params }: RouteContext) {
+export async function PUT(request: NextRequest, props: RouteContext) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

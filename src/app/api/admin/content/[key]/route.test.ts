@@ -56,7 +56,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(200);
     expect(cmsRepo.saveCmsDraft).toHaveBeenCalledWith(
       'adverts',
@@ -85,7 +85,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();
@@ -109,7 +109,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();
@@ -137,7 +137,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       method: 'POST',
     });
 
-    const res = await publishPOST(req, { params: { key: 'adverts' } });
+    const res = await publishPOST(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();
@@ -185,7 +185,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(200);
 
     // Verify audit log for revocation
@@ -253,7 +253,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(200);
 
     // Verify audit log for revocation
@@ -321,7 +321,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(200);
 
     // Stored draft must strip client-supplied legalApproval and store it as unapproved
@@ -383,7 +383,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       }),
     });
 
-    const res = await PUT(req, { params: { key: 'adverts' } });
+    const res = await PUT(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(200);
 
     // Revocation audit log should NOT have been called
@@ -426,7 +426,7 @@ describe('Admin CMS Content Draft & Publish API — Compliance Gate', () => {
       method: 'POST',
     });
 
-    const res = await publishPOST(req, { params: { key: 'adverts' } });
+    const res = await publishPOST(req, { params: Promise.resolve({ key: 'adverts' }) });
     expect(res.status).toBe(400);
 
     const body = await res.json();

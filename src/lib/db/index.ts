@@ -48,7 +48,6 @@ export function createPostgresClient(
 
 // Singleton client to avoid connection leak in development hot-reloads
 declare global {
-  // eslint-disable-next-line no-var
   var __postgresClient: postgres.Sql | undefined;
 }
 

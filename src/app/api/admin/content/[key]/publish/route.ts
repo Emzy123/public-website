@@ -7,9 +7,10 @@ import { verifyCsrfToken } from '@/lib/security/csrf-handler';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import type { CmsKey } from '@admin/types/content';
 
-type RouteContext = { params: { key: string } };
+type RouteContext = { params: Promise<{ key: string }> };
 
-export async function POST(_request: NextRequest, { params }: RouteContext) {
+export async function POST(_request: NextRequest, props: RouteContext) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

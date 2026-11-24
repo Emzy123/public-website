@@ -12,11 +12,12 @@ export const metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function JoinIndexPage({
-  searchParams,
-}: {
-  searchParams?: Record<string, string | string[] | undefined>;
-}) {
+export default async function JoinIndexPage(
+  props: {
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const target = await getActiveMembershipApplication();
 
   const rawRole =

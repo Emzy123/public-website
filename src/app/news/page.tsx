@@ -19,14 +19,15 @@ const PILLAR_LABELS: Record<PostPillar, string> = {
 };
 
 interface NewsPageProps {
-  searchParams: {
+  searchParams: Promise<{
     pillar?: string;
     q?: string;
     page?: string;
-  };
+  }>;
 }
 
-export default async function NewsPage({ searchParams }: NewsPageProps) {
+export default async function NewsPage(props: NewsPageProps) {
+  const searchParams = await props.searchParams;
   const selectedPillar = (
     searchParams.pillar && (POST_PILLARS as readonly string[]).includes(searchParams.pillar)
       ? searchParams.pillar

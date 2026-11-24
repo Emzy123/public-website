@@ -3,10 +3,8 @@ import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/me
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 import { sanitizeDatabaseError } from '@/lib/db';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { memberId: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ memberId: string }> }) {
+  const params = await props.params;
   const ip = getClientIp(request);
 
   // Rate limit: 60 checks per minute per IP to mitigate automated enumeration/scraping

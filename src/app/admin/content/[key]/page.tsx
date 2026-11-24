@@ -3,7 +3,8 @@ import { ContentEditorPage } from '@admin/components/ContentEditorPage';
 import { isCmsKey } from '@admin/lib/cms/keys';
 import type { CmsKey } from '@admin/types/content';
 
-export default function AdminContentPage({ params }: { params: { key: string } }) {
+export default async function AdminContentPage(props: { params: Promise<{ key: string }> }) {
+  const params = await props.params;
   if (!isCmsKey(params.key)) {
     notFound();
   }

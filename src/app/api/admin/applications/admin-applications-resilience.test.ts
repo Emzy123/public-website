@@ -43,7 +43,7 @@ describe('Admin applications Postgres outage resilience', () => {
     });
 
     const req = new NextRequest(`http://localhost:3000/api/admin/applications/${uuidId}`);
-    const res = await GET(req, { params: { id: uuidId } });
+    const res = await GET(req, { params: Promise.resolve({ id: uuidId }) });
 
     expect(res.status).toBe(503);
     const body = await res.json();
@@ -67,7 +67,7 @@ describe('Admin applications Postgres outage resilience', () => {
       }),
     });
 
-    const res = await POST(req, { params: { id: uuidId } });
+    const res = await POST(req, { params: Promise.resolve({ id: uuidId }) });
 
     expect(res.status).toBe(503);
     const body = await res.json();
@@ -92,7 +92,7 @@ describe('Admin applications Postgres outage resilience', () => {
       }),
     });
 
-    const res = await POST(req, { params: { id: mongoId } });
+    const res = await POST(req, { params: Promise.resolve({ id: mongoId }) });
 
     expect(res.status).toBe(503);
     const body = await res.json();

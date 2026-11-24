@@ -50,8 +50,9 @@ export function verifyPreviewToken(value: string | undefined): boolean {
   }
 }
 
-export function isPreviewMode(): boolean {
-  return verifyPreviewToken(cookies().get(PREVIEW_COOKIE)?.value);
+export async function isPreviewMode(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return verifyPreviewToken(cookieStore.get(PREVIEW_COOKIE)?.value);
 }
 
 export function previewCookieOptions(enabled: boolean) {

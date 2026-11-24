@@ -4,11 +4,12 @@ import { notFound } from 'next/navigation';
 import { getChapterBySlug } from '@/lib/chapters/chapters';
 import { STUDENT_DIVISION_INFO } from '@/lib/schemas/member-application.schema';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const chapter = await getChapterBySlug(params.slug);
   if (!chapter) {
     return {
@@ -23,11 +24,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function ChapterDetailPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function ChapterDetailPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const chapter = await getChapterBySlug(params.slug);
 
   if (!chapter) {

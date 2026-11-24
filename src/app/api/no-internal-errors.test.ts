@@ -140,7 +140,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
     jest.spyOn(memberIdModule, 'getVerifiedMemberRecord').mockRejectedValue(pgConnectionError);
 
     const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001');
-    const res = await getVerifyMember(req, { params: { memberId: 'SIN-FULOKOJA-24-0001' } });
+    const res = await getVerifyMember(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.valid).toBe(false);
@@ -186,7 +186,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
       }),
     });
 
-    const res = await postJoinApply(req, { params: { slug: 'test-membership' } });
+    const res = await postJoinApply(req, { params: Promise.resolve({ slug: 'test-membership' }) });
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('We could not save your application. Please try again.');
@@ -230,7 +230,7 @@ describe('Zero Internal Error Text Leakage Under Database Failure', () => {
     });
 
     const req = new NextRequest(`http://localhost:3000/api/admin/applications/${uuidId}`);
-    const res = await getAdminApp(req, { params: { id: uuidId } });
+    const res = await getAdminApp(req, { params: Promise.resolve({ id: uuidId }) });
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toBe('database_unavailable');
