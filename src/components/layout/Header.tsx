@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { MobileDrawer } from './MobileDrawer';
 import { ApplyNotifyModal } from './ApplyNotifyModal';
 import { getPrimaryNav, type PrimaryNavItem } from '@/lib/site-config';
 
 import { Logo } from '@/components/brand/Logo';
+import { cleanFullName } from '@/lib/members/memberId';
 
 const PRIMARY_NAV = getPrimaryNav();
 
@@ -49,9 +50,13 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   const [isCommunityDropdownOpen, setIsCommunityDropdownOpen] = useState(false);
   const [isCampaignOpen, setIsCampaignOpen] = useState(false);
   const [campaignUrl, setCampaignUrl] = useState<string | null>(null);
+  const [userSession, setUserSession] = useState<{ fullName: string | null; email: string } | null>(null);
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const accountDropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const headerLogoVariant = resolveHeaderLogoVariant(logoUrl);
 
   useEffect(() => {
@@ -61,7 +66,7 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Fetch active application status
+  // Fetch active application status and authenticated session
   useEffect(() => {
     let mounted = true;
     fetch('/api/applications')
@@ -74,10 +79,36 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
       .catch(() => {
         // Fallback: assume closed if error
       });
+
+    fetch('/api/auth/me')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!mounted || !data) return;
+        if (data.authenticated && data.user) {
+          setUserSession({
+            fullName: data.user.profile?.fullName || null,
+            email: data.user.email,
+          });
+        } else {
+          setUserSession(null);
+        }
+      })
+      .catch(() => {
+        if (mounted) setUserSession(null);
+      });
+
     return () => {
       mounted = false;
     };
   }, []);
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+    setUserSession(null);
+    setIsAccountDropdownOpen(false);
+    router.push('/sign-in');
+    router.refresh();
+  };
 
   // Close dropdown on outside click or escape key
   useEffect(() => {
@@ -85,10 +116,14 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsCommunityDropdownOpen(false);
       }
+      if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target as Node)) {
+        setIsAccountDropdownOpen(false);
+      }
     };
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setIsCommunityDropdownOpen(false);
+        setIsAccountDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleOutside);
@@ -102,7 +137,12 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
   // Close dropdown on route change
   useEffect(() => {
     setIsCommunityDropdownOpen(false);
+    setIsAccountDropdownOpen(false);
   }, [pathname]);
+
+  const displayName = userSession
+    ? cleanFullName(userSession.fullName, userSession.email) || 'Account'
+    : null;
 
   return (
     <>
@@ -206,28 +246,79 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
 
           {/* Desktop Actions */}
           <div className="hidden items-center gap-3 xl:flex">
-            <Link
-              href="/sign-in"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3.5 py-2 text-xs font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
-            >
-              Sign in
-            </Link>
+            {userSession ? (
+              <div ref={accountDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsAccountDropdownOpen((prev) => !prev)}
+                  aria-expanded={isAccountDropdownOpen}
+                  aria-haspopup="true"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3.5 py-2 text-xs font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
+                >
+                  <span>{displayName}</span>
+                  <svg
+                    className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                      isAccountDropdownOpen ? 'rotate-180 text-[#E0A92E]' : 'text-[#F6F2E8]/70'
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-            {isCampaignOpen ? (
-              <Link
-                href={campaignUrl || '/join'}
-                className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
-              >
-                Apply Now
-              </Link>
+                {isAccountDropdownOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Account navigation"
+                    className="absolute right-0 top-full mt-2 z-50 w-44 rounded-xl border border-white/15 bg-[#0A0A0F] p-1.5 shadow-xl ring-1 ring-black/20"
+                  >
+                    <Link
+                      href="/portal"
+                      role="menuitem"
+                      onClick={() => setIsAccountDropdownOpen(false)}
+                      className="block rounded-lg px-3.5 py-2 text-xs font-semibold text-[#F6F2E8]/85 hover:bg-white/10 hover:text-[#E0A92E]"
+                    >
+                      Portal
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={handleLogout}
+                      className="block w-full text-left rounded-lg px-3.5 py-2 text-xs font-semibold text-rose-300 hover:bg-white/10 hover:text-rose-200"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => setIsNotifyModalOpen(true)}
-                className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
-              >
-                Get Notified
-              </button>
+              <>
+                <Link
+                  href="/sign-in"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-transparent px-3.5 py-2 text-xs font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
+                >
+                  Sign in
+                </Link>
+
+                {isCampaignOpen ? (
+                  <Link
+                    href={campaignUrl || '/join'}
+                    className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
+                  >
+                    Apply Now
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsNotifyModalOpen(true)}
+                    className="inline-flex rounded-lg bg-[#143DB1] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[#2153D2]"
+                  >
+                    Get Notified
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -253,6 +344,8 @@ export function Header({ stackOffset = false, logoUrl }: HeaderProps) {
         isCampaignOpen={isCampaignOpen}
         campaignUrl={campaignUrl || undefined}
         onOpenNotify={() => setIsNotifyModalOpen(true)}
+        userSession={userSession}
+        onLogout={handleLogout}
       />
 
       <ApplyNotifyModal

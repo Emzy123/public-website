@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
+import { cleanFullName } from '@/lib/members/memberId';
 import type { PrimaryNavItem } from '@/lib/site-config';
 
 interface MobileDrawerProps {
@@ -13,6 +14,8 @@ interface MobileDrawerProps {
   isCampaignOpen?: boolean;
   campaignUrl?: string;
   onOpenNotify?: () => void;
+  userSession?: { fullName: string | null; email: string } | null;
+  onLogout?: () => void;
 }
 
 export function MobileDrawer({
@@ -23,6 +26,8 @@ export function MobileDrawer({
   isCampaignOpen,
   campaignUrl,
   onOpenNotify,
+  userSession,
+  onLogout,
 }: MobileDrawerProps) {
   const [communityExpanded, setCommunityExpanded] = useState(true);
 
@@ -55,34 +60,61 @@ export function MobileDrawer({
 
         {/* Primary CTA Buttons */}
         <div className="mb-6 flex flex-col gap-2.5">
-          {isCampaignOpen ? (
-            <Link
-              href={campaignUrl || '/join'}
-              onClick={onClose}
-              className="flex min-h-[44px] items-center justify-center rounded-xl bg-[#143DB1] px-5 text-sm font-bold text-white transition-colors hover:bg-[#2153D2]"
-            >
-              Apply Now →
-            </Link>
+          {userSession ? (
+            <>
+              <div className="px-1 text-xs font-medium text-slate-400">
+                Signed in as <span className="font-bold text-[#E0A92E]">{cleanFullName(userSession.fullName, userSession.email) || 'Account'}</span>
+              </div>
+              <Link
+                href="/portal"
+                onClick={onClose}
+                className="flex min-h-[44px] items-center justify-center rounded-xl bg-[#143DB1] px-5 text-sm font-bold text-white transition-colors hover:bg-[#2153D2]"
+              >
+                Portal →
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onLogout?.();
+                }}
+                className="flex min-h-[44px] items-center justify-center rounded-xl border border-white/20 bg-transparent px-5 text-sm font-semibold text-rose-300 transition-colors hover:border-rose-400 hover:text-rose-200 hover:bg-white/5"
+              >
+                Sign out
+              </button>
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
-                onOpenNotify?.();
-              }}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#143DB1] px-5 text-sm font-bold text-white transition-colors hover:bg-[#2153D2]"
-            >
-              Get Notified (Cohort)
-            </button>
-          )}
+            <>
+              {isCampaignOpen ? (
+                <Link
+                  href={campaignUrl || '/join'}
+                  onClick={onClose}
+                  className="flex min-h-[44px] items-center justify-center rounded-xl bg-[#143DB1] px-5 text-sm font-bold text-white transition-colors hover:bg-[#2153D2]"
+                >
+                  Apply Now →
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenNotify?.();
+                  }}
+                  className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-[#143DB1] px-5 text-sm font-bold text-white transition-colors hover:bg-[#2153D2]"
+                >
+                  Get Notified (Cohort)
+                </button>
+              )}
 
-          <Link
-            href="/sign-in"
-            onClick={onClose}
-            className="flex min-h-[44px] items-center justify-center rounded-xl border border-white/20 bg-transparent px-5 text-sm font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
-          >
-            Sign in
-          </Link>
+              <Link
+                href="/sign-in"
+                onClick={onClose}
+                className="flex min-h-[44px] items-center justify-center rounded-xl border border-white/20 bg-transparent px-5 text-sm font-semibold text-[#F6F2E8] transition-colors hover:border-[#E0A92E] hover:text-[#E0A92E] hover:bg-white/5"
+              >
+                Sign in
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Navigation List */}
