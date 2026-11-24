@@ -56,7 +56,10 @@ const DEFAULT_WEEKLY_PULSE_TASKS: PulseTask[] = [
 /**
  * Returns this week's active pulse announcements and learning tasks.
  */
-export async function getWeeklyPulseFeed(chapterId?: string | null) {
+export async function getWeeklyPulseFeed(
+  chapterId?: string | null,
+  options?: { includeSeeds?: boolean }
+) {
   let customTasks: PulseTask[] = [];
   try {
     const dbAnnouncements = await db
@@ -91,10 +94,15 @@ export async function getWeeklyPulseFeed(chapterId?: string | null) {
     console.warn('[Pulse] Announcements fetch skipped or database offline:', err);
   }
 
+  // Never render seed pulse items in production.
+  // In test environments, seeds may be included unless explicitly disabled.
+  const isProduction = process.env.NODE_ENV === 'production';
+  const shouldIncludeSeeds = options?.includeSeeds ?? (!isProduction && process.env.NODE_ENV === 'test');
+
   return {
     weekNumber: getIsoWeekNumber(new Date()),
     year: new Date().getFullYear(),
-    tasks: [...customTasks, ...DEFAULT_WEEKLY_PULSE_TASKS],
+    tasks: shouldIncludeSeeds ? [...customTasks, ...DEFAULT_WEEKLY_PULSE_TASKS] : customTasks,
   };
 }
 
