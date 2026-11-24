@@ -9,6 +9,7 @@ import {
   createMemberVerificationSignature,
   generateMemberQrDataUrl,
 } from '@/lib/members/member-id';
+import { formatMemberId, cleanFullName, getMemberTierSummary } from '@/lib/members/memberId';
 import { getMemberBadgesShowcase } from '@/lib/members/gamification';
 import { getWeeklyPulseFeed } from '@/lib/pulse/pulse';
 import { SITE_URL } from '@/lib/site-config';
@@ -83,17 +84,18 @@ export default async function PortalPage() {
 
         const mDoc = await mongo.collection('members').findOne(mongoQuery);
         if (mDoc) {
+          const cleanName = cleanFullName(mDoc.fullName as string, session.email);
           profile = {
             id: String(mDoc._id),
             userId: session.userId,
-            fullName: (mDoc.fullName as string) || session.email.split('@')[0],
+            fullName: cleanName || '',
             avatarUrl: (mDoc.avatarUrl as string) || null,
             bio: (mDoc.bio as string) || 'Member of the SINetwork Global community network.',
             programme: (mDoc.course as string) || (mDoc.programme as string) || 'General Member',
-            level: (mDoc.level as string) || 'Active',
+            level: (mDoc.level as string) || null,
             division: (mDoc.pathway as any) || 'student_finance',
             status: 'active' as const,
-            referralCode: `SIN${String(mDoc._id).slice(-6).toUpperCase()}`,
+            referralCode: formatMemberId(mDoc.referralCode as string || String(mDoc._id).slice(-6)),
             profileCompletenessPct: 85,
           };
         }
@@ -108,27 +110,33 @@ export default async function PortalPage() {
     profile = {
       id: session.userId,
       userId: session.userId,
-      fullName: session.email.split('@')[0],
+      fullName: '',
       avatarUrl: null,
       bio: 'Verified student member of SINet higher education network.',
       programme: 'Student Enterprise & Finance',
-      level: 'Undergraduate',
+      level: null,
       division: 'student_finance' as const,
       status: 'active' as const,
-      referralCode: `SIN${session.userId.slice(-6).toUpperCase()}`,
+      referralCode: formatMemberId(session.userId.slice(-6)),
       profileCompletenessPct: 80,
     };
   }
 
-  // Fetch gamified badge showcase and weekly pulse feed
+  // Sanitize fullName if loaded from Postgres
+  if (profile && profile.fullName) {
+    profile.fullName = cleanFullName(profile.fullName, session.email) || '';
+  }
+
+  // Fetch gamified badge showcase and weekly pulse feed (never include seed items on portal)
   const [badgesShowcase, pulseFeed] = await Promise.all([
     getMemberBadgesShowcase(session.userId),
-    getWeeklyPulseFeed(chapter?.id),
+    getWeeklyPulseFeed(chapter?.id, { includeSeeds: false }),
   ]);
 
   // Build digital card
   let memberCard = null;
-  const effectiveMemberId = memberIdRecord?.memberId || (profile?.referralCode ? `SIN-${profile.referralCode}` : `SIN-MBR-${String(session.userId).slice(-6).toUpperCase()}`);
+  const rawCandidate = memberIdRecord?.memberId || profile?.referralCode || `MBR-${String(session.userId).slice(-6).toUpperCase()}`;
+  const effectiveMemberId = formatMemberId(rawCandidate);
   const issuedDate = memberIdRecord?.issuedAt || new Date();
   const signature = createMemberVerificationSignature(
     effectiveMemberId,
@@ -138,8 +146,19 @@ export default async function PortalPage() {
   const verificationUrl = `${SITE_URL}/verify/${effectiveMemberId}?sig=${signature}`;
   const qrDataUrl = await generateMemberQrDataUrl(verificationUrl);
 
+  const tierSummary = getMemberTierSummary({
+    roles: session.roles,
+    programme: profile?.programme,
+    division: profile?.division,
+    chapterName: chapter?.name,
+    universityName: university?.name,
+    universityShortName: university?.shortName,
+  });
+
+  const memberDisplayName = cleanFullName(profile?.fullName, session.email) || '';
+
   memberCard = {
-    fullName: profile?.fullName || session.email.split('@')[0],
+    fullName: memberDisplayName,
     avatarUrl: profile?.avatarUrl || null,
     memberId: effectiveMemberId,
     campusCode: memberIdRecord?.campusCode || 'KOGI',
@@ -147,7 +166,9 @@ export default async function PortalPage() {
     universityName: university?.name || 'Federal University Lokoja (FULOKOJA)',
     division: profile?.division || 'student_finance',
     programme: profile?.programme || 'Undergraduate Member',
-    level: profile?.level || 'Active',
+    level: profile?.level || null,
+    status: profile?.status || 'active',
+    tierSummaryLine: tierSummary.summaryLine,
     issuedAt: issuedDate.toISOString(),
     verificationUrl,
     qrDataUrl,
@@ -163,6 +184,7 @@ export default async function PortalPage() {
     profile: profile || null,
     memberId: memberIdRecord?.memberId || null,
     memberCard,
+    tierSummary,
     chapter: chapter
       ? {
           id: chapter.id,

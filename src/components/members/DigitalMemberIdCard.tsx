@@ -3,6 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
+import {
+  cleanFullName,
+  getMemberInitials,
+  formatAcademicLevel,
+  getMemberStatusLabel,
+} from '@/lib/members/memberId';
 
 export type MemberCardData = {
   fullName: string;
@@ -14,6 +20,8 @@ export type MemberCardData = {
   division?: string | null;
   programme?: string | null;
   level?: string | null;
+  status?: string | null;
+  tierSummaryLine?: string | null;
   issuedAt: string | Date;
   verificationUrl: string;
   qrDataUrl: string;
@@ -97,13 +105,13 @@ function escapeHtml(value?: string | null): string {
   <div class="card">
     <div class="header">
       <div class="logo">SINET</div>
-      <div class="badge">OFFLINE PASS</div>
+      <div class="badge">${escapeHtml(getMemberStatusLabel(card.status).toUpperCase())}</div>
     </div>
     <div class="profile">
-      <div class="avatar">${escapeHtml(card.fullName.slice(0, 2).toUpperCase())}</div>
+      <div class="avatar">${escapeHtml(getMemberInitials(card.fullName))}</div>
       <div class="info">
-        <h2>${escapeHtml(card.fullName)}</h2>
-        <p>${escapeHtml(card.programme || 'Undergraduate')} • ${escapeHtml(card.campusCode)}</p>
+        <h2>${escapeHtml(cleanFullName(card.fullName) || 'Member')}</h2>
+        <p>${escapeHtml(card.tierSummaryLine || card.programme || 'Undergraduate Member')} • ${escapeHtml(card.campusCode)}</p>
         <div class="tag">${escapeHtml(divisionInfo?.name || 'Student Network')}</div>
       </div>
     </div>
@@ -175,20 +183,31 @@ function escapeHtml(value?: string | null): string {
                   </p>
                 </div>
               </div>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[8px] font-bold text-emerald-300 ring-1 ring-emerald-500/40 sm:text-[9px]">
-                ACTIVE
+              <span
+                className={`rounded-full px-2 py-0.5 text-[8px] font-bold ring-1 sm:text-[9px] ${
+                  getMemberStatusLabel(card.status) === 'Active'
+                    ? 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/40'
+                    : getMemberStatusLabel(card.status) === 'Suspended'
+                    ? 'bg-rose-500/20 text-rose-300 ring-rose-500/40'
+                    : 'bg-amber-500/20 text-amber-300 ring-amber-500/40'
+                }`}
+              >
+                {getMemberStatusLabel(card.status).toUpperCase()}
               </span>
             </div>
 
             {/* Middle Section: Photo & Identity */}
             <div className="flex items-center gap-3.5 py-1.5 sm:gap-4 sm:py-2">
               <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 text-lg font-black text-[#071026] shadow-md ring-2 ring-white/20 sm:h-16 sm:w-16 sm:text-xl">
-                {card.fullName.slice(0, 2).toUpperCase()}
+                {getMemberInitials(card.fullName)}
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="truncate text-sm font-bold text-white sm:text-base">{card.fullName}</h3>
+                <h3 className="truncate text-sm font-bold text-white sm:text-base">
+                  {cleanFullName(card.fullName) || 'Member'}
+                </h3>
                 <p className="truncate text-[10px] font-medium text-slate-300 sm:text-[11px]">
-                  {card.programme || 'Undergraduate'} {card.level ? `(${card.level}L)` : ''}
+                  {card.tierSummaryLine ||
+                    `${card.programme || 'Undergraduate Member'}${formatAcademicLevel(card.level) ? ` (${formatAcademicLevel(card.level)})` : ''}`}
                 </p>
                 <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
                   <span className="inline-block truncate rounded bg-white/10 px-1.5 py-0.5 text-[8px] font-semibold text-amber-300 sm:text-[9px]">

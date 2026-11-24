@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DigitalMemberIdCard, type MemberCardData } from '@/components/members/DigitalMemberIdCard';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
 import type { PulseTask } from '@/lib/pulse/pulse';
+import { cleanFullName } from '@/lib/members/memberId';
 
 type BadgeItem = {
   id: string;
@@ -41,6 +42,12 @@ type UserData = {
     slug: string;
     universityName?: string;
     universityShortName?: string;
+  } | null;
+  tierSummary?: {
+    tier: string;
+    division: string | null;
+    chapter: string | null;
+    summaryLine: string;
   } | null;
   badges: BadgeItem[];
 };
@@ -116,7 +123,7 @@ export function PortalClient({
 
           <div className="flex items-center gap-3">
             <span className="hidden text-xs text-slate-500 sm:inline">
-              {user.email}
+              {cleanFullName(user.profile?.fullName, user.email) || user.email}
             </span>
             <button
               onClick={handleLogout}
@@ -135,11 +142,15 @@ export function PortalClient({
         <div className="mb-6 sm:mb-8">
           <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Member Portal</p>
           <h1 className="mt-1 text-xl font-extrabold tracking-tight text-[#071026] sm:text-3xl">
-            Welcome, {user.profile?.fullName || user.email.split('@')[0]}
+            {cleanFullName(user.profile?.fullName, user.email)
+              ? `Welcome, ${cleanFullName(user.profile?.fullName, user.email)}`
+              : 'Welcome'}
           </h1>
           <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-            {user.chapter?.universityName || 'Community Network Member'} •{' '}
-            {divisionInfo?.name || 'General Division'}
+            {user.tierSummary?.summaryLine ||
+              (user.chapter?.universityName
+                ? `${user.chapter.universityName} • ${divisionInfo?.name || 'Community Member'}`
+                : 'Community Member')}
           </p>
         </div>
 
@@ -151,11 +162,6 @@ export function PortalClient({
               <div className="mb-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-bold text-slate-900">Digital Member ID</h2>
-                  {user.memberCard && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800">
-                      Offline Ready
-                    </span>
-                  )}
                 </div>
                 <span className="text-[10px] font-semibold text-slate-500 sm:text-[11px]">Tap to flip</span>
               </div>
@@ -208,146 +214,150 @@ export function PortalClient({
 
           {/* RIGHT: Weekly Pulse & Gamification Badges */}
           <div className="space-y-6 lg:col-span-7">
-            {/* WEEKLY PULSE SECTION */}
-            <div className="rounded-3xl border border-amber-600/20 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-sm sm:p-7">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
-                      Week {pulseFeed.weekNumber}
-                    </span>
-                    <h2 className="text-base font-extrabold text-[#071026] sm:text-lg">
-                      Weekly Network Pulse
-                    </h2>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600">
-                    Complete your weekly initiative task and maintain your chapter check-in streak.
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleCheckIn}
-                  disabled={checkingIn || Boolean(checkedInMessage)}
-                  className={`inline-flex min-h-[40px] items-center justify-center rounded-xl px-4 text-xs font-bold shadow-sm transition ${
-                    checkedInMessage
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-[#071026] text-white hover:bg-slate-800 disabled:opacity-50'
-                  }`}
-                >
-                  {checkingIn
-                    ? 'Checking In…'
-                    : checkedInMessage
-                    ? '✓ Checked In This Week'
-                    : `Check In for Week ${pulseFeed.weekNumber}`}
-                </button>
-              </div>
-
-              {/* Weekly Tasks List */}
-              <div className="mt-5 space-y-3">
-                {pulseFeed.tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 transition hover:border-amber-500/50 sm:flex-row sm:items-center"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-700">
-                          {task.divisionTarget.replace('_', ' ')}
-                        </span>
-                        <h4 className="truncate text-xs font-bold text-slate-900">{task.title}</h4>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
-                        {task.summary}
-                      </p>
+            {/* WEEKLY PULSE SECTION (hidden when empty) */}
+            {pulseFeed.tasks && pulseFeed.tasks.length > 0 && (
+              <div className="rounded-3xl border border-amber-600/20 bg-gradient-to-br from-white to-amber-50/30 p-6 shadow-sm sm:p-7">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-lg bg-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                        Week {pulseFeed.weekNumber}
+                      </span>
+                      <h2 className="text-base font-extrabold text-[#071026] sm:text-lg">
+                        Weekly Network Pulse
+                      </h2>
                     </div>
-
-                    <Link
-                      href={task.actionHref || '/portal'}
-                      className="inline-flex min-h-[36px] items-center justify-center rounded-xl bg-slate-100 px-3.5 text-xs font-bold text-slate-800 transition hover:bg-slate-200 whitespace-nowrap"
-                    >
-                      {task.actionText} →
-                    </Link>
+                    <p className="mt-1 text-xs text-slate-600">
+                      Complete your weekly initiative task and maintain your chapter check-in streak.
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* GAMIFICATION & BADGES SHOWCASE */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-7">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
-                    Achievement Badges Showcase
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Earn verified badges as you participate and represent your chapter or community.
-                  </p>
-                </div>
-                <span className="rounded-full bg-amber-100 px-3 py-1 font-mono text-xs font-bold text-amber-900">
-                  {user.badges.filter((b) => b.isUnlocked).length} / {user.badges.length} Unlocked
-                </span>
-              </div>
-
-              <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-                {user.badges.map((badge) => (
-                  <div
-                    key={badge.id}
-                    className={`flex items-start gap-3 rounded-2xl border p-4 transition ${
-                      badge.isUnlocked
-                        ? 'border-emerald-500/30 bg-emerald-50/20 shadow-sm'
-                        : 'border-slate-200/80 bg-slate-50/50 opacity-75'
+                  <button
+                    onClick={handleCheckIn}
+                    disabled={checkingIn || Boolean(checkedInMessage)}
+                    className={`inline-flex min-h-[40px] items-center justify-center rounded-xl px-4 text-xs font-bold shadow-sm transition ${
+                      checkedInMessage
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-[#071026] text-white hover:bg-slate-800 disabled:opacity-50'
                     }`}
                   >
+                    {checkingIn
+                      ? 'Checking In…'
+                      : checkedInMessage
+                      ? '✓ Checked In This Week'
+                      : `Check In for Week ${pulseFeed.weekNumber}`}
+                  </button>
+                </div>
+
+                {/* Weekly Tasks List */}
+                <div className="mt-5 space-y-3">
+                  {pulseFeed.tasks.map((task) => (
                     <div
-                      className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl font-bold ${
+                      key={task.id}
+                      className="flex flex-col justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white p-4 transition hover:border-amber-500/50 sm:flex-row sm:items-center"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-700">
+                            {task.divisionTarget.replace('_', ' ')}
+                          </span>
+                          <h4 className="truncate text-xs font-bold text-slate-900">{task.title}</h4>
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-600">
+                          {task.summary}
+                        </p>
+                      </div>
+
+                      <Link
+                        href={task.actionHref || '/portal'}
+                        className="inline-flex min-h-[36px] items-center justify-center rounded-xl bg-slate-100 px-3.5 text-xs font-bold text-slate-800 transition hover:bg-slate-200 whitespace-nowrap"
+                      >
+                        {task.actionText} →
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* GAMIFICATION & BADGES SHOWCASE (hidden when empty) */}
+            {user.badges && user.badges.length > 0 && (
+              <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm sm:p-7">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                      Achievement Badges Showcase
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Earn verified badges as you participate and represent your chapter or community.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-amber-100 px-3 py-1 font-mono text-xs font-bold text-amber-900">
+                    {user.badges.filter((b) => b.isUnlocked).length} / {user.badges.length} Unlocked
+                  </span>
+                </div>
+
+                <div className="mt-5 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                  {user.badges.map((badge) => (
+                    <div
+                      key={badge.id}
+                      className={`flex items-start gap-3 rounded-2xl border p-4 transition ${
                         badge.isUnlocked
-                          ? 'bg-emerald-600 text-white shadow-md'
-                          : 'bg-slate-200 text-slate-400'
+                          ? 'border-emerald-500/30 bg-emerald-50/20 shadow-sm'
+                          : 'border-slate-200/80 bg-slate-50/50 opacity-75'
                       }`}
                     >
-                      {badge.isUnlocked ? (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2.5"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <h4 className="truncate text-xs font-bold text-slate-900">{badge.name}</h4>
-                        {badge.isUnlocked && (
-                          <span className="text-[10px] font-bold text-emerald-700">
-                            UNLOCKED
-                          </span>
+                      <div
+                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl font-bold ${
+                          badge.isUnlocked
+                            ? 'bg-emerald-600 text-white shadow-md'
+                            : 'bg-slate-200 text-slate-400'
+                        }`}
+                      >
+                        {badge.isUnlocked ? (
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2.5"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
                         )}
                       </div>
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
-                        {badge.description}
-                      </p>
-                      {badge.awardedAt && (
-                        <p className="mt-1.5 font-mono text-[9px] text-slate-400">
-                          Awarded {new Date(badge.awardedAt).toLocaleDateString()}
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="truncate text-xs font-bold text-slate-900">{badge.name}</h4>
+                          {badge.isUnlocked && (
+                            <span className="text-[10px] font-bold text-emerald-700">
+                              UNLOCKED
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                          {badge.description}
                         </p>
-                      )}
+                        {badge.awardedAt && (
+                          <p className="mt-1.5 font-mono text-[9px] text-slate-400">
+                            Awarded {new Date(badge.awardedAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
