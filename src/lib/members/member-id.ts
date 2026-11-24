@@ -10,8 +10,11 @@ import {
   memberProfiles,
   type MemberIdRecord,
 } from '@/lib/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, or, sql } from 'drizzle-orm';
 import { SITE_URL } from '@/lib/site-config';
+import { normalizeMemberId, formatMemberId } from './memberId';
+
+export { normalizeMemberId, formatMemberId };
 
 import { isProductionMode } from '@/lib/runtime/envMode';
 
@@ -48,6 +51,7 @@ export function createMemberVerificationSignature(
 
 /**
  * Verifies the cryptographic HMAC signature for a member record.
+ * Supports direct match, canonical normalized ID, and legacy doubled-prefix forms.
  */
 export function verifyMemberSignature(
   fullMemberId: string,
@@ -56,15 +60,47 @@ export function verifyMemberSignature(
   signature: string
 ): boolean {
   if (!signature || signature.length !== 32) return false;
-  const expected = createMemberVerificationSignature(fullMemberId, userId, issuedAt);
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature.toLowerCase()),
-      Buffer.from(expected.toLowerCase())
-    );
-  } catch {
-    return false;
+
+  function safeHmacMatch(id: string): boolean {
+    const expected = createMemberVerificationSignature(id, userId, issuedAt);
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(signature.toLowerCase()),
+        Buffer.from(expected.toLowerCase())
+      );
+    } catch {
+      return false;
+    }
   }
+
+  // 1. Direct match with passed ID
+  if (safeHmacMatch(fullMemberId)) return true;
+
+  // 2. Canonical normalized form
+  const canonical = normalizeMemberId(fullMemberId);
+  if (canonical && canonical !== fullMemberId.trim().toUpperCase()) {
+    if (safeHmacMatch(canonical)) return true;
+  }
+
+  // 3. Legacy doubled-prefix form (e.g. SIN-SIN...)
+  if (canonical) {
+    const suffix = canonical.startsWith('SIN-') ? canonical.slice(4) : canonical;
+    const legacyVariants = [
+      `SIN-SIN${suffix}`,
+      `SIN-SIN-${suffix}`,
+      `SINSIN${suffix}`,
+      `SIN${suffix}`,
+      `SIN-${canonical}`,
+      `SIN${canonical}`,
+    ];
+    for (const variant of legacyVariants) {
+      if (variant !== fullMemberId.trim().toUpperCase() && variant !== canonical) {
+        if (safeHmacMatch(variant)) return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -101,7 +137,7 @@ export async function mintMemberId(opts: {
 
   const nextSeq = result[0]?.last_seq || 1;
   const seqStr = String(nextSeq).padStart(4, '0');
-  const fullMemberId = `SIN-${normalizedCampus}-${yearPrefix}-${seqStr}`;
+  const fullMemberId = formatMemberId(`SIN-${normalizedCampus}-${yearPrefix}-${seqStr}`);
 
   const [inserted] = await db
     .insert(memberIds)
@@ -120,10 +156,30 @@ export async function mintMemberId(opts: {
 
 /**
  * Retrieves the full verified member profile for public ID verification.
+ * Normalizes member ID and supports canonical, legacy doubled-prefix, and profile referral codes.
  */
 export async function getVerifiedMemberRecord(fullMemberId: string) {
-  const normalizedId = fullMemberId.trim().toUpperCase();
+  const canonicalId = normalizeMemberId(fullMemberId);
+  if (!canonicalId) {
+    return null;
+  }
 
+  const rawNormalized = fullMemberId.trim().toUpperCase();
+  const suffix = canonicalId.startsWith('SIN-') ? canonicalId.slice(4) : canonicalId;
+
+  const memberIdCandidates = Array.from(
+    new Set([
+      canonicalId,
+      rawNormalized,
+      `SIN-${canonicalId}`,
+      `SIN-SIN${suffix}`,
+      `SIN-SIN-${suffix}`,
+      `SINSIN${suffix}`,
+      `SIN${suffix}`,
+    ])
+  );
+
+  // 1. Query member_ids table (matching canonical or raw stored value)
   const [record] = await db
     .select({
       id: memberIds.id,
@@ -155,23 +211,100 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     .innerJoin(memberProfiles, eq(memberIds.userId, memberProfiles.userId))
     .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
     .leftJoin(universities, eq(chapters.universityId, universities.id))
-    .where(eq(memberIds.memberId, normalizedId));
+    .where(or(...memberIdCandidates.map((c) => eq(memberIds.memberId, c))));
 
-  if (!record) {
-    return null;
+  if (record) {
+    const formattedId = formatMemberId(record.fullMemberId) || canonicalId;
+    const signature = createMemberVerificationSignature(
+      formattedId,
+      record.userId,
+      record.issuedAt
+    );
+
+    return {
+      ...record,
+      fullMemberId: formattedId,
+      signature,
+      verificationUrl: `${SITE_URL}/verify/${formattedId}?sig=${signature}`,
+    };
   }
 
-  const signature = createMemberVerificationSignature(
-    record.fullMemberId,
-    record.userId,
-    record.issuedAt
+  // 2. Fallback: Query member_profiles by referralCode for members without a minted campus ID
+  const referralCandidates = Array.from(
+    new Set([
+      suffix,
+      `SIN${suffix}`,
+      `SIN-${suffix}`,
+      `SIN-SIN${suffix}`,
+      canonicalId,
+      rawNormalized,
+    ])
   );
 
-  return {
-    ...record,
-    signature,
-    verificationUrl: `${SITE_URL}/verify/${record.fullMemberId}?sig=${signature}`,
-  };
+  const [profileRecord] = await db
+    .select({
+      id: memberProfiles.id,
+      userId: memberProfiles.userId,
+      fullName: memberProfiles.fullName,
+      avatarUrl: memberProfiles.avatarUrl,
+      programme: memberProfiles.programme,
+      level: memberProfiles.level,
+      division: memberProfiles.division,
+      status: memberProfiles.status,
+      referralCode: memberProfiles.referralCode,
+      issuedAt: memberProfiles.createdAt,
+      // User
+      userEmail: users.email,
+      userPhone: users.phone,
+      // Chapter & University
+      chapterId: memberProfiles.chapterId,
+      chapterName: chapters.name,
+      chapterSlug: chapters.slug,
+      campusCode: universities.campusCode,
+      universityName: universities.name,
+      universityShortName: universities.shortName,
+    })
+    .from(memberProfiles)
+    .innerJoin(users, eq(memberProfiles.userId, users.id))
+    .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
+    .leftJoin(universities, eq(chapters.universityId, universities.id))
+    .where(or(...referralCandidates.map((rc) => eq(memberProfiles.referralCode, rc))))
+    .limit(1);
+
+  if (profileRecord) {
+    const signature = createMemberVerificationSignature(
+      canonicalId,
+      profileRecord.userId,
+      profileRecord.issuedAt
+    );
+
+    return {
+      id: profileRecord.id,
+      userId: profileRecord.userId,
+      fullMemberId: canonicalId,
+      campusCode: profileRecord.campusCode || 'KOGI',
+      yearPrefix: getCurrentYearPrefix(),
+      sequenceNumber: 0,
+      issuedAt: profileRecord.issuedAt,
+      userEmail: profileRecord.userEmail,
+      userPhone: profileRecord.userPhone,
+      fullName: profileRecord.fullName,
+      avatarUrl: profileRecord.avatarUrl,
+      programme: profileRecord.programme,
+      level: profileRecord.level,
+      division: profileRecord.division,
+      status: profileRecord.status,
+      chapterId: profileRecord.chapterId,
+      chapterName: profileRecord.chapterName,
+      chapterSlug: profileRecord.chapterSlug,
+      universityName: profileRecord.universityName,
+      universityShortName: profileRecord.universityShortName,
+      signature,
+      verificationUrl: `${SITE_URL}/verify/${canonicalId}?sig=${signature}`,
+    };
+  }
+
+  return null;
 }
 
 /**

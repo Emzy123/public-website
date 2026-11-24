@@ -46,6 +46,31 @@ describe('Digital Member ID & QR Code Engine', () => {
     expect(verifyMemberSignature(fullMemberId, userId, issuedAt, 'invalid_sig')).toBe(false);
   });
 
+  it('verifies both canonical and legacy doubled-prefix signatures for printed QRs', () => {
+    const canonicalId = 'SIN-UEPX3B';
+    const legacyDoubledId = 'SIN-SINUEPX3B';
+    const userId = 'usr_legacy_456';
+    const issuedAt = new Date('2026-01-15T10:00:00Z');
+
+    // Signature originally created over doubled prefix (the old prod bug)
+    const legacySig = createMemberVerificationSignature(legacyDoubledId, userId, issuedAt);
+    expect(verifyMemberSignature(canonicalId, userId, issuedAt, legacySig)).toBe(true);
+    expect(verifyMemberSignature(legacyDoubledId, userId, issuedAt, legacySig)).toBe(true);
+
+    // Signature originally created over canonical ID
+    const canonicalSig = createMemberVerificationSignature(canonicalId, userId, issuedAt);
+    expect(verifyMemberSignature(canonicalId, userId, issuedAt, canonicalSig)).toBe(true);
+    expect(verifyMemberSignature(legacyDoubledId, userId, issuedAt, canonicalSig)).toBe(true);
+
+    // Casing variations verify
+    expect(verifyMemberSignature('sin-uepx3b', userId, issuedAt, canonicalSig)).toBe(true);
+    expect(verifyMemberSignature('sin-sinuepx3b', userId, issuedAt, legacySig)).toBe(true);
+
+    // Tampered signature fails
+    const tamperedSig = legacySig.slice(0, 31) + (legacySig[31] === '0' ? '1' : '0');
+    expect(verifyMemberSignature(canonicalId, userId, issuedAt, tamperedSig)).toBe(false);
+  });
+
   it('generates QR code SVG and data URL correctly', async () => {
     const testUrl = 'https://www.sinet.africa/verify/SIN-FULOKOJA-26-0001?sig=abcdef123456';
     const svg = await generateMemberQrSvg(testUrl);

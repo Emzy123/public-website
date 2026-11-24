@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { permanentRedirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/member-id';
+import { normalizeMemberId } from '@/lib/members/memberId';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
@@ -189,6 +191,13 @@ export default async function MemberVerificationPage(
   const isSigValid = searchParams?.sig
     ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
     : false;
+
+  // If request arrived via legacy or unnormalized Member ID with valid signature,
+  // 308 redirect to canonical URL while preserving signature validity
+  if (isSigValid && params.memberId.trim() !== record.fullMemberId) {
+    const canonicalRedirectUrl = `/verify/${encodeURIComponent(record.fullMemberId)}${searchParams?.sig ? `?sig=${encodeURIComponent(searchParams.sig)}` : ''}`;
+    permanentRedirect(canonicalRedirectUrl);
+  }
 
   const isRevoked = record.status === 'suspended';
   const isValid = record.status === 'active' && !isRevoked;
