@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth/session';
 import { db, isPostgresConfigured, sanitizeDatabaseError } from '@/lib/db';
 import { getMongoDb } from '@/lib/db/mongodb';
-import { memberProfiles, memberIds, chapters, universities, userBadges, badges } from '@/lib/db/schema';
+import { userBadges, badges } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import {
-  createMemberVerificationSignature,
+  getMemberCredential,
   generateMemberQrDataUrl,
+  type MemberCredential,
 } from '@/lib/members/member-id';
-import { SITE_URL } from '@/lib/site-config';
 
 export async function GET() {
   const session = await getSession();
@@ -16,46 +16,45 @@ export async function GET() {
     return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
 
+  let credential: MemberCredential | null = null;
   let profile: any = null;
-  let memberIdRecord: any = null;
   let chapter: any = null;
   let university: any = null;
   let earnedBadges: any[] = [];
   let memberCard: any = null;
   let isDegraded = false;
 
-  // 1. Try PostgreSQL if configured
+  // 1. Try PostgreSQL via single source of truth credential lookup
   if (isPostgresConfigured()) {
     try {
-      const [p] = await db
-        .select()
-        .from(memberProfiles)
-        .where(eq(memberProfiles.userId, session.userId))
-        .limit(1);
-      profile = p || null;
-
-      const [mId] = await db
-        .select()
-        .from(memberIds)
-        .where(eq(memberIds.userId, session.userId))
-        .limit(1);
-      memberIdRecord = mId || null;
-
-      if (profile?.chapterId) {
-        const [ch] = await db
-          .select()
-          .from(chapters)
-          .where(eq(chapters.id, profile.chapterId))
-          .limit(1);
-        chapter = ch || null;
-
-        if (chapter?.universityId) {
-          const [uni] = await db
-            .select()
-            .from(universities)
-            .where(eq(universities.id, chapter.universityId))
-            .limit(1);
-          university = uni || null;
+      credential = await getMemberCredential(session.userId);
+      if (credential) {
+        profile = {
+          id: credential.id,
+          userId: credential.userId,
+          fullName: credential.fullName,
+          avatarUrl: credential.avatarUrl,
+          bio: credential.bio,
+          programme: credential.programme,
+          level: credential.level,
+          division: credential.division,
+          status: credential.status,
+          referralCode: credential.referralCode,
+          profileCompletenessPct: credential.profileCompletenessPct,
+          createdAt: credential.issuedAt,
+        };
+        if (credential.chapterId) {
+          chapter = {
+            id: credential.chapterId,
+            name: credential.chapterName,
+            slug: credential.chapterSlug,
+          };
+        }
+        if (credential.universityName || credential.universityShortName) {
+          university = {
+            name: credential.universityName,
+            shortName: credential.universityShortName,
+          };
         }
       }
 
@@ -124,22 +123,21 @@ export async function GET() {
     };
   }
 
-  // Build digital Member ID card payload if minted
-  if (memberIdRecord) {
-    const signature = createMemberVerificationSignature(
-      memberIdRecord.memberId,
-      session.userId,
-      memberIdRecord.issuedAt
-    );
-    const verificationUrl = `${SITE_URL}/verify/${memberIdRecord.memberId}?sig=${signature}`;
-    const qrDataUrl = await generateMemberQrDataUrl(verificationUrl);
+  // Build digital Member ID card payload strictly when credential is active
+  if (
+    credential &&
+    credential.status === 'active' &&
+    credential.signature &&
+    credential.verificationUrl
+  ) {
+    const qrDataUrl = await generateMemberQrDataUrl(credential.verificationUrl);
 
     memberCard = {
-      memberId: memberIdRecord.memberId,
-      campusCode: memberIdRecord.campusCode,
-      issuedAt: memberIdRecord.issuedAt,
-      signature,
-      verificationUrl,
+      memberId: credential.memberId,
+      campusCode: credential.campusCode,
+      issuedAt: credential.issuedAt,
+      signature: credential.signature,
+      verificationUrl: credential.verificationUrl,
       qrDataUrl,
     };
   }
@@ -155,7 +153,7 @@ export async function GET() {
       chapterIds: session.chapterIds,
       is2faAuthenticated: session.is2faAuthenticated,
       profile: profile || null,
-      memberId: memberIdRecord?.memberId || null,
+      memberId: credential?.isMinted ? credential.memberId : null,
       memberCard,
       chapter: chapter
         ? {

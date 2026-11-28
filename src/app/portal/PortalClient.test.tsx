@@ -1,0 +1,166 @@
+/**
+ * @jest-environment jsdom
+ */
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { PortalClient } from './PortalClient';
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    refresh: jest.fn(),
+  }),
+}));
+
+const baseUser = {
+  id: 'usr_test_1',
+  email: 'ada@example.com',
+  phone: '+2348012345678',
+  roles: ['member'],
+  is2faAuthenticated: true,
+  profile: {
+    fullName: 'Ada Lovelace',
+    avatarUrl: null,
+    bio: 'Test bio',
+    programme: 'Undergraduate Member',
+    level: '300',
+    division: 'student_finance',
+    status: 'active',
+    referralCode: 'SIN-UEPX3B',
+    profileCompletenessPct: 85,
+  },
+  memberId: 'SIN-UEPX3B',
+  memberCard: {
+    fullName: 'Ada Lovelace',
+    avatarUrl: null,
+    memberId: 'SIN-UEPX3B',
+    campusCode: 'FULOKOJA',
+    chapterName: 'Federal University Lokoja Chapter',
+    universityName: 'Federal University Lokoja',
+    division: 'student_finance',
+    programme: 'Undergraduate Member',
+    level: '300',
+    status: 'active',
+    tierSummaryLine: 'Student Finance • FULOKOJA',
+    issuedAt: new Date('2026-01-01').toISOString(),
+    verificationUrl: 'https://www.sinet.africa/verify/SIN-UEPX3B?sig=abc',
+    qrDataUrl: 'data:image/png;base64,mock',
+    signature: 'abc',
+  },
+  chapter: {
+    id: 'ch-1',
+    name: 'FULOKOJA Chapter',
+    slug: 'fulokoja',
+    universityName: 'Federal University Lokoja',
+  },
+  tierSummary: {
+    tier: 'Member',
+    division: 'Student Finance',
+    chapter: 'FULOKOJA',
+    summaryLine: 'Student Finance • FULOKOJA',
+  },
+  badges: [],
+};
+
+describe('PortalClient rendering and data integrity (Steps 2, 3, 4, 6)', () => {
+  it('renders greeting with member real name and consistent tier line', () => {
+    render(<PortalClient user={baseUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.getByText('Welcome, Ada Lovelace')).toBeInTheDocument();
+    // Welcome subtitle and ID card both show the exact same consistent tier summary line
+    expect(screen.getAllByText('Student Finance • FULOKOJA')).toHaveLength(2);
+  });
+
+  it('renders neutral greeting and person icon (no "SI" fallback) when real name is absent', () => {
+    const userWithoutName = {
+      ...baseUser,
+      profile: {
+        ...baseUser.profile,
+        fullName: '',
+      },
+      memberCard: {
+        ...baseUser.memberCard,
+        fullName: '',
+      },
+    };
+
+    render(<PortalClient user={userWithoutName} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.getByText('Welcome')).toBeInTheDocument();
+    expect(screen.queryByText(/Welcome, ada/i)).not.toBeInTheDocument();
+    const avatar = screen.getByTestId('member-avatar');
+    expect(avatar).toContainElement(screen.getByTestId('person-icon'));
+    expect(avatar).not.toHaveTextContent('SI');
+  });
+
+  it('renders Digital ID card with typed status label and no (ActiveL) typo', () => {
+    const userWithActiveLevel = {
+      ...baseUser,
+      memberCard: {
+        ...baseUser.memberCard,
+        level: 'Active', // legacy level value that caused (ActiveL)
+        status: 'active',
+        tierSummaryLine: 'Student Finance • FULOKOJA',
+      },
+    };
+
+    render(<PortalClient user={userWithActiveLevel} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByText(/\(ActiveL\)/i)).not.toBeInTheDocument();
+    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
+  });
+
+  it('hides Weekly Pulse section when pulseFeed.tasks is empty', () => {
+    render(<PortalClient user={baseUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByText('Weekly Network Pulse')).not.toBeInTheDocument();
+  });
+
+  it('hides Badges showcase when user has no badges (prevents 0 / 0 Unlocked)', () => {
+    render(<PortalClient user={{ ...baseUser, badges: [] }} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByText('Achievement Badges Showcase')).not.toBeInTheDocument();
+    expect(screen.queryByText(/0 \/ 0 Unlocked/i)).not.toBeInTheDocument();
+  });
+
+  it('does NOT render misleading "Offline Ready" badge on portal', () => {
+    render(<PortalClient user={baseUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByText('Offline Ready')).not.toBeInTheDocument();
+  });
+
+  it('renders working Save Pass and Verify Online link for active members', () => {
+    render(<PortalClient user={baseUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.getByRole('button', { name: /Save Pass/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Verify Online/i })).toHaveAttribute(
+      'href',
+      '/verify/SIN-UEPX3B?sig=abc'
+    );
+    expect(screen.getByAltText('QR Code for SIN-UEPX3B')).toBeInTheDocument();
+  });
+
+  it('hides Verify Online link and QR for pending members and shows status instead', () => {
+    const pendingUser = {
+      ...baseUser,
+      profile: {
+        ...baseUser.profile,
+        status: 'pending',
+      },
+      memberCard: {
+        ...baseUser.memberCard,
+        status: 'pending',
+        verificationUrl: null,
+        qrDataUrl: null,
+        signature: null,
+      },
+    };
+
+    render(<PortalClient user={pendingUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByRole('link', { name: /Verify Online/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('copy-verification-link')).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/QR Code/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('member-verification-status')).toHaveTextContent('Status: Pending');
+  });
+});

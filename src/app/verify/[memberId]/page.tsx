@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { permanentRedirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { getVerifiedMemberRecord, verifyMemberSignature } from '@/lib/members/member-id';
+import { getVerifiedMemberRecord, verifyMemberSignature, normalizeMemberId } from '@/lib/members/member-id';
+import { cleanFullName } from '@/lib/members/display';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
 import { enforceRateLimit, getClientIp } from '@/lib/security/rate-limit-unified';
 
@@ -15,16 +17,17 @@ export async function generateMetadata(
   const params = await props.params;
   try {
     const record = await getVerifiedMemberRecord(params.memberId);
-    if (!record) {
+    const isSigValid =
+      record && searchParams?.sig
+        ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
+        : false;
+
+    if (!record || (!record.isMinted && (record.status !== 'active' || !isSigValid))) {
       return {
         title: 'Credential Verification — SINet',
         description: 'Verify digital membership credentials on SINet.',
       };
     }
-
-    const isSigValid = searchParams?.sig
-      ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
-      : false;
 
     if (!isSigValid) {
       return {
@@ -33,9 +36,14 @@ export async function generateMetadata(
       };
     }
 
+    const safeName = cleanFullName(record.fullName, record.userEmail);
     return {
-      title: `Verify Member: ${record.fullName} (${record.fullMemberId}) — SINet`,
-      description: `Official digital credential verification for ${record.fullName}, ${record.universityName || 'SINet'}.`,
+      title: safeName
+        ? `Verify Member: ${safeName} (${record.fullMemberId}) — SINet`
+        : `Verify Member (${record.fullMemberId}) — SINet`,
+      description: safeName
+        ? `Official digital credential verification for ${safeName}, ${record.universityName || 'SINet'}.`
+        : `Official digital credential verification for ${record.fullMemberId}, ${record.universityName || 'SINet'}.`,
     };
   } catch {
     return {
@@ -151,7 +159,12 @@ export default async function MemberVerificationPage(
     );
   }
 
-  if (!record) {
+  const isSigValid =
+    record && searchParams?.sig
+      ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
+      : false;
+
+  if (!record || (!record.isMinted && (record.status !== 'active' || !isSigValid))) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-[#071026] px-4 py-16 text-center text-white">
         <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl backdrop-blur-md">
@@ -186,9 +199,12 @@ export default async function MemberVerificationPage(
     );
   }
 
-  const isSigValid = searchParams?.sig
-    ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
-    : false;
+  // If request arrived via legacy or unnormalized Member ID with valid signature,
+  // 308 redirect to canonical URL while preserving signature validity
+  if (isSigValid && params.memberId.trim() !== record.fullMemberId) {
+    const canonicalRedirectUrl = `/verify/${encodeURIComponent(record.fullMemberId)}${searchParams?.sig ? `?sig=${encodeURIComponent(searchParams.sig)}` : ''}`;
+    permanentRedirect(canonicalRedirectUrl);
+  }
 
   const isRevoked = record.status === 'suspended';
   const isValid = record.status === 'active' && !isRevoked;
@@ -196,6 +212,9 @@ export default async function MemberVerificationPage(
   const divisionInfo = record.division
     ? STUDENT_DIVISION_INFO[record.division as StudentDivision]
     : null;
+
+  const safeFullName = cleanFullName(record.fullName, record.userEmail);
+  const avatarInitials = safeFullName ? safeFullName.slice(0, 2).toUpperCase() : null;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#071026] px-4 py-12 text-slate-100 selection:bg-amber-500 selection:text-slate-900 xs:px-6">
@@ -235,13 +254,20 @@ export default async function MemberVerificationPage(
 
           {/* Member Identity Section */}
           <div className="mt-6 flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left">
-            <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-2xl font-black text-[#071026] shadow-lg ring-4 ring-white/10">
-              {record.fullName.slice(0, 2).toUpperCase()}
+            <div
+              data-testid="verify-avatar"
+              className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-600 to-amber-400 text-2xl font-black text-[#071026] shadow-lg ring-4 ring-white/10"
+            >
+              {avatarInitials || (
+                <svg className="h-10 w-10 text-[#071026]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" data-testid="person-icon">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              )}
             </div>
 
             <div className="mt-4 sm:ml-5 sm:mt-0">
               <h1 className="text-xl font-bold tracking-tight text-white sm:text-2xl font-mono">
-                {isSigValid ? record.fullName : record.fullMemberId}
+                {isSigValid ? safeFullName || record.fullMemberId : record.fullMemberId}
               </h1>
               {isSigValid && (
                 <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-amber-400">

@@ -2,12 +2,18 @@
  * @jest-environment node
  */
 import { NextRequest } from 'next/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { GET as getVerify } from '@/app/api/verify/[memberId]/route';
 import MemberVerificationPage, { generateMetadata } from './[memberId]/page';
 import * as memberIdModule from '@/lib/members/member-id';
 import * as rateLimit from '@/lib/security/rate-limit-unified';
 import { HeadersAdapter } from 'next/dist/server/web/spec-extension/adapters/headers';
 import { headers } from 'next/headers';
+
+const mockPermanentRedirect = jest.fn();
+jest.mock('next/navigation', () => ({
+  permanentRedirect: (...args: any[]) => mockPermanentRedirect(...args),
+}));
 
 jest.mock('next/headers', () => ({
   headers: jest.fn(),
@@ -34,6 +40,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
       fullMemberId: 'SIN-FULOKOJA-24-0001',
       userId: 'user-1',
+      isMinted: true,
       fullName: 'Ada Lovelace',
       avatarUrl: null,
       campusCode: 'FULOKOJA',
@@ -72,6 +79,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
       fullMemberId: 'SIN-FULOKOJA-24-0002',
       userId: 'user-2',
+      isMinted: true,
       fullName: 'Revoked Member',
       campusCode: 'FULOKOJA',
       universityName: 'Federal University Lokoja',
@@ -107,6 +115,121 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     expect(body.error).toBe('Too many verification requests. Please slow down.');
   });
 
+  it('resolves legacy doubled-prefix member ID and verifies successfully', async () => {
+    (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+      fullMemberId: 'SIN-UEPX3B',
+      userId: 'user-legacy',
+      isMinted: true,
+      fullName: 'Legacy Member',
+      campusCode: 'KOGI',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'Kogi Chapter',
+      division: 'student_finance',
+      programme: 'Computer Science',
+      level: '200',
+      status: 'active',
+      issuedAt: new Date('2026-01-01'),
+    });
+    (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+    const req = new NextRequest('http://localhost:3000/api/verify/SIN-SINUEPX3B?sig=legacysig');
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-SINUEPX3B' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.valid).toBe(true);
+    expect(body.member.memberId).toBe('SIN-UEPX3B');
+    expect(body.member.fullName).toBe('Legacy Member');
+    expect(body.signatureValid).toBe(true);
+  });
+
+  it('resolves lowercase member ID and verifies successfully', async () => {
+    (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+      fullMemberId: 'SIN-FULOKOJA-24-0001',
+      userId: 'user-1',
+      isMinted: true,
+      fullName: 'Ada Lovelace',
+      campusCode: 'FULOKOJA',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'FULOKOJA Chapter',
+      division: 'student_finance',
+      programme: 'Economics',
+      level: '300',
+      status: 'active',
+      issuedAt: new Date('2024-01-15'),
+    });
+    (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+    const req = new NextRequest('http://localhost:3000/api/verify/sin-fulokoja-24-0001?sig=abc');
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'sin-fulokoja-24-0001' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.valid).toBe(true);
+    expect(body.member.memberId).toBe('SIN-FULOKOJA-24-0001');
+  });
+
+  it('rejects tampered signature with signatureValid: false', async () => {
+    (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+      fullMemberId: 'SIN-FULOKOJA-24-0001',
+      userId: 'user-1',
+      isMinted: true,
+      fullName: 'Ada Lovelace',
+      campusCode: 'FULOKOJA',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'FULOKOJA Chapter',
+      division: 'student_finance',
+      programme: 'Economics',
+      level: '300',
+      status: 'active',
+      issuedAt: new Date('2024-01-15'),
+    });
+    (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+
+    const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001?sig=tampered_signature_hex_value_here');
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.signatureValid).toBe(false);
+  });
+
+  it('missing signature sets signatureValid to null', async () => {
+    (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+      fullMemberId: 'SIN-FULOKOJA-24-0001',
+      userId: 'user-1',
+      isMinted: true,
+      fullName: 'Ada Lovelace',
+      campusCode: 'FULOKOJA',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'FULOKOJA Chapter',
+      division: 'student_finance',
+      programme: 'Economics',
+      level: '300',
+      status: 'active',
+      issuedAt: new Date('2024-01-15'),
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/verify/SIN-FULOKOJA-24-0001');
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.signatureValid).toBeNull();
+  });
+
+  it('returns 404 for unknown Member ID (never 500)', async () => {
+    (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+
+    const req = new NextRequest('http://localhost:3000/api/verify/SIN-UNKNOWN-99-9999');
+    const res = await getVerify(req, { params: Promise.resolve({ memberId: 'SIN-UNKNOWN-99-9999' }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(body.valid).toBe(false);
+    expect(body.error).toContain('Member ID not found');
+  });
+
   it('renders a friendly user-facing page message when rate limit is exceeded, not a raw error', async () => {
     (rateLimit.enforceRateLimit as jest.Mock).mockResolvedValue({
       ok: false,
@@ -131,6 +254,7 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
     const mockMember = {
       fullMemberId: 'SIN-FULOKOJA-24-0001',
       userId: 'user-1',
+      isMinted: true,
       fullName: 'Ada Lovelace',
       avatarUrl: null,
       campusCode: 'FULOKOJA',
@@ -259,6 +383,225 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       });
       expect(metaValidSig.title).toContain('Ada Lovelace');
       expect(metaValidSig.description).toContain('Ada Lovelace');
+    });
+
+    it('redirects (308) legacy doubled-prefix URL to canonical URL when signature is valid', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+        ...mockMember,
+        fullMemberId: 'SIN-UEPX3B',
+      });
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-SINUEPX3B' }),
+        searchParams: Promise.resolve({ sig: 'valid_sig_32_chars_hex_value' }),
+      });
+
+      expect(mockPermanentRedirect).toHaveBeenCalledWith(
+        '/verify/SIN-UEPX3B?sig=valid_sig_32_chars_hex_value'
+      );
+    });
+
+    it('returns graceful 200 Member ID Not Found page for unknown ID without throwing 500', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+
+      const jsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-TEST' }),
+        searchParams: Promise.resolve({}),
+      });
+
+      expect(jsx).toBeDefined();
+      const text = extractText(jsx);
+      expect(text).toContain('Member ID Not Found');
+      expect(text).toContain('SIN-TEST');
+      expect(text).toContain('Invalid Credential');
+    });
+
+    it('renders neutral person icon (no "SI" fallback) when no real name on verified credential', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue({
+        ...mockMember,
+        fullName: '',
+        userEmail: 'anon@example.com',
+      });
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      const jsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-FULOKOJA-24-0001' }),
+        searchParams: Promise.resolve({ sig: 'valid_sig' }),
+      });
+
+      const html = renderToStaticMarkup(jsx);
+      expect(html).toContain('data-testid="verify-avatar"');
+      expect(html).toContain('data-testid="person-icon"');
+      expect(html).not.toMatch(/data-testid="verify-avatar"[^>]*>SI</);
+    });
+  });
+
+  describe('Verification Oracle Prevention for referral-derived IDs (Fix 1)', () => {
+    const referralDerivedMember = {
+      fullMemberId: 'SIN-UEPX3B',
+      userId: 'user-referral-only',
+      isMinted: false,
+      fullName: 'Referral Member',
+      avatarUrl: null,
+      campusCode: 'KOGI',
+      universityName: 'Federal University Lokoja',
+      chapterName: 'Kogi Chapter',
+      division: 'student_finance',
+      programme: 'Accounting',
+      level: '200',
+      status: 'active',
+      issuedAt: new Date('2026-01-01'),
+    };
+
+    it('API: referral-derived + no sig and + tampered sig return byte-identical 404 body to unknown ID', async () => {
+      // Unknown ID baseline
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+      const resUnknown = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UNKNOWN99'),
+        { params: Promise.resolve({ memberId: 'SIN-UNKNOWN99' }) }
+      );
+      const unknownBody = await resUnknown.text();
+      expect(resUnknown.status).toBe(404);
+
+      // Referral-derived + NO sig
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(referralDerivedMember);
+      const resNoSig = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UEPX3B'),
+        { params: Promise.resolve({ memberId: 'SIN-UEPX3B' }) }
+      );
+      const noSigBody = await resNoSig.text();
+      expect(resNoSig.status).toBe(404);
+      expect(noSigBody).toBe(unknownBody);
+      expect(noSigBody).not.toContain('Referral Member');
+      expect(noSigBody).not.toContain('valid":true');
+
+      // Referral-derived + TAMPERED sig
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+      const resTampered = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UEPX3B?sig=tampered_sig_hex'),
+        { params: Promise.resolve({ memberId: 'SIN-UEPX3B' }) }
+      );
+      const tamperedBody = await resTampered.text();
+      expect(resTampered.status).toBe(404);
+      expect(tamperedBody).toBe(unknownBody);
+      expect(tamperedBody).not.toContain('Referral Member');
+    });
+
+    it('API: referral-derived + valid sig returns 200 with member payload', async () => {
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(referralDerivedMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      const res = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UEPX3B?sig=valid_sig_hex'),
+        { params: Promise.resolve({ memberId: 'SIN-UEPX3B' }) }
+      );
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.valid).toBe(true);
+      expect(body.signatureValid).toBe(true);
+      expect(body.member.fullName).toBe('Referral Member');
+      expect(body.member.memberId).toBe('SIN-UEPX3B');
+    });
+
+    it('Page: referral-derived + no sig and + tampered sig render "Member ID Not Found" identical to unknown ID', async () => {
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+
+      // Unknown ID baseline
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+      const unknownJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({}),
+      });
+      const unknownHtml = renderToStaticMarkup(unknownJsx);
+
+      // Referral-derived + no sig
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(referralDerivedMember);
+      const noSigJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({}),
+      });
+      expect(renderToStaticMarkup(noSigJsx)).toBe(unknownHtml);
+      expect(extractText(noSigJsx)).toContain('Member ID Not Found');
+      expect(extractText(noSigJsx)).not.toContain('Referral Member');
+
+      // Referral-derived + tampered sig
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+      const tamperedJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({ sig: 'tampered_sig' }),
+      });
+      expect(renderToStaticMarkup(tamperedJsx)).toBe(unknownHtml);
+      expect(extractText(tamperedJsx)).toContain('Member ID Not Found');
+      expect(extractText(tamperedJsx)).not.toContain('Referral Member');
+
+      // Referral-derived + valid sig
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+      const validJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({ sig: 'valid_sig' }),
+      });
+      const validText = extractText(validJsx);
+      expect(validText).toContain('Referral Member');
+      expect(validText).toContain('Authentic Digital Credential Verified');
+    });
+
+    it('generateMetadata omits member existence when referral-derived has no valid sig', async () => {
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(referralDerivedMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(false);
+
+      const metaNoSig = await generateMetadata({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({}),
+      });
+      expect(metaNoSig.title).toBe('Credential Verification — SINet');
+      expect(metaNoSig.description).toBe('Verify digital membership credentials on SINet.');
+      expect(metaNoSig.description).not.toContain('SIN-UEPX3B');
+    });
+
+    it('API & Page reject non-active (pending) referral-derived IDs even when sig matches', async () => {
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+      const unknownApiRes = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UNKNOWN99'),
+        { params: Promise.resolve({ memberId: 'SIN-UNKNOWN99' }) }
+      );
+      const unknownApiBody = await unknownApiRes.text();
+
+      const pendingReferralMember = {
+        ...referralDerivedMember,
+        status: 'pending',
+      };
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(pendingReferralMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      const pendingApiRes = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UEPX3B?sig=valid_sig'),
+        { params: Promise.resolve({ memberId: 'SIN-UEPX3B' }) }
+      );
+      expect(pendingApiRes.status).toBe(404);
+      expect(await pendingApiRes.text()).toBe(unknownApiBody);
+
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      const pendingPageJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({ sig: 'valid_sig' }),
+      });
+      expect(extractText(pendingPageJsx)).toContain('Member ID Not Found');
+      expect(extractText(pendingPageJsx)).not.toContain('Referral Member');
     });
   });
 });

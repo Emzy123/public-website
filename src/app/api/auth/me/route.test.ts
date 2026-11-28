@@ -114,4 +114,46 @@ describe('GET /api/auth/me resilience', () => {
     expect(body.user.chapterIds).toEqual([]);
     expect(body.user.chapterIds).not.toContain('unauthorized-chapter-access');
   });
+
+  it('includes NO signature, verificationUrl, or qrDataUrl when Postgres / getMemberCredential fails (degraded mode)', async () => {
+    jest.spyOn(sessionModule, 'getSession').mockResolvedValue({
+      userId: 'user-789',
+      email: 'degraded-member@sinet.africa',
+      phone: null,
+      roles: ['member'],
+      chapterIds: ['fulokoja'],
+      is2faAuthenticated: true,
+      lastActive: Date.now(),
+    });
+
+    (db.select as jest.Mock).mockImplementation(() => {
+      throw new Error('ETIMEDOUT');
+    });
+    (getMongoDb as jest.Mock).mockResolvedValue({
+      collection: jest.fn().mockReturnValue({
+        findOne: jest.fn().mockResolvedValue({
+          _id: 'mongo-id-789',
+          fullName: 'Degraded Active Mongo Member',
+          email: 'degraded-member@sinet.africa',
+          status: 'active',
+        }),
+      }),
+    });
+
+    const res = await GET();
+    expect(res.status).toBe(200);
+
+    const raw = await res.text();
+    const body = JSON.parse(raw);
+
+    expect(body.authenticated).toBe(true);
+    expect(body.degraded).toBe(true);
+    expect(body.user.roles).toEqual(['member']);
+    expect(body.user.chapterIds).toEqual(['fulokoja']);
+    expect(body.user.memberId).toBeNull();
+    expect(body.user.memberCard).toBeNull();
+    expect(raw).not.toContain('signature');
+    expect(raw).not.toContain('verificationUrl');
+    expect(raw).not.toContain('qrDataUrl');
+  });
 });

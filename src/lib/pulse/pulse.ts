@@ -20,39 +20,6 @@ export type PulseTask = {
   isCompleted?: boolean;
 };
 
-const DEFAULT_WEEKLY_PULSE_TASKS: PulseTask[] = [
-  {
-    id: 'pulse-fin-01',
-    category: 'finance_brief',
-    title: 'NGX Equities & CBN Inflation Briefing (Week 41)',
-    divisionTarget: 'student_finance',
-    summary:
-      'Review the latest Nigerian Exchange (NGX) banking index performance against recent CBN interest rate directives. Understand cash reserve ratios and treasury bills yield curve.',
-    actionText: 'Read Financial Briefing',
-    actionHref: '/academy',
-  },
-  {
-    id: 'pulse-ent-01',
-    category: 'enterprise_sprint',
-    title: 'Campus Food & Logistics Opportunity Mapping',
-    divisionTarget: 'student_enterprise',
-    summary:
-      'Identify 3 student service bottlenecks around off-campus hostels and student centers in Kogi State tertiary institutions. Propose a lean student venture hypothesis.',
-    actionText: 'Submit Venture Idea',
-    actionHref: '/portal',
-  },
-  {
-    id: 'pulse-gov-01',
-    category: 'chapter_sync',
-    title: 'Kogi Campuses Executive Chapter Sync',
-    divisionTarget: 'governance_records',
-    summary:
-      'Bi-weekly coordination sync for chapter executives and ambassadors across FULOKOJA, PAAU, CUSTECH, KSUK, SALEM, and ALBAYAN campuses.',
-    actionText: 'View Agenda',
-    actionHref: '/chapters',
-  },
-];
-
 /**
  * Returns this week's active pulse announcements and learning tasks.
  */
@@ -94,7 +61,7 @@ export async function getWeeklyPulseFeed(chapterId?: string | null) {
   return {
     weekNumber: getIsoWeekNumber(new Date()),
     year: new Date().getFullYear(),
-    tasks: [...customTasks, ...DEFAULT_WEEKLY_PULSE_TASKS],
+    tasks: customTasks,
   };
 }
 
