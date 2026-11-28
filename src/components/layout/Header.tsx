@@ -8,7 +8,7 @@ import { ApplyNotifyModal } from './ApplyNotifyModal';
 import { getPrimaryNav, type PrimaryNavItem } from '@/lib/site-config';
 
 import { Logo } from '@/components/brand/Logo';
-import { cleanFullName } from '@/lib/members/memberId';
+import { cleanFullName } from '@/lib/members/display';
 
 const PRIMARY_NAV = getPrimaryNav();
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Logo } from '@/components/brand/Logo';
-import { cleanFullName } from '@/lib/members/memberId';
+import { cleanFullName } from '@/lib/members/display';
 import type { PrimaryNavItem } from '@/lib/site-config';
 
 interface MobileDrawerProps {

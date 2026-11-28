@@ -12,9 +12,149 @@ import {
 } from '@/lib/db/schema';
 import { eq, and, or, sql } from 'drizzle-orm';
 import { SITE_URL } from '@/lib/site-config';
-import { normalizeMemberId, formatMemberId } from './memberId';
+export {
+  cleanFullName,
+  getMemberInitials,
+  formatAcademicLevel,
+  getMemberStatusLabel,
+  MEMBER_STATUS_LABELS,
+  type MemberStatus,
+} from './display';
 
-export { normalizeMemberId, formatMemberId };
+/**
+ * Normalizes user input or legacy Member IDs into the canonical format: SIN-XXXXXX.
+ * Strips at most ONE duplicated SIN prefix so referral codes whose nanoid part starts
+ * with "SIN" (e.g. SINSINAB -> SIN-SINAB) resolve to the right member and not another.
+ */
+export function normalizeMemberId(input?: string | null): string | null {
+  if (!input || typeof input !== 'string') return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  // Reject strings containing characters outside [a-zA-Z0-9-]
+  if (!/^[a-zA-Z0-9-]+$/.test(trimmed)) return null;
+
+  // Reject consecutive hyphens like '--'
+  if (trimmed.includes('--')) return null;
+
+  let upper = trimmed.toUpperCase();
+
+  // Strip at most ONE duplicated prefix if present
+  if (upper.startsWith('SIN-SIN-')) {
+    upper = `SIN-${upper.slice(8)}`;
+  } else if (upper.startsWith('SINSIN-')) {
+    upper = `SIN-${upper.slice(7)}`;
+  } else if (upper.startsWith('SIN-SIN')) {
+    const after = upper.slice(7);
+    if (after.startsWith('SIN') || after.includes('-') || after.length >= 6) {
+      upper = `SIN-${after}`;
+    }
+  } else if (upper.startsWith('SINSIN')) {
+    const after = upper.slice(6);
+    if (after.startsWith('SIN') || after.includes('-') || after.length >= 6) {
+      upper = `SIN-${after}`;
+    }
+  }
+
+  if (upper.startsWith('SIN-')) {
+    const rest = upper.slice(4);
+    if (!rest || rest.startsWith('-') || rest.endsWith('-')) return null;
+    return `SIN-${rest}`;
+  } else if (upper.startsWith('SIN')) {
+    const rest = upper.slice(3);
+    if (!rest || rest.startsWith('-') || rest.endsWith('-')) return null;
+    return `SIN-${rest}`;
+  }
+
+  return null;
+}
+
+/**
+ * Formats a raw member ID or referral code into canonical SIN-XXXXXX format.
+ * If raw already has a SIN prefix, it normalizes it.
+ * If raw lacks a SIN prefix (e.g. 'UEPX3B' or 'MBR-123456'), it safely prefixes 'SIN-'.
+ */
+export function formatMemberId(raw?: string | null): string {
+  if (!raw || typeof raw !== 'string') return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  const normalized = normalizeMemberId(trimmed);
+  if (normalized) return normalized;
+
+  // Clean characters outside alphanumeric and hyphens
+  const cleaned = trimmed
+    .replace(/[^a-zA-Z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toUpperCase();
+  if (!cleaned) return '';
+
+  if (cleaned.startsWith('SIN-')) return cleaned;
+  if (cleaned.startsWith('SIN')) return `SIN-${cleaned.slice(3)}`;
+  return `SIN-${cleaned}`;
+}
+
+export type MemberTierInfo = {
+  tier: string;
+  division: string | null;
+  chapter: string | null;
+  summaryLine: string;
+};
+
+export const STUDENT_DIVISION_LABELS: Record<string, string> = {
+  student_finance: 'Student Finance',
+  student_enterprise: 'Student Enterprise',
+  governance_records: 'Governance & Records',
+};
+
+/**
+ * Derives a single consistent tier, division, and chapter line from Postgres records.
+ * Excludes staff roles (admin, super_admin, staff) entirely.
+ * Chapter Lead may show as a credential. Programme is not a tier and is excluded from the line.
+ */
+export function getMemberTierSummary(opts: {
+  roles?: string[] | null;
+  programme?: string | null;
+  division?: string | null;
+  chapterName?: string | null;
+  universityName?: string | null;
+  universityShortName?: string | null;
+}): MemberTierInfo {
+  const memberRoles = (opts.roles || []).filter(
+    (r) => r !== 'admin' && r !== 'super_admin' && r !== 'staff'
+  );
+
+  const credential = memberRoles.includes('chapter_lead') ? 'Chapter Lead' : null;
+
+  let division: string | null = null;
+  if (opts.division && STUDENT_DIVISION_LABELS[opts.division]) {
+    division = STUDENT_DIVISION_LABELS[opts.division];
+  } else if (opts.division && opts.division !== 'student_finance') {
+    division = opts.division.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  } else if (opts.division === 'student_finance') {
+    division = 'Student Finance';
+  }
+
+  let chapter: string | null = null;
+  if (opts.universityShortName && opts.universityShortName.trim()) {
+    chapter = opts.universityShortName.trim();
+  } else if (opts.chapterName && opts.chapterName.trim()) {
+    chapter = opts.chapterName.trim();
+  } else if (opts.universityName && opts.universityName.trim()) {
+    chapter = opts.universityName.trim();
+  }
+
+  const parts = [credential, division, chapter].filter(Boolean) as string[];
+  const summaryLine = parts.length > 0 ? parts.join(' • ') : 'Community Member';
+
+  return {
+    tier: credential || 'Member',
+    division,
+    chapter,
+    summaryLine,
+  };
+}
 
 import { isProductionMode } from '@/lib/runtime/envMode';
 
@@ -223,6 +363,7 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
 
     return {
       ...record,
+      isMinted: true,
       fullMemberId: formattedId,
       signature,
       verificationUrl: `${SITE_URL}/verify/${formattedId}?sig=${signature}`,
@@ -232,12 +373,12 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
   // 2. Fallback: Query member_profiles by referralCode for members without a minted campus ID
   const referralCandidates = Array.from(
     new Set([
-      suffix,
+      rawNormalized,
       `SIN${suffix}`,
+      canonicalId,
       `SIN-${suffix}`,
       `SIN-SIN${suffix}`,
-      canonicalId,
-      rawNormalized,
+      suffix,
     ])
   );
 
@@ -269,6 +410,15 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
     .leftJoin(universities, eq(chapters.universityId, universities.id))
     .where(or(...referralCandidates.map((rc) => eq(memberProfiles.referralCode, rc))))
+    .orderBy(
+      sql`CASE
+        WHEN ${memberProfiles.referralCode} = ${rawNormalized} THEN 1
+        WHEN ${memberProfiles.referralCode} = ${`SIN${suffix}`} THEN 2
+        WHEN ${memberProfiles.referralCode} = ${canonicalId} THEN 3
+        WHEN ${memberProfiles.referralCode} = ${suffix} THEN 4
+        ELSE 5
+      END`
+    )
     .limit(1);
 
   if (profileRecord) {
@@ -281,6 +431,7 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     return {
       id: profileRecord.id,
       userId: profileRecord.userId,
+      isMinted: false,
       fullMemberId: canonicalId,
       campusCode: profileRecord.campusCode || 'KOGI',
       yearPrefix: getCurrentYearPrefix(),

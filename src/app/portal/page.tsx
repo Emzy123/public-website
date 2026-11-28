@@ -8,8 +8,10 @@ import { eq } from 'drizzle-orm';
 import {
   createMemberVerificationSignature,
   generateMemberQrDataUrl,
+  formatMemberId,
+  getMemberTierSummary,
 } from '@/lib/members/member-id';
-import { formatMemberId, cleanFullName, getMemberTierSummary } from '@/lib/members/memberId';
+import { cleanFullName } from '@/lib/members/display';
 import { getMemberBadgesShowcase } from '@/lib/members/gamification';
 import { getWeeklyPulseFeed } from '@/lib/pulse/pulse';
 import { SITE_URL } from '@/lib/site-config';
@@ -127,10 +129,10 @@ export default async function PortalPage() {
     profile.fullName = cleanFullName(profile.fullName, session.email) || '';
   }
 
-  // Fetch gamified badge showcase and weekly pulse feed (never include seed items on portal)
+  // Fetch gamified badge showcase and weekly pulse feed
   const [badgesShowcase, pulseFeed] = await Promise.all([
     getMemberBadgesShowcase(session.userId),
-    getWeeklyPulseFeed(chapter?.id, { includeSeeds: false }),
+    getWeeklyPulseFeed(chapter?.id),
   ]);
 
   // Build digital card

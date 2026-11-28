@@ -41,7 +41,7 @@ const baseUser = {
     programme: 'Undergraduate Member',
     level: '300',
     status: 'active',
-    tierSummaryLine: 'Undergraduate • Student Finance • FULOKOJA',
+    tierSummaryLine: 'Student Finance • FULOKOJA',
     issuedAt: new Date('2026-01-01').toISOString(),
     verificationUrl: 'https://www.sinet.africa/verify/SIN-UEPX3B?sig=abc',
     qrDataUrl: 'data:image/png;base64,mock',
@@ -53,10 +53,10 @@ const baseUser = {
     universityName: 'Federal University Lokoja',
   },
   tierSummary: {
-    tier: 'Undergraduate',
+    tier: 'Member',
     division: 'Student Finance',
     chapter: 'FULOKOJA',
-    summaryLine: 'Undergraduate • Student Finance • FULOKOJA',
+    summaryLine: 'Student Finance • FULOKOJA',
   },
   badges: [],
 };
@@ -67,14 +67,18 @@ describe('PortalClient rendering and data integrity (Steps 2, 3, 4, 6)', () => {
 
     expect(screen.getByText('Welcome, Ada Lovelace')).toBeInTheDocument();
     // Welcome subtitle and ID card both show the exact same consistent tier summary line
-    expect(screen.getAllByText('Undergraduate • Student Finance • FULOKOJA')).toHaveLength(2);
+    expect(screen.getAllByText('Student Finance • FULOKOJA')).toHaveLength(2);
   });
 
-  it('renders neutral greeting when real name is absent, never email handle', () => {
+  it('renders neutral greeting and person icon (no "SI" fallback) when real name is absent', () => {
     const userWithoutName = {
       ...baseUser,
       profile: {
         ...baseUser.profile,
+        fullName: '',
+      },
+      memberCard: {
+        ...baseUser.memberCard,
         fullName: '',
       },
     };
@@ -83,6 +87,9 @@ describe('PortalClient rendering and data integrity (Steps 2, 3, 4, 6)', () => {
 
     expect(screen.getByText('Welcome')).toBeInTheDocument();
     expect(screen.queryByText(/Welcome, ada/i)).not.toBeInTheDocument();
+    const avatar = screen.getByTestId('member-avatar');
+    expect(avatar).toContainElement(screen.getByTestId('person-icon'));
+    expect(avatar).not.toHaveTextContent('SI');
   });
 
   it('renders Digital ID card with typed status label and no (ActiveL) typo', () => {
@@ -92,7 +99,7 @@ describe('PortalClient rendering and data integrity (Steps 2, 3, 4, 6)', () => {
         ...baseUser.memberCard,
         level: 'Active', // legacy level value that caused (ActiveL)
         status: 'active',
-        tierSummaryLine: 'Undergraduate • Student Finance • FULOKOJA',
+        tierSummaryLine: 'Student Finance • FULOKOJA',
       },
     };
 

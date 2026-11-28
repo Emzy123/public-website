@@ -8,7 +8,7 @@ import {
   getMemberInitials,
   formatAcademicLevel,
   getMemberStatusLabel,
-} from '@/lib/members/memberId';
+} from '@/lib/members/display';
 
 export type MemberCardData = {
   fullName: string;
@@ -71,6 +71,11 @@ function escapeHtml(value?: string | null): string {
     .replace(/'/g, '&#39;');
 }
 
+  const avatarInitials = getMemberInitials(card.fullName);
+  const offlineAvatarHtml = avatarInitials
+    ? escapeHtml(avatarInitials)
+    : '<svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>';
+
   const handleSaveOfflinePass = () => {
     const safeQrSrc = card.qrDataUrl.startsWith('data:image/')
       ? card.qrDataUrl
@@ -108,7 +113,7 @@ function escapeHtml(value?: string | null): string {
       <div class="badge">${escapeHtml(getMemberStatusLabel(card.status).toUpperCase())}</div>
     </div>
     <div class="profile">
-      <div class="avatar">${escapeHtml(getMemberInitials(card.fullName))}</div>
+      <div class="avatar">${offlineAvatarHtml}</div>
       <div class="info">
         <h2>${escapeHtml(cleanFullName(card.fullName) || 'Member')}</h2>
         <p>${escapeHtml(card.tierSummaryLine || card.programme || 'Undergraduate Member')} • ${escapeHtml(card.campusCode)}</p>
@@ -198,8 +203,27 @@ function escapeHtml(value?: string | null): string {
 
             {/* Middle Section: Photo & Identity */}
             <div className="flex items-center gap-3.5 py-1.5 sm:gap-4 sm:py-2">
-              <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 text-lg font-black text-[#071026] shadow-md ring-2 ring-white/20 sm:h-16 sm:w-16 sm:text-xl">
-                {getMemberInitials(card.fullName)}
+              <div
+                data-testid="member-avatar"
+                className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 text-lg font-black text-[#071026] shadow-md ring-2 ring-white/20 sm:h-16 sm:w-16 sm:text-xl"
+              >
+                {avatarInitials || (
+                  <svg
+                    className="h-7 w-7 text-[#071026]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    aria-hidden="true"
+                    data-testid="person-icon"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="truncate text-sm font-bold text-white sm:text-base">

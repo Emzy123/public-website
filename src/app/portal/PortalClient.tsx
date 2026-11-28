@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DigitalMemberIdCard, type MemberCardData } from '@/components/members/DigitalMemberIdCard';
 import { STUDENT_DIVISION_INFO, type StudentDivision } from '@/lib/schemas/member-application.schema';
 import type { PulseTask } from '@/lib/pulse/pulse';
-import { cleanFullName } from '@/lib/members/memberId';
+import { cleanFullName } from '@/lib/members/display';
 
 type BadgeItem = {
   id: string;
