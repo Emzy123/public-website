@@ -26,7 +26,16 @@ export async function GET(request: NextRequest, props: { params: Promise<{ membe
 
   try {
     const record = await getVerifiedMemberRecord(rawMemberId);
-    if (!record) {
+    const { searchParams } = new URL(request.url);
+    const sig = searchParams.get('sig');
+    const signatureValid =
+      record && sig
+        ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, sig)
+        : null;
+
+    // Verification oracle mitigation: legacy/referral-derived IDs without a valid signature
+    // must return the exact same 404 body as an unknown Member ID.
+    if (!record || (!record.isMinted && signatureValid !== true)) {
       return NextResponse.json(
         {
           valid: false,
@@ -35,12 +44,6 @@ export async function GET(request: NextRequest, props: { params: Promise<{ membe
         { status: 404 }
       );
     }
-
-    const { searchParams } = new URL(request.url);
-    const sig = searchParams.get('sig');
-    const signatureValid = sig
-      ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, sig)
-      : null;
 
     const isRevoked = record.status === 'suspended';
     const isValid = record.status === 'active' && !isRevoked;
