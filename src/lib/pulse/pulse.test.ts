@@ -6,25 +6,52 @@
  */
 import { getWeeklyPulseFeed, recordMemberWeeklyCheckIn } from './pulse';
 import { db } from '@/lib/db';
-import { users, notifications } from '@/lib/db/schema';
+import { users, notifications, announcements } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 describe('Weekly Pulse Engine (DB-backed)', () => {
-  it('returns active weekly pulse feed with week number and tasks', async () => {
-    const feed = await getWeeklyPulseFeed();
-    expect(feed.weekNumber).toBeGreaterThan(0);
-    expect(feed.year).toBeGreaterThanOrEqual(2026);
-    expect(feed.tasks.length).toBeGreaterThanOrEqual(3);
+  it('returns active weekly pulse feed sourced from approved announcements only (no seeded tasks)', async () => {
+    const testTitle = `Pulse Test Update ${Date.now()}`;
+    const [author] = await db
+      .insert(users)
+      .values({
+        email: `pulse-author-${Date.now()}@fulokoja.edu.ng`,
+        phone: `+23480${Math.floor(10000000 + Math.random() * 90000000)}`,
+      })
+      .returning();
 
-    const categories = feed.tasks.map((t) => t.category);
-    expect(categories).toContain('finance_brief');
-    expect(categories).toContain('enterprise_sprint');
-    expect(categories).toContain('chapter_sync');
+    const [inserted] = await db
+      .insert(announcements)
+      .values({
+        authorId: author.id,
+        title: testTitle,
+        body: 'Test announcement body for pulse feed verification.',
+        isApproved: true,
+        chapterId: null,
+      })
+      .returning();
 
-    for (const task of feed.tasks) {
-      expect(task.title).toBeDefined();
-      expect(task.summary).toBeDefined();
-      expect(task.actionText).toBeDefined();
+    try {
+      const feed = await getWeeklyPulseFeed();
+      expect(feed.weekNumber).toBeGreaterThan(0);
+      expect(feed.year).toBeGreaterThanOrEqual(2026);
+      expect(Array.isArray(feed.tasks)).toBe(true);
+
+      const titles = feed.tasks.map((t) => t.title);
+      expect(titles).toContain(testTitle);
+      // Seed content must never be included
+      expect(titles.join(' ')).not.toContain('NGX Equities & CBN Inflation Briefing');
+      expect(titles.join(' ')).not.toContain('Campus Food & Logistics Opportunity Mapping');
+      expect(titles.join(' ')).not.toContain('Kogi Campuses Executive Chapter Sync');
+
+      for (const task of feed.tasks) {
+        expect(task.title).toBeDefined();
+        expect(task.summary).toBeDefined();
+        expect(task.actionText).toBeDefined();
+      }
+    } finally {
+      await db.delete(announcements).where(eq(announcements.id, inserted.id));
+      await db.delete(users).where(eq(users.id, author.id));
     }
   });
 
