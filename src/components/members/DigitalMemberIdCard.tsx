@@ -23,9 +23,9 @@ export type MemberCardData = {
   status?: string | null;
   tierSummaryLine?: string | null;
   issuedAt: string | Date;
-  verificationUrl: string;
-  qrDataUrl: string;
-  signature?: string;
+  verificationUrl?: string | null;
+  qrDataUrl?: string | null;
+  signature?: string | null;
 };
 
 export function DigitalMemberIdCard({ card }: { card: MemberCardData }) {
@@ -53,8 +53,13 @@ export function DigitalMemberIdCard({ card }: { card: MemberCardData }) {
     year: 'numeric',
   });
 
+  const statusLabel = getMemberStatusLabel(card.status);
+  const canVerifyOnline =
+    card.status === 'active' &&
+    Boolean(card.signature && card.verificationUrl && card.qrDataUrl);
+
   const handleCopyLink = () => {
-    if (navigator?.clipboard?.writeText) {
+    if (canVerifyOnline && card.verificationUrl && navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(card.verificationUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -77,9 +82,10 @@ function escapeHtml(value?: string | null): string {
     : '<svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>';
 
   const handleSaveOfflinePass = () => {
-    const safeQrSrc = card.qrDataUrl.startsWith('data:image/')
-      ? card.qrDataUrl
-      : '';
+    const safeQrSrc =
+      canVerifyOnline && card.qrDataUrl && card.qrDataUrl.startsWith('data:image/')
+        ? card.qrDataUrl
+        : '';
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -121,7 +127,11 @@ function escapeHtml(value?: string | null): string {
       </div>
     </div>
     <div class="qr-box">
-      <img src="${safeQrSrc}" alt="Verification QR Code">
+      ${
+        safeQrSrc
+          ? `<img src="${safeQrSrc}" alt="Verification QR Code">`
+          : `<p style="color:#334155;font-size:11px;font-weight:600;margin:16px 8px;text-align:center;">Membership Status: ${escapeHtml(statusLabel)}</p>`
+      }
     </div>
     <div class="footer">
       <div>
@@ -269,38 +279,53 @@ function escapeHtml(value?: string | null): string {
           >
             {/* Header Stripe */}
             <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
-              <p className="text-[9px] font-bold text-amber-400 sm:text-[10px]">SCAN TO VERIFY CREDENTIAL</p>
+              <p className="text-[9px] font-bold text-amber-400 sm:text-[10px]">
+                {canVerifyOnline ? 'SCAN TO VERIFY CREDENTIAL' : 'MEMBERSHIP STATUS'}
+              </p>
               <span className="text-[8px] text-slate-400 sm:text-[9px]">sinet.africa/verify</span>
             </div>
 
-            {/* QR Code & Verification Instructions */}
-            <div className="flex items-center justify-center gap-3.5 py-1">
-              <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-md sm:h-24 sm:w-24">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={card.qrDataUrl}
-                  alt={`QR Code for ${card.memberId}`}
-                  className="h-full w-full object-contain"
-                />
-              </div>
+            {/* QR Code or Status Banner (pending/inactive members get no QR) */}
+            {canVerifyOnline ? (
+              <div className="flex items-center justify-center gap-3.5 py-1">
+                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 shadow-md sm:h-24 sm:w-24">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={card.qrDataUrl!}
+                    alt={`QR Code for ${card.memberId}`}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
 
-              <div className="text-left text-[10px] leading-relaxed text-slate-300 sm:text-[11px]">
-                <p className="font-semibold text-white">Official Verification QR</p>
-                <p className="mt-1 text-[9px] text-slate-400 sm:text-[10px]">
-                  Scan with any phone camera to verify student identity and chapter membership.
+                <div className="text-left text-[10px] leading-relaxed text-slate-300 sm:text-[11px]">
+                  <p className="font-semibold text-white">Official Verification QR</p>
+                  <p className="mt-1 text-[9px] text-slate-400 sm:text-[10px]">
+                    Scan with any phone camera to verify student identity and chapter membership.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-amber-400/20 bg-white/5 px-4 py-4 text-center">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                  Status: {statusLabel}
+                </p>
+                <p className="mt-1.5 text-[10px] leading-relaxed text-slate-300">
+                  QR verification and online verification links unlock once your membership status is Active.
                 </p>
               </div>
-            </div>
+            )}
 
             {/* Security Notice */}
             <div className="border-t border-white/10 pt-1.5 text-center text-[8px] text-slate-400 sm:text-[9px]">
-              Cryptographically signed by SINet Authority.
+              {canVerifyOnline
+                ? 'Cryptographically signed by SINet Authority.'
+                : `Current Membership Status: ${statusLabel}`}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Control Buttons Grid: 2 columns on mobile, 4 columns on desktop */}
+      {/* Control Buttons Grid */}
       <div className="mt-3.5 grid w-full max-w-[380px] grid-cols-2 gap-2 text-xs">
         <button
           type="button"
@@ -315,16 +340,21 @@ function escapeHtml(value?: string | null): string {
               d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
-          <span className="truncate">{isFlipped ? 'Show Front' : 'Flip to QR'}</span>
+          <span className="truncate">
+            {isFlipped ? 'Show Front' : canVerifyOnline ? 'Flip to QR' : 'View Status'}
+          </span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleCopyLink}
-          className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-        >
-          <span className="truncate">{copied ? '✓ Copied' : 'Copy Link'}</span>
-        </button>
+        {canVerifyOnline && (
+          <button
+            type="button"
+            data-testid="copy-verification-link"
+            onClick={handleCopyLink}
+            className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+          >
+            <span className="truncate">{copied ? '✓ Copied' : 'Copy Link'}</span>
+          </button>
+        )}
 
         <button
           type="button"
@@ -337,13 +367,22 @@ function escapeHtml(value?: string | null): string {
           <span className="truncate">{savedOffline ? '✓ Saved!' : 'Save Pass'}</span>
         </button>
 
-        <Link
-          href={`/verify/${card.memberId}${card.signature ? `?sig=${card.signature}` : ''}`}
-          target="_blank"
-          className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl bg-[#071026] px-2.5 py-1.5 font-semibold text-white shadow-sm transition hover:bg-slate-800"
-        >
-          <span className="truncate">Verify Online →</span>
-        </Link>
+        {canVerifyOnline ? (
+          <Link
+            href={`/verify/${encodeURIComponent(card.memberId)}?sig=${card.signature}`}
+            target="_blank"
+            className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-xl bg-[#071026] px-2.5 py-1.5 font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          >
+            <span className="truncate">Verify Online →</span>
+          </Link>
+        ) : (
+          <span
+            data-testid="member-verification-status"
+            className="inline-flex min-h-[38px] items-center justify-center rounded-xl border border-amber-300/60 bg-amber-50 px-2.5 py-1.5 text-center font-semibold text-amber-900"
+          >
+            Status: {statusLabel}
+          </span>
+        )}
       </div>
     </div>
   );

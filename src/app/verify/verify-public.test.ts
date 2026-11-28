@@ -570,6 +570,39 @@ describe('GET /api/verify/[memberId] public payload (B2)', () => {
       expect(metaNoSig.description).toBe('Verify digital membership credentials on SINet.');
       expect(metaNoSig.description).not.toContain('SIN-UEPX3B');
     });
+
+    it('API & Page reject non-active (pending) referral-derived IDs even when sig matches', async () => {
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(null);
+      const unknownApiRes = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UNKNOWN99'),
+        { params: Promise.resolve({ memberId: 'SIN-UNKNOWN99' }) }
+      );
+      const unknownApiBody = await unknownApiRes.text();
+
+      const pendingReferralMember = {
+        ...referralDerivedMember,
+        status: 'pending',
+      };
+      (memberIdModule.getVerifiedMemberRecord as jest.Mock).mockResolvedValue(pendingReferralMember);
+      (memberIdModule.verifyMemberSignature as jest.Mock).mockReturnValue(true);
+
+      const pendingApiRes = await getVerify(
+        new NextRequest('http://localhost:3000/api/verify/SIN-UEPX3B?sig=valid_sig'),
+        { params: Promise.resolve({ memberId: 'SIN-UEPX3B' }) }
+      );
+      expect(pendingApiRes.status).toBe(404);
+      expect(await pendingApiRes.text()).toBe(unknownApiBody);
+
+      (headers as jest.Mock).mockReturnValue(
+        HeadersAdapter.seal(HeadersAdapter.from({ 'x-real-ip': '203.0.113.50' }))
+      );
+      const pendingPageJsx = await MemberVerificationPage({
+        params: Promise.resolve({ memberId: 'SIN-UEPX3B' }),
+        searchParams: Promise.resolve({ sig: 'valid_sig' }),
+      });
+      expect(extractText(pendingPageJsx)).toContain('Member ID Not Found');
+      expect(extractText(pendingPageJsx)).not.toContain('Referral Member');
+    });
   });
 });
 

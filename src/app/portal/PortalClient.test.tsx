@@ -45,6 +45,7 @@ const baseUser = {
     issuedAt: new Date('2026-01-01').toISOString(),
     verificationUrl: 'https://www.sinet.africa/verify/SIN-UEPX3B?sig=abc',
     qrDataUrl: 'data:image/png;base64,mock',
+    signature: 'abc',
   },
   chapter: {
     id: 'ch-1',
@@ -128,9 +129,38 @@ describe('PortalClient rendering and data integrity (Steps 2, 3, 4, 6)', () => {
     expect(screen.queryByText('Offline Ready')).not.toBeInTheDocument();
   });
 
-  it('renders working Save Pass button', () => {
+  it('renders working Save Pass and Verify Online link for active members', () => {
     render(<PortalClient user={baseUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
 
     expect(screen.getByRole('button', { name: /Save Pass/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Verify Online/i })).toHaveAttribute(
+      'href',
+      '/verify/SIN-UEPX3B?sig=abc'
+    );
+    expect(screen.getByAltText('QR Code for SIN-UEPX3B')).toBeInTheDocument();
+  });
+
+  it('hides Verify Online link and QR for pending members and shows status instead', () => {
+    const pendingUser = {
+      ...baseUser,
+      profile: {
+        ...baseUser.profile,
+        status: 'pending',
+      },
+      memberCard: {
+        ...baseUser.memberCard,
+        status: 'pending',
+        verificationUrl: null,
+        qrDataUrl: null,
+        signature: null,
+      },
+    };
+
+    render(<PortalClient user={pendingUser} pulseFeed={{ weekNumber: 47, year: 2026, tasks: [] }} />);
+
+    expect(screen.queryByRole('link', { name: /Verify Online/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('copy-verification-link')).not.toBeInTheDocument();
+    expect(screen.queryByAltText(/QR Code/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('member-verification-status')).toHaveTextContent('Status: Pending');
   });
 });

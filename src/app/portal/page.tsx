@@ -1,20 +1,18 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
-import { isPostgresConfigured, db } from '@/lib/db';
+import { isPostgresConfigured } from '@/lib/db';
 import { getMongoDb } from '@/lib/db/mongodb';
 import { ObjectId } from 'mongodb';
-import { memberProfiles, memberIds, chapters, universities, userBadges, badges } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import {
-  createMemberVerificationSignature,
+  getMemberCredential,
   generateMemberQrDataUrl,
   formatMemberId,
   getMemberTierSummary,
+  type MemberCredential,
 } from '@/lib/members/member-id';
 import { cleanFullName } from '@/lib/members/display';
 import { getMemberBadgesShowcase } from '@/lib/members/gamification';
 import { getWeeklyPulseFeed } from '@/lib/pulse/pulse';
-import { SITE_URL } from '@/lib/site-config';
 import { PortalClient } from './PortalClient';
 
 export const metadata = {
@@ -28,43 +26,42 @@ export default async function PortalPage() {
     redirect('/sign-in');
   }
 
-  // 1. Fetch profile from PostgreSQL if configured
+  // 1. Fetch credential from PostgreSQL via the single source of truth shared with /verify
+  let credential: MemberCredential | null = null;
   let profile: any = null;
-  let memberIdRecord: any = null;
   let chapter: any = null;
   let university: any = null;
 
   if (isPostgresConfigured()) {
     try {
-      const [p] = await db
-        .select()
-        .from(memberProfiles)
-        .where(eq(memberProfiles.userId, session.userId))
-        .limit(1);
-      profile = p || null;
-
-      const [mId] = await db
-        .select()
-        .from(memberIds)
-        .where(eq(memberIds.userId, session.userId))
-        .limit(1);
-      memberIdRecord = mId || null;
-
-      if (profile?.chapterId) {
-        const [ch] = await db
-          .select()
-          .from(chapters)
-          .where(eq(chapters.id, profile.chapterId))
-          .limit(1);
-        chapter = ch || null;
-
-        if (chapter?.universityId) {
-          const [uni] = await db
-            .select()
-            .from(universities)
-            .where(eq(universities.id, chapter.universityId))
-            .limit(1);
-          university = uni || null;
+      credential = await getMemberCredential(session.userId);
+      if (credential) {
+        profile = {
+          id: credential.id,
+          userId: credential.userId,
+          fullName: credential.fullName,
+          avatarUrl: credential.avatarUrl,
+          bio: credential.bio,
+          programme: credential.programme,
+          level: credential.level,
+          division: credential.division,
+          status: credential.status,
+          referralCode: credential.referralCode,
+          profileCompletenessPct: credential.profileCompletenessPct,
+          createdAt: credential.issuedAt,
+        };
+        if (credential.chapterId) {
+          chapter = {
+            id: credential.chapterId,
+            name: credential.chapterName,
+            slug: credential.chapterSlug,
+          };
+        }
+        if (credential.universityName || credential.universityShortName) {
+          university = {
+            name: credential.universityName,
+            shortName: credential.universityShortName,
+          };
         }
       }
     } catch (pgErr) {
@@ -118,7 +115,7 @@ export default async function PortalPage() {
       programme: 'Student Enterprise & Finance',
       level: null,
       division: 'student_finance' as const,
-      status: 'active' as const,
+      status: 'pending' as const,
       referralCode: formatMemberId(session.userId.slice(-6)),
       profileCompletenessPct: 80,
     };
@@ -135,18 +132,22 @@ export default async function PortalPage() {
     getWeeklyPulseFeed(chapter?.id),
   ]);
 
-  // Build digital card
-  let memberCard = null;
-  const rawCandidate = memberIdRecord?.memberId || profile?.referralCode || `MBR-${String(session.userId).slice(-6).toUpperCase()}`;
-  const effectiveMemberId = formatMemberId(rawCandidate);
-  const issuedDate = memberIdRecord?.issuedAt || new Date();
-  const signature = createMemberVerificationSignature(
-    effectiveMemberId,
-    session.userId,
-    issuedDate
+  // Build digital card from single-source-of-truth credential.
+  // Never synthesize a verification signature with new Date(); non-active or non-Postgres members
+  // receive no signed link or verification QR.
+  const effectiveMemberId =
+    credential?.memberId ||
+    formatMemberId(profile?.referralCode || `MBR-${String(session.userId).slice(-6).toUpperCase()}`);
+  const issuedDate = credential?.issuedAt || null;
+  const isActiveVerifiedCredential = Boolean(
+    credential &&
+      credential.status === 'active' &&
+      credential.verificationUrl &&
+      credential.signature
   );
-  const verificationUrl = `${SITE_URL}/verify/${effectiveMemberId}?sig=${signature}`;
-  const qrDataUrl = await generateMemberQrDataUrl(verificationUrl);
+  const verificationUrl = isActiveVerifiedCredential ? credential!.verificationUrl! : null;
+  const signature = isActiveVerifiedCredential ? credential!.signature! : null;
+  const qrDataUrl = verificationUrl ? await generateMemberQrDataUrl(verificationUrl) : null;
 
   const tierSummary = getMemberTierSummary({
     roles: session.roles,
@@ -159,19 +160,19 @@ export default async function PortalPage() {
 
   const memberDisplayName = cleanFullName(profile?.fullName, session.email) || '';
 
-  memberCard = {
+  const memberCard = {
     fullName: memberDisplayName,
     avatarUrl: profile?.avatarUrl || null,
     memberId: effectiveMemberId,
-    campusCode: memberIdRecord?.campusCode || 'KOGI',
+    campusCode: credential?.campusCode || 'KOGI',
     chapterName: chapter?.name || 'Kogi State Student Chapter',
     universityName: university?.name || 'Federal University Lokoja (FULOKOJA)',
     division: profile?.division || 'student_finance',
     programme: profile?.programme || 'Undergraduate Member',
     level: profile?.level || null,
-    status: profile?.status || 'active',
+    status: profile?.status || 'pending',
     tierSummaryLine: tierSummary.summaryLine,
-    issuedAt: issuedDate.toISOString(),
+    issuedAt: issuedDate ? issuedDate.toISOString() : new Date().toISOString(),
     verificationUrl,
     qrDataUrl,
     signature,
@@ -184,7 +185,7 @@ export default async function PortalPage() {
     roles: session.roles,
     is2faAuthenticated: session.is2faAuthenticated,
     profile: profile || null,
-    memberId: memberIdRecord?.memberId || null,
+    memberId: credential?.isMinted ? credential.memberId : null,
     memberCard,
     tierSummary,
     chapter: chapter

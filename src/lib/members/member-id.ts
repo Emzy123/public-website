@@ -294,11 +294,235 @@ export async function mintMemberId(opts: {
   return inserted;
 }
 
+export type MemberCredential = {
+  id: string;
+  userId: string;
+  /** Canonical normalized ID (e.g. SIN-FULOKOJA-26-0001 or SIN-0LH73M). */
+  memberId: string;
+  /** Alias preserved for verifier callers. */
+  fullMemberId: string;
+  campusCode: string;
+  yearPrefix: string;
+  sequenceNumber: number;
+  /** Stored issuance timestamp: member_ids.issued_at when minted, member_profiles.created_at when referral-derived. */
+  issuedAt: Date;
+  isMinted: boolean;
+  userEmail: string;
+  userPhone: string | null;
+  fullName: string;
+  avatarUrl: string | null;
+  bio: string | null;
+  programme: string | null;
+  level: string | null;
+  division: 'student_finance' | 'student_enterprise' | 'governance_records' | null;
+  status: 'pending' | 'active' | 'suspended' | 'alumni';
+  referralCode: string;
+  profileCompletenessPct: number;
+  chapterId: string | null;
+  chapterName: string | null;
+  chapterSlug: string | null;
+  universityName: string | null;
+  universityShortName: string | null;
+  signature: string | null;
+  verificationPath: string | null;
+  verificationUrl: string | null;
+};
+
 /**
- * Retrieves the full verified member profile for public ID verification.
- * Normalizes member ID and supports canonical, legacy doubled-prefix, and profile referral codes.
+ * Computes a signed verification link strictly for active members using their stored credential fields.
+ * Non-active (pending/suspended/alumni) members do not receive a signed verification link.
  */
-export async function getVerifiedMemberRecord(fullMemberId: string) {
+export function createSignedVerificationData(opts: {
+  memberId: string;
+  userId: string;
+  issuedAt: Date;
+  status: string;
+}): {
+  signature: string;
+  verificationPath: string;
+  verificationUrl: string;
+} | null {
+  if (opts.status !== 'active' || !opts.memberId) {
+    return null;
+  }
+
+  const signature = createMemberVerificationSignature(
+    opts.memberId,
+    opts.userId,
+    opts.issuedAt
+  );
+  const verificationPath = `/verify/${encodeURIComponent(opts.memberId)}?sig=${signature}`;
+  return {
+    signature,
+    verificationPath,
+    verificationUrl: `${SITE_URL}${verificationPath}`,
+  };
+}
+
+/**
+ * Single source of truth for resolving a member's credential (minted or referral-derived).
+ * Used identically by both the Portal/API signer and the public /verify verifier.
+ * `issuedAt` is always a stored database column (member_ids.issued_at or member_profiles.created_at).
+ */
+export async function getMemberCredential(userId: string): Promise<MemberCredential | null> {
+  if (!userId) return null;
+
+  // 1. Prefer minted campus ID if present
+  const [mintedRow] = await db
+    .select({
+      id: memberIds.id,
+      userId: memberIds.userId,
+      rawMemberId: memberIds.memberId,
+      campusCode: memberIds.campusCode,
+      yearPrefix: memberIds.yearPrefix,
+      sequenceNumber: memberIds.sequenceNumber,
+      issuedAt: memberIds.issuedAt,
+      userEmail: users.email,
+      userPhone: users.phone,
+      fullName: memberProfiles.fullName,
+      avatarUrl: memberProfiles.avatarUrl,
+      bio: memberProfiles.bio,
+      programme: memberProfiles.programme,
+      level: memberProfiles.level,
+      division: memberProfiles.division,
+      status: memberProfiles.status,
+      referralCode: memberProfiles.referralCode,
+      profileCompletenessPct: memberProfiles.profileCompletenessPct,
+      chapterId: memberProfiles.chapterId,
+      chapterName: chapters.name,
+      chapterSlug: chapters.slug,
+      universityName: universities.name,
+      universityShortName: universities.shortName,
+    })
+    .from(memberIds)
+    .innerJoin(users, eq(memberIds.userId, users.id))
+    .innerJoin(memberProfiles, eq(memberIds.userId, memberProfiles.userId))
+    .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
+    .leftJoin(universities, eq(chapters.universityId, universities.id))
+    .where(eq(memberIds.userId, userId))
+    .limit(1);
+
+  if (mintedRow) {
+    const memberId = formatMemberId(mintedRow.rawMemberId);
+    const signed = createSignedVerificationData({
+      memberId,
+      userId: mintedRow.userId,
+      issuedAt: mintedRow.issuedAt,
+      status: mintedRow.status,
+    });
+
+    return {
+      id: mintedRow.id,
+      userId: mintedRow.userId,
+      memberId,
+      fullMemberId: memberId,
+      campusCode: mintedRow.campusCode,
+      yearPrefix: mintedRow.yearPrefix,
+      sequenceNumber: mintedRow.sequenceNumber,
+      issuedAt: mintedRow.issuedAt,
+      isMinted: true,
+      userEmail: mintedRow.userEmail,
+      userPhone: mintedRow.userPhone,
+      fullName: mintedRow.fullName,
+      avatarUrl: mintedRow.avatarUrl,
+      bio: mintedRow.bio,
+      programme: mintedRow.programme,
+      level: mintedRow.level,
+      division: mintedRow.division,
+      status: mintedRow.status,
+      referralCode: mintedRow.referralCode,
+      profileCompletenessPct: mintedRow.profileCompletenessPct,
+      chapterId: mintedRow.chapterId,
+      chapterName: mintedRow.chapterName,
+      chapterSlug: mintedRow.chapterSlug,
+      universityName: mintedRow.universityName,
+      universityShortName: mintedRow.universityShortName,
+      signature: signed?.signature ?? null,
+      verificationPath: signed?.verificationPath ?? null,
+      verificationUrl: signed?.verificationUrl ?? null,
+    };
+  }
+
+  // 2. Fallback: referral-derived credential using stored member_profiles.created_at
+  const [profileRow] = await db
+    .select({
+      id: memberProfiles.id,
+      userId: memberProfiles.userId,
+      fullName: memberProfiles.fullName,
+      avatarUrl: memberProfiles.avatarUrl,
+      bio: memberProfiles.bio,
+      programme: memberProfiles.programme,
+      level: memberProfiles.level,
+      division: memberProfiles.division,
+      status: memberProfiles.status,
+      referralCode: memberProfiles.referralCode,
+      profileCompletenessPct: memberProfiles.profileCompletenessPct,
+      issuedAt: memberProfiles.createdAt,
+      userEmail: users.email,
+      userPhone: users.phone,
+      chapterId: memberProfiles.chapterId,
+      chapterName: chapters.name,
+      chapterSlug: chapters.slug,
+      campusCode: universities.campusCode,
+      universityName: universities.name,
+      universityShortName: universities.shortName,
+    })
+    .from(memberProfiles)
+    .innerJoin(users, eq(memberProfiles.userId, users.id))
+    .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
+    .leftJoin(universities, eq(chapters.universityId, universities.id))
+    .where(eq(memberProfiles.userId, userId))
+    .limit(1);
+
+  if (!profileRow) {
+    return null;
+  }
+
+  const memberId = formatMemberId(profileRow.referralCode);
+  const signed = createSignedVerificationData({
+    memberId,
+    userId: profileRow.userId,
+    issuedAt: profileRow.issuedAt,
+    status: profileRow.status,
+  });
+
+  return {
+    id: profileRow.id,
+    userId: profileRow.userId,
+    memberId,
+    fullMemberId: memberId,
+    campusCode: profileRow.campusCode || 'KOGI',
+    yearPrefix: getCurrentYearPrefix(),
+    sequenceNumber: 0,
+    issuedAt: profileRow.issuedAt,
+    isMinted: false,
+    userEmail: profileRow.userEmail,
+    userPhone: profileRow.userPhone,
+    fullName: profileRow.fullName,
+    avatarUrl: profileRow.avatarUrl,
+    bio: profileRow.bio,
+    programme: profileRow.programme,
+    level: profileRow.level,
+    division: profileRow.division,
+    status: profileRow.status,
+    referralCode: profileRow.referralCode,
+    profileCompletenessPct: profileRow.profileCompletenessPct,
+    chapterId: profileRow.chapterId,
+    chapterName: profileRow.chapterName,
+    chapterSlug: profileRow.chapterSlug,
+    universityName: profileRow.universityName,
+    universityShortName: profileRow.universityShortName,
+    signature: signed?.signature ?? null,
+    verificationPath: signed?.verificationPath ?? null,
+    verificationUrl: signed?.verificationUrl ?? null,
+  };
+}
+
+/**
+ * Retrieves the full verified member credential for public ID verification.
+ * Resolves userId from member_ids or member_profiles.referral_code, then delegates to getMemberCredential(userId).
+ */
+export async function getVerifiedMemberRecord(fullMemberId: string): Promise<MemberCredential | null> {
   const canonicalId = normalizeMemberId(fullMemberId);
   if (!canonicalId) {
     return null;
@@ -319,58 +543,18 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     ])
   );
 
-  // 1. Query member_ids table (matching canonical or raw stored value)
-  const [record] = await db
-    .select({
-      id: memberIds.id,
-      userId: memberIds.userId,
-      fullMemberId: memberIds.memberId,
-      campusCode: memberIds.campusCode,
-      yearPrefix: memberIds.yearPrefix,
-      sequenceNumber: memberIds.sequenceNumber,
-      issuedAt: memberIds.issuedAt,
-      // User
-      userEmail: users.email,
-      userPhone: users.phone,
-      // Profile
-      fullName: memberProfiles.fullName,
-      avatarUrl: memberProfiles.avatarUrl,
-      programme: memberProfiles.programme,
-      level: memberProfiles.level,
-      division: memberProfiles.division,
-      status: memberProfiles.status,
-      // Chapter & University
-      chapterId: memberProfiles.chapterId,
-      chapterName: chapters.name,
-      chapterSlug: chapters.slug,
-      universityName: universities.name,
-      universityShortName: universities.shortName,
-    })
+  // 1. Resolve userId via member_ids table
+  const [mintedMatch] = await db
+    .select({ userId: memberIds.userId })
     .from(memberIds)
-    .innerJoin(users, eq(memberIds.userId, users.id))
-    .innerJoin(memberProfiles, eq(memberIds.userId, memberProfiles.userId))
-    .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
-    .leftJoin(universities, eq(chapters.universityId, universities.id))
-    .where(or(...memberIdCandidates.map((c) => eq(memberIds.memberId, c))));
+    .where(or(...memberIdCandidates.map((c) => eq(memberIds.memberId, c))))
+    .limit(1);
 
-  if (record) {
-    const formattedId = formatMemberId(record.fullMemberId) || canonicalId;
-    const signature = createMemberVerificationSignature(
-      formattedId,
-      record.userId,
-      record.issuedAt
-    );
-
-    return {
-      ...record,
-      isMinted: true,
-      fullMemberId: formattedId,
-      signature,
-      verificationUrl: `${SITE_URL}/verify/${formattedId}?sig=${signature}`,
-    };
+  if (mintedMatch) {
+    return getMemberCredential(mintedMatch.userId);
   }
 
-  // 2. Fallback: Query member_profiles by referralCode for members without a minted campus ID
+  // 2. Fallback: resolve userId via member_profiles.referralCode
   const referralCandidates = Array.from(
     new Set([
       rawNormalized,
@@ -382,33 +566,9 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     ])
   );
 
-  const [profileRecord] = await db
-    .select({
-      id: memberProfiles.id,
-      userId: memberProfiles.userId,
-      fullName: memberProfiles.fullName,
-      avatarUrl: memberProfiles.avatarUrl,
-      programme: memberProfiles.programme,
-      level: memberProfiles.level,
-      division: memberProfiles.division,
-      status: memberProfiles.status,
-      referralCode: memberProfiles.referralCode,
-      issuedAt: memberProfiles.createdAt,
-      // User
-      userEmail: users.email,
-      userPhone: users.phone,
-      // Chapter & University
-      chapterId: memberProfiles.chapterId,
-      chapterName: chapters.name,
-      chapterSlug: chapters.slug,
-      campusCode: universities.campusCode,
-      universityName: universities.name,
-      universityShortName: universities.shortName,
-    })
+  const [profileMatch] = await db
+    .select({ userId: memberProfiles.userId })
     .from(memberProfiles)
-    .innerJoin(users, eq(memberProfiles.userId, users.id))
-    .leftJoin(chapters, eq(memberProfiles.chapterId, chapters.id))
-    .leftJoin(universities, eq(chapters.universityId, universities.id))
     .where(or(...referralCandidates.map((rc) => eq(memberProfiles.referralCode, rc))))
     .orderBy(
       sql`CASE
@@ -421,38 +581,8 @@ export async function getVerifiedMemberRecord(fullMemberId: string) {
     )
     .limit(1);
 
-  if (profileRecord) {
-    const signature = createMemberVerificationSignature(
-      canonicalId,
-      profileRecord.userId,
-      profileRecord.issuedAt
-    );
-
-    return {
-      id: profileRecord.id,
-      userId: profileRecord.userId,
-      isMinted: false,
-      fullMemberId: canonicalId,
-      campusCode: profileRecord.campusCode || 'KOGI',
-      yearPrefix: getCurrentYearPrefix(),
-      sequenceNumber: 0,
-      issuedAt: profileRecord.issuedAt,
-      userEmail: profileRecord.userEmail,
-      userPhone: profileRecord.userPhone,
-      fullName: profileRecord.fullName,
-      avatarUrl: profileRecord.avatarUrl,
-      programme: profileRecord.programme,
-      level: profileRecord.level,
-      division: profileRecord.division,
-      status: profileRecord.status,
-      chapterId: profileRecord.chapterId,
-      chapterName: profileRecord.chapterName,
-      chapterSlug: profileRecord.chapterSlug,
-      universityName: profileRecord.universityName,
-      universityShortName: profileRecord.universityShortName,
-      signature,
-      verificationUrl: `${SITE_URL}/verify/${canonicalId}?sig=${signature}`,
-    };
+  if (profileMatch) {
+    return getMemberCredential(profileMatch.userId);
   }
 
   return null;

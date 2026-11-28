@@ -253,7 +253,11 @@ describe('Digital Member ID, Normalization & QR Code Engine', () => {
       });
 
       it('resolves referral code whose nanoid starts with SIN (e.g. SINSINAB) to the right member and not another', async () => {
-        const tag = `${Math.floor(10 + Math.random() * 89)}A`;
+        const randLetters = () =>
+          Array.from({ length: 4 }, () =>
+            'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(Math.floor(Math.random() * 32))
+          ).join('');
+        const tag = `${randLetters()}Q`; // 5 chars (< 6), unique per run
         const shortReferral = `SIN${tag}`; // nanoid part = tag
         const sinPrefixedNanoidReferral = `SINSIN${tag}`; // nanoid part = SIN + tag
 

@@ -33,9 +33,10 @@ export async function GET(request: NextRequest, props: { params: Promise<{ membe
         ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, sig)
         : null;
 
-    // Verification oracle mitigation: legacy/referral-derived IDs without a valid signature
-    // must return the exact same 404 body as an unknown Member ID.
-    if (!record || (!record.isMinted && signatureValid !== true)) {
+    // Verification oracle & status gating:
+    // Legacy/referral-derived IDs require BOTH an active member status AND a valid signature.
+    // Otherwise return the exact same 404 body as an unknown Member ID.
+    if (!record || (!record.isMinted && (record.status !== 'active' || signatureValid !== true))) {
       return NextResponse.json(
         {
           valid: false,

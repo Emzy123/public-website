@@ -22,7 +22,7 @@ export async function generateMetadata(
         ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
         : false;
 
-    if (!record || (!record.isMinted && !isSigValid)) {
+    if (!record || (!record.isMinted && (record.status !== 'active' || !isSigValid))) {
       return {
         title: 'Credential Verification — SINet',
         description: 'Verify digital membership credentials on SINet.',
@@ -164,7 +164,7 @@ export default async function MemberVerificationPage(
       ? verifyMemberSignature(record.fullMemberId, record.userId, record.issuedAt, searchParams.sig)
       : false;
 
-  if (!record || (!record.isMinted && !isSigValid)) {
+  if (!record || (!record.isMinted && (record.status !== 'active' || !isSigValid))) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center bg-[#071026] px-4 py-16 text-center text-white">
         <div className="mx-auto max-w-md rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-2xl backdrop-blur-md">
